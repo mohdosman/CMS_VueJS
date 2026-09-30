@@ -37,7 +37,9 @@ public sealed class PagedResult<T>
     public int TotalCount { get; init; }
 }
 
-public sealed record LookupItem(int Id, string Label);
+public sealed record UserDocumentItem(int DocumentId, string FileName, DateTime CreatedOn, long FileSize);
+
+public sealed record LookupItem(int Id, string Label, string? Short = null);
 
 public sealed class UserDetail
 {

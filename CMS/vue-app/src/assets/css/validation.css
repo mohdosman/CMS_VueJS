@@ -63,16 +63,18 @@
     margin-left: -30px;
 }
 
-/* Radios are 18px, under the 24px minimum, which WCAG 2.2 (2.5.8) allows when a
+/* Radios and checkboxes are 18px, under the 24px minimum, which WCAG 2.2 (2.5.8) allows when a
    24px circle centred on each one overlaps no other target. Label rows are 24px
    tall and labels are 12px apart, so that holds. Centre the 18px control in the row. */
-.radio-inline input[type="radio"] {
+.radio-inline input[type="radio"],
+.checkbox-inline input[type="checkbox"] {
     width: 18px;
     height: 18px;
     top: 3px;
     margin-left: -26px;
 }
-.radio-inline {
+.radio-inline,
+.checkbox-inline {
     padding-left: 26px;
 }
 

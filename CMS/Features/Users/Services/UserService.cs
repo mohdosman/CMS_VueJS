@@ -59,7 +59,7 @@ public sealed class UserService(
 
     public async Task<List<LookupItem>> GetProvidersAsync(CancellationToken ct) =>
         (await uow.Providers.GetIdNamesAsync(IsAdmin ? null : ProviderIdsClaim()))
-            .Select(p => new LookupItem(p.Id, p.Name)).ToList();
+            .Select(p => new LookupItem(p.Id, p.Name, p.Short)).ToList();
 
     public UserPolicy GetPolicy()
     {
@@ -240,7 +240,7 @@ public sealed class UserService(
 
         // Documents and facility links have no screen here yet, so refuse rather than orphan or destroy them.
         if (await uow.Documents.AnyForUserAsync(u.Id) || await uow.FacilityUsers.AnyForUserAsync(u.Id))
-            throw new ConflictException("This user has documents or facility assignments. Remove those before deleting the user.");
+            throw new ConflictException("This user has documents or facility assignments. Remove them (agreements: View User Agreement) before deleting the user.");
 
         await using var tx = await uow.BeginTransactionAsync(ct);
 
@@ -255,6 +255,15 @@ public sealed class UserService(
         if (!deleted.Succeeded) throw ToValidation(deleted, "form");
         await tx.CommitAsync(ct);
         return true;
+    }
+
+    // Id of a user the caller may see and manage; null = not found. Throws Forbidden outside the caller scope.
+    public async Task<int?> ResolveScopedUserIdAsync(Guid userKey)
+    {
+        var u = await uow.Users.GetByKeyNoTrackingAsync(userKey);
+        if (u is null) return null;
+        await EnsureTargetInScopeAsync(u);
+        return u.Id;
     }
 
     // Same rule as edit: every role and provider of the target must be inside the caller scope.

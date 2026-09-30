@@ -29,7 +29,8 @@ export function useUserDetail() {
     const policy = ref({ passwordRules: [], adUserNameRule: '' });
     const errors = ref({});          // { field: [messages] } from a 400 validation response
     const formError = ref('');       // page-level message: form-level validation, or a load failure
-    const dialog = ref('');          // '', 'password' or 'delete'
+    const dialog = ref('');          // '', 'password', 'delete', 'agreements' or 'upload'
+    const documentCount = ref(0);
     const isLoading = ref(true);
     const isSaving = ref(false);
 
@@ -96,12 +97,25 @@ export function useUserDetail() {
         logSuccess('Password set. The user must change it at next sign-in.');
     }
 
+    // The agreements dialog reports the count it ended on (deletes included); the upload dialog whether anything landed.
+    function agreementsClosed(count) {
+        dialog.value = '';
+        documentCount.value = count;
+    }
+    async function uploadClosed(uploaded) {
+        dialog.value = '';
+        if (uploaded) documentCount.value = (await usersApi.documents(route.params.key)).length;
+    }
+
     const cancel = () => router.push('/admin/users');
 
     onMounted(async () => {
         try {
             [roles.value, providers.value, policy.value] = await Promise.all([usersApi.roles(), usersApi.providers(), usersApi.policy()]);
-            if (!isNew) fill(await usersApi.get(route.params.key));
+            if (!isNew) {
+                fill(await usersApi.get(route.params.key));
+                documentCount.value = (await usersApi.documents(route.params.key)).length;
+            }
         } catch (e) {
             // Nothing to edit: keep the reason on the page.
             formError.value = e.response?.status === 404 ? 'User not found.' : apiErrorMessage(e);
@@ -112,6 +126,6 @@ export function useUserDetail() {
 
     return {
         isNew, canEdit, form, info, roles, providers, policy, errors, formError, dialog,
-        isLoading, isSaving, hasAdminRole, save, remove, passwordSet, cancel
+        isLoading, isSaving, hasAdminRole, documentCount, save, remove, passwordSet, agreementsClosed, uploadClosed, cancel
     };
 }

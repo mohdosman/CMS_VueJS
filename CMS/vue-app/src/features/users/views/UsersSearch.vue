@@ -1,5 +1,7 @@
 <script setup>
 import { useUserSearch } from '../composables/useUserSearch.js';
+import MultiSelectDropdown from '../../../common/components/MultiSelectDropdown.vue';
+import RoleChips from '../../../common/components/RoleChips.vue';
 
 const {
     criteria, paging, users, totalRecords, roles, providers, isSearching,
@@ -41,12 +43,7 @@ const flags = [
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label" for="providerIds">Provider</label>
-                        <select id="providerIds" v-model="criteria.providerIds" multiple size="4" class="form-select form-select-sm"
-                                aria-describedby="providerHint">
-                            <option v-for="p in providers" :key="p.id" :value="p.id">{{ p.label }}</option>
-                        </select>
-                        <div id="providerHint" class="form-text">Hold Ctrl to select more than one.</div>
+                        <MultiSelectDropdown id="providerIds" v-model="criteria.providerIds" label="Provider" :options="providers" />
                     </div>
                     <div v-for="f in flags" :key="f.key" class="col-md-2 mb-3">
                         <fieldset>
@@ -58,12 +55,8 @@ const flags = [
                     </div>
                 </div>
 
-                <fieldset class="mb-3">
-                    <legend class="form-label">Roles</legend>
-                    <label v-for="r in roles" :key="r.id" class="checkbox-inline">
-                        <input v-model="criteria.roleIds" type="checkbox" :value="r.id" /> {{ r.label }}
-                    </label>
-                </fieldset>
+                <RoleChips v-model="criteria.roleIds" class="mb-3" label="Roles - click to filter"
+                           :options="roles" :hint="criteria.roleIds.length ? `${criteria.roleIds.length} role(s) selected` : 'No roles selected - showing all users'" />
             </template>
             <template #buttons>
                 <AppButton action="search" :disabled="isSearching" />

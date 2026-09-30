@@ -15,5 +15,14 @@ export const usersApi = {
     create: async (body) => (await http.post('users', body)).data,
     update: async (key, body) => (await http.put(`users/${key}`, body)).data,
     setPassword: async (key, body) => { await http.post(`users/${key}/password`, body); },
-    remove: async (key) => { await http.delete(`users/${key}`); }
+    remove: async (key) => { await http.delete(`users/${key}`); },
+    documents: async (key) => (await http.get(`users/${key}/documents`)).data,
+    uploadDocument: async (key, file) => {
+        const body = new FormData();
+        body.append('file', file);
+        return (await http.post(`users/${key}/documents`, body)).data;
+    },
+    removeDocument: async (key, id) => { await http.delete(`users/${key}/documents/${id}`); },
+    // A plain link the browser follows: the server answers with an attachment.
+    documentUrl: (key, id) => `${http.defaults.baseURL}/users/${key}/documents/${id}/download`
 };

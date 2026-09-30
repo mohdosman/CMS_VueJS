@@ -57,7 +57,6 @@ services.ConfigureApplicationCookie(o =>
 services.AddAntiforgery(o => o.HeaderName = "X-XSRF-TOKEN");
 services.AddControllersWithViews(o =>
     {
-        o.Filters.Add<DomainExceptionFilter>();
         o.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
     }).AddRazorOptions(o =>
 {
@@ -78,6 +77,7 @@ services.AddScoped<IUnitOfWork, HttpUnitOfWork>();
 services.AddScoped<IPublicFilesService, PublicFilesService>();
 services.AddScoped<UserService>();
 services.AddScoped<RoleService>();
+services.AddScoped<UserDocumentService>();
 
 var app = builder.Build();
 
