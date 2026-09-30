@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <VueSource Include="$(SpaRoot)src\**\*;$(SpaRoot)vite.config.js;$(SpaRoot)package.json;$(SpaRoot)package-lock.json" />
+    <VueSource Include="$(SpaRoot)src\**\*;$(SpaRoot)vite.config.js;$(SpaRoot)package.json;$(SpaRoot)package-lock.json;$(SpaRoot)eslint.config.mjs" />
   </ItemGroup>
 
   <Target Name="NpmInstall" BeforeTargets="ViteBuild" Condition="!Exists('$(SpaRoot)node_modules')">

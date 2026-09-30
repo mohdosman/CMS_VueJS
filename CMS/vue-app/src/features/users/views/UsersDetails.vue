@@ -4,7 +4,7 @@ import SetPasswordDialog from '../components/SetPasswordDialog.vue';
 import AppDialog from '../../../common/components/AppDialog.vue';
 
 const {
-    isNew, canEdit, form, info, roles, providers, policy, errors, formError, notice, dialog,
+    isNew, canEdit, form, info, roles, providers, policy, errors, formError, dialog,
     isLoading, isSaving, hasAdminRole, save, remove, passwordSet, cancel
 } = useUserDetail();
 
@@ -20,7 +20,6 @@ const err = (f) => errors.value[f]?.length ?? 0;
             <h1 id="main-title" class="visually-hidden">{{ isNew ? 'Add User' : 'User Details' }}</h1>
 
             <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
-            <div v-if="notice" class="alert alert-success" role="status">{{ notice }}</div>
 
             <!-- A read-only viewer (users.view only) gets the same form with every control disabled. -->
             <fieldset :disabled="!canEdit || isLoading" class="border-0 p-0 m-0">

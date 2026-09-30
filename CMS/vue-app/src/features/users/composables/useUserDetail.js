@@ -1,8 +1,9 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { usersApi } from '../api/usersApi.js';
-import { can } from '../../../boot.js';
-import { announce } from '../../../services/liveAnnouncer.js';
+import { useCapabilities } from '../../../common/composables/useCapabilities.js';
+import { useLogger } from '../../../common/composables/useLogger.js';
+import { apiErrorMessage } from '../../../utils/apiError.js';
 
 const blankForm = () => ({
     rowVersion: null, userName: '', firstName: '', lastName: '', email: '', phoneNumber: '', notes: '',
@@ -15,6 +16,8 @@ const blankForm = () => ({
 export function useUserDetail() {
     const route = useRoute();
     const router = useRouter();
+    const { can } = useCapabilities();
+    const { logSuccess, logApiError } = useLogger();
 
     const isNew = route.params.key === '0';
     const canEdit = can('users.edit');
@@ -24,9 +27,8 @@ export function useUserDetail() {
     const roles = ref([]);
     const providers = ref([]);
     const policy = ref({ passwordRules: [], adUserNameRule: '' });
-    const errors = ref({});          // { field: [messages] }
-    const formError = ref('');
-    const notice = ref('');
+    const errors = ref({});          // { field: [messages] } from a 400 validation response
+    const formError = ref('');       // page-level message: form-level validation, or a load failure
     const dialog = ref('');          // '', 'password' or 'delete'
     const isLoading = ref(true);
     const isSaving = ref(false);
@@ -45,30 +47,32 @@ export function useUserDetail() {
         });
     }
 
+    // Field problems (400) show next to their inputs; anything else (403, 409 conflict, ...) is a toast.
     function fail(e) {
-        errors.value = e.fieldErrors ?? {};
-        // Anything that is not a field problem (403, 409 conflict, form-level) is shown as a banner.
-        formError.value = e.fieldErrors ? (e.fieldErrors.form?.join(' ') ?? '') : e.message;
+        const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
+        if (fieldErrors) {
+            errors.value = fieldErrors;
+            formError.value = fieldErrors.form?.join(' ') ?? '';
+        } else {
+            logApiError(e);
+        }
     }
 
     async function save() {
         errors.value = {};
         formError.value = '';
-        notice.value = '';
         isSaving.value = true;
         try {
             const body = { ...form, providerIds: hasAdminRole.value ? [] : form.providerIds };
             const detail = isNew ? await usersApi.create(body) : await usersApi.update(route.params.key, body);
+            logSuccess('User saved.');
             if (isNew) {
                 router.replace(`/admin/users/${detail.userKey}`);
                 return;
             }
             fill(detail);
-            notice.value = 'User saved.';
-            announce('User saved');
         } catch (e) {
             fail(e);
-            announce('The user could not be saved. Check the highlighted fields.');
         } finally {
             isSaving.value = false;
         }
@@ -77,19 +81,19 @@ export function useUserDetail() {
     async function remove() {
         try {
             await usersApi.remove(route.params.key);
+            logSuccess('User deleted.');
             router.push('/admin/users');
         } catch (e) {
-            // 403 / 409 explain themselves ("has documents", "your own account"); show them on the page.
+            // 403 / 409 explain themselves ("has documents", "your own account").
             dialog.value = '';
-            formError.value = e.message;
+            logApiError(e);
         }
     }
 
     // A password reset bumps the security stamp but not the row version, so the form stays valid.
     function passwordSet() {
         dialog.value = '';
-        notice.value = 'Password set. The user must change it at next sign-in.';
-        announce(notice.value);
+        logSuccess('Password set. The user must change it at next sign-in.');
     }
 
     const cancel = () => router.push('/admin/users');
@@ -99,14 +103,15 @@ export function useUserDetail() {
             [roles.value, providers.value, policy.value] = await Promise.all([usersApi.roles(), usersApi.providers(), usersApi.policy()]);
             if (!isNew) fill(await usersApi.get(route.params.key));
         } catch (e) {
-            formError.value = e.status === 404 ? 'User not found.' : e.message;
+            // Nothing to edit: keep the reason on the page.
+            formError.value = e.response?.status === 404 ? 'User not found.' : apiErrorMessage(e);
         } finally {
             isLoading.value = false;
         }
     });
 
     return {
-        isNew, canEdit, form, info, roles, providers, policy, errors, formError, notice, dialog,
+        isNew, canEdit, form, info, roles, providers, policy, errors, formError, dialog,
         isLoading, isSaving, hasAdminRole, save, remove, passwordSet, cancel
     };
 }

@@ -2,7 +2,7 @@
 import { useUserSearch } from '../composables/useUserSearch.js';
 
 const {
-    criteria, paging, users, totalRecords, roles, providers, isSearching, error,
+    criteria, paging, users, totalRecords, roles, providers, isSearching,
     search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, gotoUser, canAdd, add
 } = useUserSearch();
 
@@ -71,8 +71,6 @@ const flags = [
                 <AppButton action="clear" @click="clear" />
             </template>
         </SearchPanel>
-
-        <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
 
         <div class="row" role="region" aria-labelledby="results-heading">
             <h2 id="results-heading" class="visually-hidden">User Results Grid</h2>

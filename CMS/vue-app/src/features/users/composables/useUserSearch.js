@@ -2,7 +2,8 @@ import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { usersApi } from '../api/usersApi.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
-import { can } from '../../../boot.js';
+import { useCapabilities } from '../../../common/composables/useCapabilities.js';
+import { useLogger } from '../../../common/composables/useLogger.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
 // YesNoFilter on the server: 0 = All, 1 = Yes, 2 = No.
@@ -23,26 +24,26 @@ const roles = ref([]);
 const providers = ref([]);
 const hasSearched = ref(false);
 const isSearching = ref(false);
-const error = ref('');
-
-async function getUsers() {
-    isSearching.value = true;
-    error.value = '';
-    try {
-        const result = await usersApi.search(paging.currentPage, paging.pageSize, criteria);
-        users.value = result.items;
-        totalRecords.value = result.totalCount;
-        hasSearched.value = true;
-        announce(`${result.totalCount} users found`);
-    } catch (e) {
-        error.value = e.message;
-    } finally {
-        isSearching.value = false;
-    }
-}
 
 export function useUserSearch() {
     const router = useRouter();
+    const { can } = useCapabilities();
+    const { logApiError } = useLogger();
+
+    async function getUsers() {
+        isSearching.value = true;
+        try {
+            const result = await usersApi.search(paging.currentPage, paging.pageSize, criteria);
+            users.value = result.items;
+            totalRecords.value = result.totalCount;
+            hasSearched.value = true;
+            announce(`${result.totalCount} users found`);
+        } catch (e) {
+            logApiError(e);
+        } finally {
+            isSearching.value = false;
+        }
+    }
 
     const setOrder = createSetOrder(criteria, paging, getUsers);
     const sortIcon = (col) => getSortIcon(col, criteria);
@@ -68,7 +69,7 @@ export function useUserSearch() {
             try {
                 [roles.value, providers.value] = await Promise.all([usersApi.roles(), usersApi.providers()]);
             } catch (e) {
-                error.value = e.message;
+                logApiError(e);
             }
         }
         // Coming back from a detail screen: refresh in place so edits and deletes show, keeping the page.
@@ -76,7 +77,7 @@ export function useUserSearch() {
     });
 
     return {
-        criteria, paging, users, totalRecords, roles, providers, isSearching, error,
+        criteria, paging, users, totalRecords, roles, providers, isSearching,
         search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, gotoUser, canAdd, add
     };
 }

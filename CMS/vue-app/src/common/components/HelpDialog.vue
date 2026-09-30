@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { api } from '../../api/http.js';
+import { publicFilesApi } from '../api/publicFilesApi.js';
+import { apiErrorMessage } from '../../utils/apiError.js';
 import AppDialog from './AppDialog.vue';
 
 const emit = defineEmits(['close']);
@@ -14,9 +15,9 @@ const date = (v) => new Date(v).toLocaleDateString();
 
 onMounted(async () => {
     try {
-        files.value = await api('publicfiles/help');
+        files.value = await publicFilesApi.helpFiles();
     } catch (e) {
-        error.value = e.message;
+        error.value = apiErrorMessage(e);
     } finally {
         isLoading.value = false;
     }
@@ -34,8 +35,7 @@ onMounted(async () => {
             </thead>
             <tbody>
                 <tr v-for="f in files" :key="f.id">
-                    <!-- A plain link: the server answers with an attachment, so the browser downloads it. -->
-                    <td><a :href="`api/publicfiles/${f.id}/download`" download>{{ f.fileName }}</a></td>
+                    <td><a :href="publicFilesApi.downloadUrl(f.id)" download>{{ f.fileName }}</a></td>
                     <td>{{ date(f.createdOn) }}</td>
                     <td>{{ size(f.fileSize) }}</td>
                 </tr>

@@ -51,7 +51,14 @@ services.ConfigureApplicationCookie(o =>
 });
 
 // Razor views live under /Mvc/Views (same layout as SafetyNet).
-services.AddControllersWithViews(o => o.Filters.Add<DomainExceptionFilter>()).AddRazorOptions(o =>
+// Writes need the antiforgery token (SafetyNet: BaseController is AutoValidateAntiforgeryToken); the SPA
+// sends it as X-XSRF-TOKEN.
+services.AddAntiforgery(o => o.HeaderName = "X-XSRF-TOKEN");
+services.AddControllersWithViews(o =>
+    {
+        o.Filters.Add<DomainExceptionFilter>();
+        o.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
+    }).AddRazorOptions(o =>
 {
     o.ViewLocationFormats.Clear();
     o.ViewLocationFormats.Add("/Mvc/Views/{1}/{0}.cshtml");

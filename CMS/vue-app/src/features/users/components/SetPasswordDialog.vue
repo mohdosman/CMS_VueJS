@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { usersApi } from '../api/usersApi.js';
 import AppDialog from '../../../common/components/AppDialog.vue';
+import { apiErrorMessage } from '../../../utils/apiError.js';
 
 const props = defineProps({
     userKey: { type: String, required: true },
@@ -23,8 +24,10 @@ async function save() {
         await usersApi.setPassword(props.userKey, { password: password.value, confirmPassword: confirmPassword.value });
         emit('saved');
     } catch (e) {
-        errors.value = e.fieldErrors ?? {};
-        formError.value = e.fieldErrors ? '' : e.message;
+        // Field problems (400) sit next to their inputs; anything else is shown in the dialog.
+        const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
+        errors.value = fieldErrors ?? {};
+        formError.value = fieldErrors ? '' : apiErrorMessage(e);
     } finally {
         isSaving.value = false;
     }
