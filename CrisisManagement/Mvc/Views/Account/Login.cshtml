@@ -1,0 +1,153 @@
+@model CrisisManagement.Mvc.ViewModels.LoginViewModel
+@{
+    ViewBag.Title = "Login";
+    Layout = "_LoginLayout";
+    var modelErrors = ViewData.ModelState.TryGetValue("", out var entry)
+        ? entry.Errors.Select(e => e.ErrorMessage).Where(m => !string.IsNullOrWhiteSpace(m)).ToList()
+        : new List<string>();
+}
+
+<main class="login-shell login-stack" aria-labelledby="main-title">
+    <h1 id="main-title" class="visually-hidden">Sign in</h1>
+
+    <section class="acknowledgement" aria-labelledby="acknowledgement-title">
+        <h2 id="acknowledgement-title" class="text-center">ACKNOWLEDGEMENT</h2>
+        <p>BY LOGGING INTO THIS APPLICATION, I CERTIFY THAT:</p>
+        <div class="acknowledgement-scroll" role="region" aria-label="Acknowledgement terms" tabindex="0">
+            <ul>
+                <li>I understand that violation of any program policies and procedures, altering the application, disclosing the contents of this application to others not properly authorized without proper releases of information, entering fraudulent data and/or sharing the user ID assigned to me with my password may result in termination of system/application access; and</li>
+                <li>I am authorized to perform the function(s) which I am about to perform.</li>
+                <li>I am using the User ID assigned to me with its associated password, and that I have not shared this User ID and password with anyone else.</li>
+                <li>This system may contain Government information, which is restricted to authorized users ONLY. Unauthorized access, use, misuse, or modification of this computer system or of the data contained herein or in transit to/from this system constitutes a violation of state and federal laws including, but not limited to Title 18, United States Code, Section 1030, and may subject the individual to Criminal and Civil penalties pursuant to Title 26, United States Code, Sections 7213(a), 7213A (the Taxpayer Browsing Protection Act), and 7431.</li>
+                <li>This system and equipment are subject to monitoring to ensure proper performance of applicable security features or procedures. Such monitoring may result in the acquisition, recording and analysis of all data being communicated, transmitted, processed or stored in this system by a user. If monitoring reveals possible evidence of criminal activity, such evidence may be provided to law enforcement personnel.</li>
+                <li><strong>ANYONE USING THIS SYSTEM EXPRESSLY CONSENTS TO SUCH MONITORING and SHOULD HAVE NO EXPECTATION OF PRIVACY for any information stored or communicated via this system.</strong></li>
+            </ul>
+        </div>
+    </section>
+
+    <div class="login-cards">
+        <section class="login-panel" aria-labelledby="login-form-title">
+            <div class="login_box">
+                <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" id="login_form" aria-labelledby="login-form-title">
+                    <h2 id="login-form-title" class="top_b">Sign In</h2>
+
+                    @if (TempData["StatusMessage"] is string statusMessage)
+                    {
+                        <div class="alert alert-success" role="status">@statusMessage</div>
+                    }
+
+                    @if (modelErrors.Count > 0)
+                    {
+                        <div class="alert alert-danger" role="alert" tabindex="-1" id="validation-summary">
+                            <h2 class="visually-hidden">There were problems with your submission</h2>
+                            <ul class="mb-0">
+                                @foreach (var error in modelErrors)
+                                {
+                                    <li>@error</li>
+                                }
+                            </ul>
+                        </div>
+                        <script>
+                            setTimeout(function () { document.getElementById('validation-summary')?.focus(); }, 100);
+                        </script>
+                    }
+
+                    <div class="cnt_b">
+                        <div class="mb-3">
+                            <label asp-for="UserName">User ID/Email</label>
+                            <input asp-for="UserName" class="form-control" autocomplete="username" aria-required="true" />
+                            <span asp-validation-for="UserName" class="text-danger" role="alert"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Password">Password</label>
+                            <div class="password-field">
+                                <input asp-for="Password" class="form-control" autocomplete="current-password" aria-required="true" />
+                                <button type="button" class="password-toggle" id="password-toggle" aria-pressed="false" aria-label="Show password">
+                                    <i class="fa fa-eye" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger" role="alert"></span>
+                        </div>
+                        <div class="text-end mb-2">
+                            <a class="forgot-password-link" asp-controller="Account" asp-action="ForgotPassword">Forgot password?</a>
+                        </div>
+                    </div>
+
+                    <div class="btm_b">
+                        <button class="btn btn-primary login-submit" type="submit">Sign In</button>
+                        @if (Model.Info.EntraEnabled)
+                        {
+                            <div class="login-divider my-3" aria-hidden="true">or</div>
+                            <a class="openid-link" asp-controller="AzureAuth" asp-action="SignIn" asp-route-returnUrl="@ViewData["ReturnUrl"]"
+                               title="Sign in with Active Directory (State Employees)"
+                               aria-label="Sign in with Azure Active Directory (State Employees)">
+                                <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <rect width="10" height="10" fill="#F25022" />
+                                    <rect x="11" width="10" height="10" fill="#7FBA00" />
+                                    <rect y="11" width="10" height="10" fill="#00A4EF" />
+                                    <rect x="11" y="11" width="10" height="10" fill="#FFB900" />
+                                </svg>
+                                <span>Sign in with Azure Active Directory (State Employees)</span>
+                            </a>
+                        }
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section class="support-panel" aria-labelledby="attention-title">
+            <h2 id="attention-title">Attention</h2>
+            @foreach (var n in Model.Info.Notices)
+            {
+                <p class="login-notice">@n.CreatedOn.ToString("d") - @n.Text</p>
+            }
+        </section>
+
+        <section class="support-panel" aria-labelledby="support-title">
+            <p class="mb-1">For help using this application, contact the</p>
+            <h2 id="support-title">Designated Support Person</h2>
+            <div class="support-list">
+                @foreach (var s in Model.Info.Support)
+                {
+                    <address class="support-contact">
+                        <strong>@s.Name</strong>
+                        @if (!string.IsNullOrWhiteSpace(s.Phone))
+                        {
+                            <span class="d-block"><i class="fa fa-phone" aria-hidden="true"></i> <span class="visually-hidden">Phone</span> @s.Phone</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(s.Email))
+                        {
+                            <a href="mailto:@s.Email"><i class="fa fa-envelope" aria-hidden="true"></i> <span class="visually-hidden">Email</span> @s.Email</a>
+                        }
+                    </address>
+                }
+            </div>
+        </section>
+    </div>
+
+    @if (Model.Info.Schema is { } schema)
+    {
+        <p class="schema-note">
+            Using <a href="@schema.SchemaUrl">CrisisAssessment.XSD</a> Schema file, you can generate the Crisis file to upload.
+            Here's a <a href="@schema.SampleXmlUrl">Sample XML</a> file.
+            <span class="ms-3">Last Updated: @schema.LastUpdated</span>
+        </p>
+    }
+</main>
+
+@section scripts {
+    <script>
+        (function () {
+            var toggle = document.getElementById('password-toggle');
+            var input = document.getElementById('Password');
+            if (!toggle || !input) return;
+            toggle.addEventListener('click', function () {
+                var show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                toggle.setAttribute('aria-pressed', show);
+                toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                toggle.firstElementChild.className = show ? 'fa fa-eye-slash' : 'fa fa-eye';
+            });
+        })();
+    </script>
+}

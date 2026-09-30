@@ -1,0 +1,92 @@
+@model CrisisManagement.Mvc.ViewModels.SetupMfaViewModel
+@{
+    ViewBag.Title = "Two-Factor Authentication";
+    Layout = "_LoginLayout";
+    var modelErrors = ViewData.ModelState.TryGetValue("", out var entry)
+        ? entry.Errors.Select(e => e.ErrorMessage).Where(m => !string.IsNullOrWhiteSpace(m)).ToList()
+        : new List<string>();
+}
+
+<main class="login-shell password-shell" aria-labelledby="main-title">
+    <section class="login-panel" aria-labelledby="main-title">
+        <h1 id="main-title" class="visually-hidden">Two-factor authentication</h1>
+
+        <div class="login_box">
+            <div class="top_b" id="form-title" role="heading" aria-level="2">Two-Factor Authentication</div>
+
+            @if (TempData["StatusMessage"] is string statusMessage)
+            {
+                <div class="alert alert-success" role="status">@statusMessage</div>
+            }
+            @if (Model.Required && !Model.Enrolled)
+            {
+                <div class="alert alert-warning" role="status">
+                    Two-factor authentication is required for your account. Set it up to continue;
+                    the rest of the application stays unavailable until you do.
+                </div>
+            }
+            @if (modelErrors.Count > 0)
+            {
+                <div class="alert alert-danger" role="alert" tabindex="-1" id="validation-summary">
+                    <h2 class="visually-hidden">There were problems with your submission</h2>
+                    <ul class="mb-0">
+                        @foreach (var error in modelErrors)
+                        {
+                            <li>@error</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (Model.Enrolled)
+            {
+                <form asp-controller="Account" asp-action="BeginMfaSetup" method="post" aria-labelledby="form-title">
+                    <div class="cnt_b">
+                        <p>Two-factor authentication is <strong>on</strong>. You are asked for an authenticator code when you sign in.</p>
+                        <p class="field-help">
+                            Replacing your device turns the current one off straight away. You can only finish
+                            with the new one, so start it when you have your phone in your hand.
+                        </p>
+                    </div>
+                    <div class="btm_b">
+                        <button class="btn btn-primary login-submit" type="submit">Re-enroll device</button>
+                        <a class="btn btn-outline-secondary login-submit mt-2" asp-controller="Home" asp-action="Index">Back to application</a>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <form asp-controller="Account" asp-action="SetupMfa" method="post" aria-labelledby="form-title" autocomplete="off">
+                    <div class="cnt_b">
+                        <p>1. Open Microsoft Authenticator, choose <strong>Add account</strong> &rarr; <strong>Other account</strong>, then scan this code.</p>
+                        <div class="text-center mb-2">
+                            <img class="mfa-qr" src="@Model.QrCodeDataUri" width="180" height="180"
+                                 alt="QR code for enrolling this account in your authenticator app" />
+                        </div>
+                        <p class="field-help">Cannot scan? Enter this key manually: <strong class="mfa-key">@Model.SharedKey</strong></p>
+                        <p>2. Enter the six digit code the app shows.</p>
+                        <div class="mb-3">
+                            <label asp-for="Code">Authenticator code</label>
+                            <input asp-for="Code" class="form-control" inputmode="numeric" maxlength="7" autocomplete="one-time-code"
+                                   aria-required="true" autofocus />
+                        </div>
+                    </div>
+                    <div class="btm_b">
+                        <button class="btn btn-primary login-submit" type="submit">Verify and turn on</button>
+                        @if (!Model.Required)
+                        {
+                            <a class="btn btn-outline-secondary login-submit mt-2" asp-controller="Home" asp-action="Index">Cancel</a>
+                        }
+                    </div>
+                </form>
+            }
+
+            @if (Model.Required && !Model.Enrolled)
+            {
+                <form asp-controller="Account" asp-action="Logout" method="post" class="btm_b pt-0">
+                    <button class="btn btn-link" type="submit">Sign out</button>
+                </form>
+            }
+        </div>
+    </section>
+</main>

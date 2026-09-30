@@ -2,6 +2,6 @@
 bin/
 obj/
 *.user
-CMS/Logs/
-CMS/wwwroot/scripts/vue/
-CMS/vue-app/node_modules/
+CrisisManagement/Logs/
+CrisisManagement/wwwroot/scripts/vue/
+CrisisManagement/vue-app/node_modules/
