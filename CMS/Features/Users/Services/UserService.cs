@@ -6,6 +6,7 @@ using CMS.Data.Context;
 using CMS.Data.Models.Domain;
 using CMS.Data.Models.Identity;
 using CMS.Features.Users.ViewModels;
+using CMS.Infrastructure.Identity;
 using CMS.Shared.Common;
 using CMS.Shared.Constants;
 using Microsoft.AspNetCore.Identity;
@@ -23,7 +24,8 @@ public sealed partial class UserService(
     UserManager<ApplicationUser> users,
     IHttpContextAccessor http,
     IOptions<IdentityOptions> identityOptions,
-    IOptions<UserNamePolicyOptions> userNamePolicy)
+    IOptions<UserNamePolicyOptions> userNamePolicy,
+    PasswordHistory history)
 {
     private const string RolePrefix = "users.role.";
     private const int MaxNameLength = 256, MaxEmailLength = 100, MaxLocalUserNameLength = 50, MaxPhoneLength = 32;
@@ -226,7 +228,7 @@ public sealed partial class UserService(
         var created = isAd ? await users.CreateAsync(u) : await users.CreateAsync(u, r.Password!);
         if (!created.Succeeded) throw ToValidation(created, "password");
 
-        if (!isAd) RecordPassword(u);
+        if (!isAd) history.Record(u);
         db.UserRoles.AddRange(roles.Select(x => new ApplicationUserRole { UserId = u.Id, RoleId = x.Id }));
         db.ProviderUsers.AddRange(providerIds.Select(pid => new ProviderUser { UserId = u.Id, ProviderId = pid }));
         await db.SaveChangesAsync(ct);
@@ -312,8 +314,8 @@ public sealed partial class UserService(
         if (r.Password != r.ConfirmPassword) Add(errors, "confirmPassword", "Passwords must match.");
         if (errors.Count > 0) throw new ValidationFailedException(errors.ToDictionary(e => e.Key, e => e.Value.ToArray()));
 
-        if (await IsReusedAsync(u, r.Password!, ct))
-            throw ValidationFailedException.For("password", $"You cannot reuse any of your last {PasswordHistoryDepth} passwords.");
+        if (await history.IsReusedAsync(u, r.Password!, ct))
+            throw ValidationFailedException.For("password", $"You cannot reuse any of your last {PasswordHistory.Depth} passwords.");
 
         await using var tx = await db.Database.BeginTransactionAsync(ct);
 
@@ -326,7 +328,7 @@ public sealed partial class UserService(
         var flags = await users.UpdateAsync(u);
         if (!flags.Succeeded) throw ToValidation(flags, "form");
 
-        RecordPassword(u);
+        history.Record(u);
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
         return true;
@@ -375,25 +377,6 @@ public sealed partial class UserService(
         if (!ProvidersWithinScope(providerIds))
             throw new ForbiddenAccessException("You can only manage users within your own provider scope.");
     }
-
-    // ---------------------------------------------------------------- password history
-
-    private const int PasswordHistoryDepth = 12;
-
-    private async Task<bool> IsReusedAsync(ApplicationUser u, string password, CancellationToken ct)
-    {
-        var hashes = await db.PasswordChangeLogs.AsNoTracking()
-            .Where(x => x.UserId == u.Id && x.PasswordHash != null)
-            .OrderByDescending(x => x.CreatedOn).Take(PasswordHistoryDepth)
-            .Select(x => x.PasswordHash!).ToListAsync(ct);
-        if (!string.IsNullOrEmpty(u.PasswordHash)) hashes.Add(u.PasswordHash);   // the current one counts too
-
-        return hashes.Any(h => users.PasswordHasher.VerifyHashedPassword(u, h, password) != PasswordVerificationResult.Failed);
-    }
-
-    // Queued on the context; the caller saves it in the same transaction as the password change.
-    private void RecordPassword(ApplicationUser u) =>
-        db.PasswordChangeLogs.Add(new PasswordChangeLog { UserId = u.Id, PasswordHash = u.PasswordHash });
 
     // ---------------------------------------------------------------- validation
 

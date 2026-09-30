@@ -24,7 +24,9 @@
 .navbar .nav > li > a:hover,
 .navbar .nav > li > a:focus,
 .navbar .nav > li > button:hover,
-.navbar .nav > li > button:focus {
+.navbar .nav > li > button:focus,
+.navbar .nav > li > form > button:hover,
+.navbar .nav > li > form > button:focus {
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
 }
@@ -59,6 +61,12 @@
     padding: 4px;
     overflow: hidden;
 }
+
+    /* Navbar menus can hold a flyout sub-menu (Administration > Security > Users), which is positioned
+       outside its parent and would be clipped by overflow:hidden. Items round their own corners. */
+    .navbar .dropdown-menu {
+        overflow: visible;
+    }
 
     /* Bootstrap squares the top corners of a navbar dropdown; keep all four
        rounded, which is what the navy theme has always looked like. */

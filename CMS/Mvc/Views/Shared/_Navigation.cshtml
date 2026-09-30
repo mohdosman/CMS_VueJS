@@ -1,4 +1,9 @@
 @model HomeViewModel
+@{
+    // Change Password is a menu item in the database, but it belongs on the right with Help and Logout
+    // (as in SafetyNet) and opens the MVC Account/Change page. It only shows for users whose menu contains it.
+    var changePassword = CMS.Features.Menus.MenuService.Flatten(Model.Menu).FirstOrDefault(n => n.Url == "/change-password");
+}
 
 <header role="banner">
     <a class="skip-link" href="#vue-app">Skip to main content</a>
@@ -12,6 +17,7 @@
                 <ul class="nav navbar-nav" id="mobile-nav">
                     @foreach (var item in Model.Menu)
                     {
+                        if (item.Url == "/change-password") { continue; }
                         if (item.Children.Count > 0)
                         {
                             <li class="dropdown">
@@ -27,8 +33,8 @@
                                             @if (child.Children.Count > 0)
                                             {
                                                 @* Third level (e.g. Administration > Security > Users); common.js turns the nested ul into a flyout. *@
-                                                <a class="dropdown-item" href="#" onclick="return false">@child.Name</a>
-                                                <ul>
+                                                <a class="dropdown-item" href="#" role="button" aria-haspopup="true" onclick="return false">@child.Name</a>
+                                                <ul class="dropdown-menu">
                                                     @foreach (var leaf in child.Children)
                                                     {
                                                         <li><a class="dropdown-item" href="#@leaf.Url">@leaf.Name</a></li>
@@ -66,6 +72,15 @@
                                 <span class="user-link-text">Help</span>
                             </button>
                         </li>
+                        @if (changePassword is not null)
+                        {
+                            <li class="user-link-wide">
+                                <a asp-controller="Account" asp-action="Change">
+                                    <span class="fa fa-lock" aria-hidden="true"></span>
+                                    <span class="user-link-text">@changePassword.Name</span>
+                                </a>
+                            </li>
+                        }
                         <li class="user-link-wide">
                             <form asp-controller="Account" asp-action="Logout" method="post">
                                 <button type="submit">
@@ -81,17 +96,24 @@
                                 @Model.FullName
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" id="user-menu-dropdown">
+                                @* Links (role="button"), not <button>s, so every theme's ".dropdown-menu li > a" rules style them. *@
                                 <li class="user-link-compact">
-                                    <button type="button" class="dropdown-item" onclick="window.cms?.openHelp()">
+                                    <a class="dropdown-item" href="#" role="button" onclick="window.cms?.openHelp(); return false;">
                                         <span class="fa fa-book" aria-hidden="true"></span> Help
-                                    </button>
+                                    </a>
                                 </li>
+                                @if (changePassword is not null)
+                                {
+                                    <li class="user-link-compact">
+                                        <a class="dropdown-item" asp-controller="Account" asp-action="Change">
+                                            <span class="fa fa-lock" aria-hidden="true"></span> @changePassword.Name
+                                        </a>
+                                    </li>
+                                }
                                 <li class="user-link-compact">
-                                    <form asp-controller="Account" asp-action="Logout" method="post">
-                                        <button type="submit" class="dropdown-item">
-                                            <span class="fa fa-sign-out" aria-hidden="true"></span> Logout
-                                        </button>
-                                    </form>
+                                    <a class="dropdown-item" href="#" role="button" onclick="document.getElementById('logout-form').submit(); return false;">
+                                        <span class="fa fa-sign-out" aria-hidden="true"></span> Logout
+                                    </a>
                                 </li>
                                 <li class="user-link-compact"><hr class="dropdown-divider"></li>
                                 <li class="theme-picker-item" aria-label="Theme selection">
@@ -113,4 +135,5 @@
             </div>
         </div>
     </nav>
+    <form id="logout-form" asp-controller="Account" asp-action="Logout" method="post" hidden></form>
 </header>

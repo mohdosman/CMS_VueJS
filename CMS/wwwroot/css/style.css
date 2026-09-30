@@ -184,10 +184,14 @@
 	   <button> elements now (the correct native element for a non-navigating
 	   action); browsers style <button> with their own background/border/font,
 	   so the plain-link look above has to be restated here for the new tag. */
-	.navbar .nav > li > button {background:none;border:0;margin:0;font:inherit;line-height:20px;cursor:pointer;text-align:left;color: #fff;text-shadow:none;padding:10px 10px 9px}
-	.navbar .nav > li > button:hover, .navbar .nav > li > button:focus-visible {background-color: #005f8d;color: #fff;border-color: #fff;text-decoration: none;}
-	.navbar .nav > li > button:focus-visible {outline: 2px solid #ffd700; outline-offset: 1px;}
-	.navbar-nav > li > button > .fa {font-size: 12px;padding-right:2px}
+	.navbar .nav > li > form {margin:0}
+	.navbar .nav > li > button,
+	.navbar .nav > li > form > button {background:none;border:0;margin:0;font:inherit;line-height:20px;cursor:pointer;text-align:left;color: #fff;text-shadow:none;padding:10px 10px 9px}
+	.navbar .nav > li > button:hover, .navbar .nav > li > button:focus-visible,
+	.navbar .nav > li > form > button:hover, .navbar .nav > li > form > button:focus-visible {background-color: #005f8d;color: #fff;border-color: #fff;text-decoration: none;}
+	.navbar .nav > li > button:focus-visible,
+	.navbar .nav > li > form > button:focus-visible {outline: 2px solid #ffd700; outline-offset: 1px;}
+	.navbar-nav > li > button > .fa, .navbar-nav > li > form > button > .fa {font-size: 12px;padding-right:2px}
 
 	.navbar .user_menu {margin-left: 0}
 	.navbar .user_menu a.dropdown-toggle, .navbar .user_menu button.dropdown-toggle {white-space:nowrap}
@@ -231,6 +235,10 @@
 	/* Nested menus: common.js tags a <ul> inside a menu item as .sub-menu */
 	.dropdown-menu .sub-menu {left: 100%;position: absolute;top: 0;visibility: hidden;margin-top: -1px}
 	.dropdown-menu .sub-open {visibility: visible;display: block}
+	/* Keyboard: common.js opens sub-menus on hover only, so also open one while focus is inside it. */
+	.dropdown-menu .sub-dropdown:focus-within > .sub-menu {visibility: visible;display: block}
+	/* Caret on an item that opens a sub-menu */
+	.dropdown-menu .sub-dropdown > a::after {content: "\f0da";font-family: FontAwesome;float: right;margin-left: 14px}
 
 	/*#region Theme Switcher */
 	.theme-picker-item {
@@ -367,7 +375,7 @@
 		.navbar .brand {margin:9px 0 9px 34px}
 		.navbar .user_menu .dropdown-menu {margin:10px 10px 0 0;left:0 !important;right:auto}
 		.navbar .user_menu > li > a {padding:0 10px 0 0}
-		.navbar .user_menu > li > button {padding:0 10px 0 0}
+		.navbar .user_menu > li > button, .navbar .user_menu > li > form > button {padding:0 10px 0 0}
 		.navbar-inner {position:relative;z-index:990;min-height:28px}
 		.user_menu .dropdown {margin-left:10px}
 		.main_content {margin:0 !important;border:none !important;padding:56px 14px 20px}

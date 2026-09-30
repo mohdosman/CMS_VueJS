@@ -63,6 +63,7 @@ services.AddScoped<IAuthorizationHandler, PermissionHandler>();
 services.AddScoped<PermissionCatalog>();
 services.AddScoped<MenuService>();
 services.AddHttpContextAccessor();
+services.AddScoped<PasswordHistory>();
 services.AddScoped<UserService>();
 
 var app = builder.Build();

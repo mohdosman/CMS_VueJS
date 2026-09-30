@@ -163,6 +163,7 @@ small,
    !important: theme files set these colours with higher specificity. */
 .navbar .nav > li > a,
 .navbar .nav > li > button,
+.navbar .nav > li > form > button,
 .navbar .brand {
     color: #fff !important;
 }

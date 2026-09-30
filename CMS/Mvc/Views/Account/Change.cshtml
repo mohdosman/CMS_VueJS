@@ -1,0 +1,124 @@
+@using Microsoft.Extensions.Options
+@using Microsoft.AspNetCore.Identity
+@model CMS.Mvc.ViewModels.ChangePasswordViewModel
+@inject IOptions<IdentityOptions> IdentityOpts
+@{
+    ViewBag.Title = "Change Password";
+    Layout = "_LoginLayout";
+    var pw = IdentityOpts.Value.Password;
+    var modelErrors = ViewData.ModelState.TryGetValue("", out var entry)
+        ? entry.Errors.Select(e => e.ErrorMessage).Where(m => !string.IsNullOrWhiteSpace(m)).ToList()
+        : new List<string>();
+}
+
+<main class="login-shell password-shell" aria-labelledby="main-title">
+    <section class="login-panel" aria-labelledby="main-title">
+        <h1 id="main-title" class="visually-hidden">Change Password</h1>
+
+        <div class="login_box password-card">
+            <form asp-controller="Account" asp-action="Change" method="post" id="login_form" aria-labelledby="form-title" autocomplete="off">
+                <h2 id="form-title" class="top_b">Change Password</h2>
+
+                @if (TempData["StatusMessage"] is string statusMessage)
+                {
+                    <div class="alert alert-success" role="status">@statusMessage</div>
+                }
+                @if (modelErrors.Count > 0)
+                {
+                    <div class="alert alert-danger" role="alert" tabindex="-1" id="validation-summary">
+                        <h2 class="visually-hidden">There were problems with your submission</h2>
+                        <ul class="mb-0">
+                            @foreach (var error in modelErrors)
+                            {
+                                <li>@error</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <div class="cnt_b">
+                    <div class="mb-3">
+                        <label asp-for="CurrentPassword" class="form-label">Current Password <span aria-hidden="true">*</span></label>
+                        <input asp-for="CurrentPassword" class="form-control" autocomplete="current-password" aria-required="true" autofocus />
+                        <span asp-validation-for="CurrentPassword" class="text-danger" role="alert"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label">New Password <span aria-hidden="true">*</span></label>
+                        <input asp-for="Password" class="form-control" autocomplete="new-password" aria-required="true"
+                               aria-describedby="password-rules" />
+                        <span asp-validation-for="Password" class="text-danger" role="alert"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ConfirmPassword" class="form-label">Confirm New Password <span aria-hidden="true">*</span></label>
+                        <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true"
+                               aria-describedby="password-rules" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger" role="alert"></span>
+                    </div>
+                </div>
+
+                <div class="btm_b">
+                    <button class="btn btn-primary login-submit" type="submit">Change Password</button>
+                    <a class="btn btn-outline-secondary login-submit mt-2" asp-controller="Home" asp-action="Index">Back to application</a>
+                </div>
+            </form>
+
+            <section class="password-rules-panel" aria-labelledby="password-rules-heading">
+                <h2 id="password-rules-heading">Password requirements</h2>
+                <div id="password-rules" aria-live="polite">
+                    <ul>
+                        @* Rules come from the same Identity options the server enforces, so they cannot drift. *@
+                        @if (pw.RequireLowercase)
+                        {
+                            <li data-password-rule="lower"><span class="rule-status" aria-hidden="true"></span><span class="visually-hidden rule-state">Not met: </span>At least <strong>one lower case letter</strong></li>
+                        }
+                        @if (pw.RequireUppercase)
+                        {
+                            <li data-password-rule="upper"><span class="rule-status" aria-hidden="true"></span><span class="visually-hidden rule-state">Not met: </span>At least <strong>one upper case letter</strong></li>
+                        }
+                        @if (pw.RequireDigit)
+                        {
+                            <li data-password-rule="number"><span class="rule-status" aria-hidden="true"></span><span class="visually-hidden rule-state">Not met: </span>At least <strong>one number</strong></li>
+                        }
+                        @if (pw.RequireNonAlphanumeric)
+                        {
+                            <li data-password-rule="special"><span class="rule-status" aria-hidden="true"></span><span class="visually-hidden rule-state">Not met: </span>At least <strong>one special character</strong></li>
+                        }
+                        <li data-password-rule="length" data-min="@pw.RequiredLength"><span class="rule-status" aria-hidden="true"></span><span class="visually-hidden rule-state">Not met: </span>Be at least <strong>@pw.RequiredLength characters</strong></li>
+                        @if (pw.RequiredUniqueChars > 1)
+                        {
+                            <li data-password-rule="unique" data-min="@pw.RequiredUniqueChars"><span class="rule-status" aria-hidden="true"></span><span class="visually-hidden rule-state">Not met: </span>At least <strong>@pw.RequiredUniqueChars different characters</strong></li>
+                        }
+                    </ul>
+                </div>
+            </section>
+        </div>
+    </section>
+</main>
+
+@section scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var input = document.getElementById('Password');
+            var tests = {
+                lower: function (v) { return /[a-z]/.test(v); },
+                upper: function (v) { return /[A-Z]/.test(v); },
+                number: function (v) { return /\d/.test(v); },
+                special: function (v) { return /[^A-Za-z0-9]/.test(v); },
+                length: function (v, min) { return v.length >= min; },
+                unique: function (v, min) { return new Set(v).size >= min; }
+            };
+
+            function update() {
+                var value = input.value || '';
+                document.querySelectorAll('[data-password-rule]').forEach(function (li) {
+                    var met = tests[li.getAttribute('data-password-rule')](value, Number(li.getAttribute('data-min')));
+                    li.classList.toggle('is-met', met);
+                    li.querySelector('.rule-state').textContent = met ? 'Met: ' : 'Not met: ';
+                });
+            }
+
+            ['input', 'keyup', 'change'].forEach(function (evt) { input.addEventListener(evt, update); });
+            update();
+        });
+    </script>
+}

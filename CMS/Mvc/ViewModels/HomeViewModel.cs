@@ -21,7 +21,8 @@ public sealed class HomeViewModel
             {
                 applicationName = ApplicationName,
                 currentUser = new { userName = UserName, fullName = FullName, isAdmin = IsAdmin, roles = Roles, permissions = Permissions },
-                routes = MenuService.Flatten(Menu).Where(n => n.Url != "").Select(n => new { url = n.Url, name = n.Name })
+                // /change-password is the server-rendered Account/Change page, so it is not an SPA route.
+                routes = MenuService.Flatten(Menu).Where(n => n.Url != "" && n.Url != "/change-password").Select(n => new { url = n.Url, name = n.Name })
             },
             new JsonSerializerOptions(JsonSerializerDefaults.Web)).Replace("<", "\\u003c");
 }
