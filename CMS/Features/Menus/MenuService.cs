@@ -14,6 +14,8 @@ public sealed record MenuNode(int Id, string Name, string Icon, string Url, List
 // of its permissions; parents of visible items show too; Administrators see everything.
 public sealed class MenuService(IUnitOfWork uow, IMemoryCache cache)
 {
+    public const string CacheKey = "menu:rows";
+
     // RBS_MenuItem.Icon holds MudBlazor icon ids; the SPA uses Font Awesome 4.
     private static readonly Dictionary<string, string> IconMap = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -24,7 +26,7 @@ public sealed class MenuService(IUnitOfWork uow, IMemoryCache cache)
 
     public async Task<List<MenuNode>> GetMenuAsync(ClaimsPrincipal user)
     {
-        var rows = await cache.GetOrCreateAsync("menu:rows", async e =>
+        var rows = await cache.GetOrCreateAsync(CacheKey, async e =>
         {
             e.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
             return await uow.MenuItems.GetEnabledWithPermissionsAsync();

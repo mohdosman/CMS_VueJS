@@ -7,4 +7,6 @@ namespace CMS.Data.Repositories.Interfaces;
 public interface IPermissionRepository : IRepository<Permission>
 {
     Task<List<string>> GetAllValuesAsync();
+    // Tracked, for rename.
+    Task<Permission?> GetByValueAsync(string value);
 }

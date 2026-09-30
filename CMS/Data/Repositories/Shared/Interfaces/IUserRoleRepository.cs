@@ -7,6 +7,7 @@ public interface IUserRoleRepository : IRepository<ApplicationUserRole>
 {
     // Roles a user holds, ordered by name.
     Task<List<IdName>> GetRolesForUserAsync(int userId);
+    Task<int> CountForRoleAsync(int roleId);
     // Tracked rows, for removal.
     Task<List<ApplicationUserRole>> GetForUserAsync(int userId);
 }

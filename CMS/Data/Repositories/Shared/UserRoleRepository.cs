@@ -16,6 +16,8 @@ public sealed class UserRoleRepository(AppDbContext context) : Repository<Applic
          orderby r.Name
          select new IdName(r.Id, r.Name!)).ToListAsync();
 
+    public Task<int> CountForRoleAsync(int roleId) => _entities.CountAsync(x => x.RoleId == roleId);
+
     public Task<List<ApplicationUserRole>> GetForUserAsync(int userId) =>
         _entities.Where(x => x.UserId == userId).ToListAsync();
 }

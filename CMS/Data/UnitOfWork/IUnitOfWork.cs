@@ -19,6 +19,8 @@ public interface IUnitOfWork
     IDocumentRepository Documents { get; }
     IMenuRepository MenuItems { get; }
     IPermissionRepository Permissions { get; }
+    IPermissionGroupRepository PermissionGroups { get; }
+    IRoleClaimRepository RoleClaims { get; }
 
     void SetCommandTimeout(int seconds);
     int SaveChanges();

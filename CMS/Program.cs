@@ -4,6 +4,7 @@ using CMS.Data.Models.Domain;
 using CMS.Data.Models.Identity;
 using CMS.Features.Menus;
 using CMS.Features.PublicFiles.Services;
+using CMS.Features.Roles.Services;
 using CMS.Features.Users.Services;
 using CMS.Features.Users.ViewModels;
 using CMS.Shared.Common;
@@ -76,6 +77,7 @@ services.AddScoped<PasswordHistory>();
 services.AddScoped<IUnitOfWork, HttpUnitOfWork>();
 services.AddScoped<IPublicFilesService, PublicFilesService>();
 services.AddScoped<UserService>();
+services.AddScoped<RoleService>();
 
 var app = builder.Build();
 

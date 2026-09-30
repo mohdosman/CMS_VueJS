@@ -23,6 +23,8 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     private IDocumentRepository? _documents;
     private IMenuRepository? _menuItems;
     private IPermissionRepository? _permissions;
+    private IPermissionGroupRepository? _permissionGroups;
+    private IRoleClaimRepository? _roleClaims;
 
     public IUserRepository Users => _users ??= new UserRepository(_context);
     public IRoleRepository Roles => _roles ??= new RoleRepository(_context);
@@ -35,6 +37,8 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     public IDocumentRepository Documents => _documents ??= new DocumentRepository(_context);
     public IMenuRepository MenuItems => _menuItems ??= new MenuRepository(_context);
     public IPermissionRepository Permissions => _permissions ??= new PermissionRepository(_context);
+    public IPermissionGroupRepository PermissionGroups => _permissionGroups ??= new PermissionGroupRepository(_context);
+    public IRoleClaimRepository RoleClaims => _roleClaims ??= new RoleClaimRepository(_context);
 
     public void SetCommandTimeout(int seconds) => _context.Database.SetCommandTimeout(seconds);
 

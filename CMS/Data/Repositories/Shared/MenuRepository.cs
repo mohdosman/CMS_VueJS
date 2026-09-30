@@ -10,4 +10,8 @@ public sealed class MenuRepository(AppDbContext context) : Repository<MenuItem>(
 {
     public Task<List<MenuItem>> GetEnabledWithPermissionsAsync() =>
         _entities.AsNoTracking().Include(m => m.Permissions).Where(m => m.IsEnabled).ToListAsync();
+
+    public Task<List<MenuItem>> GetAllAsync() => _entities.AsNoTracking().ToListAsync();
+
+    public Task<MenuItem?> GetByNameAsync(string menuItemName) => _entities.AsNoTracking().FirstOrDefaultAsync(m => m.MenuItemName == menuItemName);
 }

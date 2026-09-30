@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
-using System.Text.RegularExpressions;
 using CMS.Data;
 using CMS.Data.Repositories.Interfaces;
 using CMS.Data.Models.Domain;
@@ -21,7 +20,7 @@ namespace CMS.Features.Users.Services;
 //  - roles: only users/roles matching a "users.role.<slug>" permission claim
 //  - providers: only users sharing a provider with the provider_ids claim of the caller
 // MFA reset and agreement documents are not ported yet.
-public sealed partial class UserService(
+public sealed class UserService(
     IUnitOfWork uow,
     UserManager<ApplicationUser> users,
     IHttpContextAccessor http,
@@ -408,9 +407,7 @@ public sealed partial class UserService(
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(v => int.TryParse(v, out var id) ? id : 0).Where(id => id > 0).ToArray();
 
-    // Same slug rule as the Blazor CMS RemoveSpecialCharacters().
-    private static string Slug(string s) => NonSlug().Replace(s, "").ToLowerInvariant();
-    [GeneratedRegex("[^a-zA-Z0-9_.]+")] private static partial Regex NonSlug();
+    private static string Slug(string s) => UserRolePermissionConstants.Slug(s);
 
     private static bool Has(string? s) => !string.IsNullOrWhiteSpace(s);
     private static string? Blank(string? s) => Has(s) ? s!.Trim() : null;

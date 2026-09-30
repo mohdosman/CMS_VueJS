@@ -30,9 +30,11 @@ public sealed class PermissionPolicyProvider(IOptions<AuthorizationOptions> opti
 // in the table never grants access, so a typo'd policy name fails closed.
 public sealed class PermissionCatalog(IUnitOfWork uow, IMemoryCache cache)
 {
+    public const string CacheKey = "perm:catalog";
+
     public async Task<bool> IsKnownAsync(string permission)
     {
-        var all = await cache.GetOrCreateAsync("perm:catalog", async e =>
+        var all = await cache.GetOrCreateAsync(CacheKey, async e =>
         {
             e.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
             var values = await uow.Permissions.GetAllValuesAsync();
