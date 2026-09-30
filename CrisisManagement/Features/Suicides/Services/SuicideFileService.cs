@@ -4,6 +4,7 @@ using CrisisManagement.Data.Models.SP;
 using CrisisManagement.Data.StoredProcedures;
 using CrisisManagement.Features.Suicides.ViewModels;
 using CrisisManagement.Shared.Common;
+using CrisisManagement.Shared.Common.Files;
 using CrisisManagement.Shared.Extensions;
 using Microsoft.Data.SqlClient;
 
@@ -52,9 +53,7 @@ public sealed class SuicideFileService(IUnitOfWork uow, IHttpContextAccessor htt
 
     public async Task<SuicideFileUploaded> UploadAsync(string fileName, byte[] content)
     {
-        var name = UploadChecks.RequireBasics(fileName, content, MaxFileBytes);
-        if (!name.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
-            throw Reject($"Upload failed: Only .xlsx Excel files are accepted. [{name}]");
+        var name = UploadChecks.Require(fileName, content, MaxFileBytes, ".xlsx Excel", FileSignatures.Excel);
 
         var (result, problems) = SuicideWorkbookReader.Read(content);
         if (result is null) throw Reject(problems.ToArray());

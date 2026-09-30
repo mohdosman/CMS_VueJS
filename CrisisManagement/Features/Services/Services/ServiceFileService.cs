@@ -9,6 +9,7 @@ using CrisisManagement.Data.StoredProcedures;
 using CrisisManagement.Features.Services.ViewModels;
 using CrisisManagement.Infrastructure.Identity;
 using CrisisManagement.Shared.Common;
+using CrisisManagement.Shared.Common.Files;
 
 namespace CrisisManagement.Features.Services.Services;
 
@@ -90,9 +91,7 @@ public sealed class ServiceFileService(IUnitOfWork uow, ProviderScope scope, ILo
     // Every problem found is reported, not only the first.
     public async Task<ServiceFileUploaded> UploadAsync(string fileName, byte[] content)
     {
-        var name = UploadChecks.RequireBasics(fileName, content, MaxFileBytes);
-        if (!name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
-            throw Reject($"Upload failed: Only TXT files are accepted. [{name}]");
+        var name = UploadChecks.Require(fileName, content, MaxFileBytes, "TXT", FileSignatures.Plaintext);
 
         var text = ReadText(content);
         var lines = text.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries);

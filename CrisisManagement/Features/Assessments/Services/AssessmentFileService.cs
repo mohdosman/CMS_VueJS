@@ -10,6 +10,7 @@ using CrisisManagement.Data.StoredProcedures;
 using CrisisManagement.Features.Assessments.ViewModels;
 using CrisisManagement.Infrastructure.Identity;
 using CrisisManagement.Shared.Common;
+using CrisisManagement.Shared.Common.Files;
 
 namespace CrisisManagement.Features.Assessments.Services;
 
@@ -82,9 +83,7 @@ public sealed class AssessmentFileService(IUnitOfWork uow, ProviderScope scope, 
 
     public async Task<AssessmentUploadResult> UploadAsync(string fileName, byte[] content)
     {
-        var name = UploadChecks.RequireBasics(fileName, content, MaxFileBytes);
-        if (!name.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
-            throw Reject($"Only XML files are accepted. [{name}]");
+        var name = UploadChecks.Require(fileName, content, MaxFileBytes, "XML", FileSignatures.Xml);
 
         var doc = Parse(content);
 
