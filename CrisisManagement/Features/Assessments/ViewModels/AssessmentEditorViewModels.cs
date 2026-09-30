@@ -28,7 +28,7 @@ public sealed class AssessmentHospitalizationItem
 public sealed class AssessmentEditModel
 {
     // Which record this is: "f2f-<id>" or "pa-<id>"; empty for a new assessment. Set by the server, ignored on save.
-    public string Key { get; set; } = "";
+    public string? Key { get; set; }
     public string? RowVersion { get; set; }
     public int? F2FAssessmentId { get; set; }
     public int? PhoneAssessmentId { get; set; }

@@ -130,9 +130,15 @@ public sealed partial class AssessmentEditorService(IUnitOfWork uow, ProviderSco
 
     public async Task<AssessmentSaved> CreateAsync(AssessmentEditModel m)
     {
-        var errors = new ErrorBag();
-        if (m.ProviderId is not > 0) errors.Add("providerId", "Please select the Provider!");
-        errors.ThrowIfAny();
+        if (m.ProviderId is not > 0)
+        {
+            // Name every other problem as well, so the form shows them all at once.
+            var errors = new ErrorBag();
+            errors.Add("providerId", "Please select the Provider!");
+            var isF2F = m.F2FAssessmentDateTime is not null;
+            Validate(m, errors, isF2F, !isF2F || m.CallEnded is not null || m.DispositionId is not null || m.DispatchDateTime is not null);
+            errors.ThrowIfAny();
+        }
         scope.Require(m.ProviderId!.Value);
         return await SaveAsync(m, m.ProviderId.Value, null, null, new Patient());
     }

@@ -12,8 +12,8 @@ const id = useId();
 </script>
 
 <template>
-    <section class="card mb-2">
-        <component :is="`h${level}`" class="card-header expand-header h6 mb-0 p-0">
+    <section class="card mb-2" :aria-labelledby="`${id}-heading`">
+        <component :is="`h${level}`" :id="`${id}-heading`" class="card-header expand-header h6 mb-0 p-0">
             <button type="button" class="btn btn-link expand-toggle text-decoration-none w-100 text-start fw-bold" :aria-expanded="expanded" :aria-controls="id"
                     @click="expanded = !expanded">
                 <i :class="expanded ? 'fa fa-chevron-down' : 'fa fa-chevron-right'" aria-hidden="true"></i> {{ title }}

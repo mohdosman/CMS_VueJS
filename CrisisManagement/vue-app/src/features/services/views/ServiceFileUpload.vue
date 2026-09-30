@@ -49,7 +49,7 @@ async function onPick(e) {
                         <div class="alert alert-warning" role="note">
                             <strong>ATTENTION:</strong> Service files are processed only at night, between 6 PM and 6 AM. Do not upload the same file
                             more than once. For help, contact Gina Young at
-                            <a href="mailto:gina.young@tn.gov">gina.young@tn.gov</a> or 615-532-6675.
+                            <a href="mailto:gina.young@tn.gov" class="text-decoration-underline">gina.young@tn.gov</a> or 615-532-6675.
                         </div>
                         <div class="row justify-content-center">
                             <div class="col-md-6">

@@ -5,3 +5,9 @@ obj/
 CrisisManagement/Logs/
 CrisisManagement/wwwroot/scripts/vue/
 CrisisManagement/vue-app/node_modules/
+
+# Playwright
+.env.test.local
+**/playwright/.auth/
+playwright-report/
+test-results/
