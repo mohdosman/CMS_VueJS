@@ -19,7 +19,7 @@ const opts = (list) => list ?? [];
 
 <template>
     <DetailPanel :title="title" icon="fa fa-file-text-o" form-name="assessmentForm" main-labelledby="main-title"
-                 button-col-class="col-md-12" :can-save="canEdit && !isSaving && !isLoading" :show-buttons="canEdit" @save="save" @cancel="cancel">
+ :can-save="canEdit && !isSaving && !isLoading" :show-buttons="canEdit" @save="save" @cancel="cancel">
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
 

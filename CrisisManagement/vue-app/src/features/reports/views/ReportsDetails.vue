@@ -15,7 +15,7 @@ const nameOptions = () => available.value.map((n) => ({ id: n, label: n }));
 
 <template>
     <DetailPanel :title="title" icon="fa fa-bar-chart" form-name="reportEditForm" main-labelledby="main-title"
-                 button-col-class="col-md-12" :can-save="!isSaving && !isLoading" @save="save" @cancel="cancel">
+ :can-save="!isSaving && !isLoading" @save="save" @cancel="cancel">
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
 

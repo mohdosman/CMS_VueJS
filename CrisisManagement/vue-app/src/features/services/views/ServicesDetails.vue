@@ -15,7 +15,7 @@ const opts = (list) => list ?? [];
 
 <template>
     <DetailPanel :title="title" icon="fa fa-medkit" form-name="serviceEntryForm" main-labelledby="main-title"
-                 button-col-class="col-md-12" :can-save="canSave && !isSaving && !isLoading" :show-buttons="canSave" @save="save" @cancel="cancel">
+ :can-save="canSave && !isSaving && !isLoading" :show-buttons="canSave" @save="save" @cancel="cancel">
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
 
