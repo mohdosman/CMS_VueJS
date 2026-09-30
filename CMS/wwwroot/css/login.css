@@ -742,3 +742,14 @@ div.basicText a:focus,
         grid-template-columns: 1fr;
     }
 }
+
+.login_page .forgot-password-link {
+    color: var(--login-primary-dark);
+    font-size: 13px;
+}
+
+.login_page .forgot-password-link:hover,
+.login_page .forgot-password-link:focus {
+    color: var(--login-accent);
+    text-decoration: underline;
+}

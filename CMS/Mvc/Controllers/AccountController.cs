@@ -1,10 +1,14 @@
 using CMS.Data;
 using CMS.Data.Models.Identity;
+using System.Text;
 using CMS.Infrastructure.Identity;
+using CMS.Infrastructure.Messaging.Email;
 using CMS.Mvc.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Options;
 
 namespace CMS.Mvc.Controllers;
 
@@ -15,6 +19,8 @@ public class AccountController(
     IUnitOfWork uow,
     PasswordHistory history,
     IConfiguration config,
+    IEmailSender email,
+    IOptions<DataProtectionTokenProviderOptions> resetTokens,
     ILogger<AccountController> log) : Controller
 {
     private const string InvalidLogin = "Invalid user ID or password.";
@@ -151,5 +157,146 @@ public class AccountController(
 
         TempData["StatusMessage"] = "Your password has been changed.";
         return RedirectToAction(nameof(Change));
+    }
+
+    // ---------------------------------------------------------------- forgot / reset password
+
+    [HttpGet, AllowAnonymous]
+    public IActionResult ForgotPassword() => View(new ForgotPasswordViewModel());
+
+    // Always answers the same way for an unknown, inactive, locked or AD account, so the page cannot be used to
+    // find out which user IDs exist. Only a failure of our own (mail relay down, template missing) is reported.
+    [HttpPost, AllowAnonymous, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model, CancellationToken ct)
+    {
+        if (!ModelState.IsValid) return View(model);
+
+        try
+        {
+            var input = model.UserNameOrEmail.Trim();
+            var user = await users.FindByNameAsync(input) ?? await users.FindByEmailAsync(input);
+
+            if (user is null || !await users.IsEmailConfirmedAsync(user))
+                log.LogInformation("Forgot password: no confirmed account for the entered value");
+            else if (!user.IsActive)
+                log.LogInformation("Forgot password skipped for inactive user {UserId}", user.Id);
+            else if (await users.IsLockedOutAsync(user))
+                log.LogInformation("Forgot password skipped for locked out user {UserId}", user.Id);
+            else if (user.IsADAccount)
+                log.LogWarning("Forgot password used with an AD account {UserId}", user.Id);
+            else
+                await SendResetLinkAsync(user, ct);
+
+            ViewData["Sent"] = true;
+            return View(new ForgotPasswordViewModel());
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            log.LogError(ex, "Forgot password email failed");
+            ModelState.AddModelError("", "The reset link could not be sent right now. Please try again later or contact support.");
+            return View(model);
+        }
+    }
+
+    private async Task SendResetLinkAsync(ApplicationUser user, CancellationToken ct)
+    {
+        var token = await users.GeneratePasswordResetTokenAsync(user);
+        var tokenUrl = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+        // A configured base URL keeps a forged Host header from pointing the emailed link at another site.
+        var configured = config["App:BaseUrl"]?.Trim();
+        var baseUrl = !string.IsNullOrWhiteSpace(configured)
+            ? configured.TrimEnd('/')
+            : $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+
+        var body = await EmailTemplate.RenderAsync("password-reset", new Dictionary<string, string>
+        {
+            ["Link"] = $"{baseUrl}/Account/ResetPassword?userId={user.Id}&token={tokenUrl}",
+            ["Expiry"] = Describe(resetTokens.Value.TokenLifespan)
+        }, ct);
+
+        await email.SendAsync(user.Email!, "Reset your password", body, ct);
+        log.LogInformation("Password reset email sent for user {UserId}", user.Id);
+    }
+
+    // "2 hours", "30 minutes" for the email copy.
+    private static string Describe(TimeSpan span)
+    {
+        var (n, unit) = span.TotalHours >= 1 ? (Math.Round(span.TotalHours, 1), "hour")
+            : span.TotalMinutes >= 1 ? (Math.Round(span.TotalMinutes), "minute")
+            : (Math.Round(span.TotalSeconds), "second");
+        return $"{n:0.#} {unit}{(n == 1 ? "" : "s")}";
+    }
+
+    [HttpGet, AllowAnonymous]
+    public IActionResult ResetPassword(int userId, string? token) =>
+        userId <= 0 || string.IsNullOrWhiteSpace(token)
+            ? View("ResetPasswordInvalid")
+            : View(new ResetPasswordViewModel { UserId = userId, Token = token });
+
+    [HttpPost, AllowAnonymous, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model, CancellationToken ct)
+    {
+        if (!ModelState.IsValid) return View(model);
+
+        var user = await users.FindByIdAsync(model.UserId.ToString());
+        if (user is null || user.IsADAccount || !user.IsActive)
+        {
+            log.LogWarning("Reset password refused for user {UserId}: unknown, AD or inactive", model.UserId);
+            return View("ResetPasswordInvalid");
+        }
+
+        string token;
+        try
+        {
+            token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Token));
+        }
+        catch (FormatException)
+        {
+            log.LogWarning("Reset password: malformed token for user {UserId}", user.Id);
+            return View("ResetPasswordInvalid");
+        }
+
+        if (await history.IsReusedAsync(user, model.Password, ct))
+        {
+            ModelState.AddModelError(nameof(model.Password), $"You cannot reuse any of your last {PasswordHistory.Depth} passwords.");
+            return View(model);
+        }
+
+        await using var tx = await uow.BeginTransactionAsync(ct);
+
+        var reset = await users.ResetPasswordAsync(user, token, model.Password);
+        if (!reset.Succeeded)
+        {
+            // A bad or used token is not the user's fault to fix on this page: send them to request a new link.
+            if (reset.Errors.Any(e => e.Code == "InvalidToken"))
+            {
+                log.LogWarning("Reset password: invalid or expired token for user {UserId}", user.Id);
+                return View("ResetPasswordInvalid");
+            }
+            // Password rule failures go to the summary, which lists all of them.
+            foreach (var e in reset.Errors) ModelState.AddModelError("", e.Description);
+            return View(model);
+        }
+
+        history.Record(user);
+        user.IsTemporaryPassword = false;
+        user.LegacyPassword = "";   // the old-format hash must not outlive the reset
+        var flags = await users.UpdateAsync(user);
+        if (!flags.Succeeded)
+        {
+            ModelState.AddModelError("", "Your password could not be saved. Please try again.");
+            return View(model);
+        }
+        await uow.SaveChangesAsync();
+        await tx.CommitAsync(ct);
+
+        log.LogInformation("Password reset completed for user {UserId}", user.Id);
+        TempData["StatusMessage"] = "Your password has been reset. Sign in with your new password.";
+        return RedirectToAction(nameof(Login));
     }
 }

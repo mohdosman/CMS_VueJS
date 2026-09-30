@@ -32,9 +32,15 @@ services.AddScoped<IPasswordHasher<ApplicationUser>, HybridPasswordHasher>();
 services.AddIdentity<ApplicationUser, ApplicationRole>()
     .AddUserManager<HybridUserManager>()
     .AddClaimsPrincipalFactory<CmsClaimsPrincipalFactory>()
-    .AddEntityFrameworkStores<AppDbContext>();
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();   // password reset tokens
 
 services.Configure<IdentityOptions>(config.GetSection("Identity"));
+// Password reset links: 2 hours unless Identity:Tokens:TokenLifespan says otherwise.
+services.Configure<DataProtectionTokenProviderOptions>(o => o.TokenLifespan = TimeSpan.FromHours(2));
+services.Configure<DataProtectionTokenProviderOptions>(config.GetSection("Identity:Tokens"));
+services.Configure<CMS.Infrastructure.Messaging.Email.SmtpOptions>(config.GetSection("Smtp"));
+services.AddScoped<CMS.Infrastructure.Messaging.Email.IEmailSender, CMS.Infrastructure.Messaging.Email.MailKitEmailSender>();
 services.PostConfigure<IdentityOptions>(o => o.Password.RequiredLength = 8);   // fixed, same as the Blazor CMS
 
 services.ConfigureApplicationCookie(o =>
