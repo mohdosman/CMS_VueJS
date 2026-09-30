@@ -22,7 +22,10 @@ onBeforeUnmount(() => {
     <dialog ref="dialog" class="app-dialog" :class="{ 'app-dialog-wide': wide }" :aria-labelledby="titleId"
             @cancel.prevent="emit('close')" @click.self="emit('close')">
         <div class="card border-0">
-            <div class="card-header"><h2 :id="titleId" class="h6 mb-0">{{ title }}</h2></div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 :id="titleId" class="h6 mb-0">{{ title }}</h2>
+                <button type="button" class="app-dialog-x" aria-label="Close" @click="emit('close')"><i class="fa fa-times" aria-hidden="true"></i></button>
+            </div>
             <div class="card-body"><slot /></div>
         </div>
     </dialog>
@@ -37,5 +40,7 @@ onBeforeUnmount(() => {
     border-radius: 6px;
 }
 .app-dialog-wide { width: 60rem; }
+.app-dialog-x { background: none; border: 0; color: inherit; font-size: 1.1rem; line-height: 1; padding: .25rem .4rem; opacity: .7; }
+.app-dialog-x:hover, .app-dialog-x:focus-visible { opacity: 1; }
 .app-dialog::backdrop { background: rgba(0, 0, 0, .45); }
 </style>
