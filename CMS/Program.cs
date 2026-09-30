@@ -36,6 +36,7 @@ services.AddIdentity<ApplicationUser, ApplicationRole>()
     .AddDefaultTokenProviders();   // password reset tokens
 
 services.Configure<IdentityOptions>(config.GetSection("Identity"));
+services.AddAuthentication().AddEntraSignIn(config);   // "Sign in with Azure Active Directory"
 // Password reset links: 2 hours unless Identity:Tokens:TokenLifespan says otherwise.
 services.Configure<DataProtectionTokenProviderOptions>(o => o.TokenLifespan = TimeSpan.FromHours(2));
 services.Configure<DataProtectionTokenProviderOptions>(config.GetSection("Identity:Tokens"));

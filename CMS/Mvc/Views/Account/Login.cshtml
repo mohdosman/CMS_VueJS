@@ -75,6 +75,21 @@
 
                     <div class="btm_b">
                         <button class="btn btn-primary login-submit" type="submit">Sign In</button>
+                        @if (Model.Info.EntraEnabled)
+                        {
+                            <div class="login-divider my-3" aria-hidden="true">or</div>
+                            <a class="openid-link" asp-controller="AzureAuth" asp-action="SignIn" asp-route-returnUrl="@ViewData["ReturnUrl"]"
+                               title="Sign in with Active Directory (State Employees)"
+                               aria-label="Sign in with Azure Active Directory (State Employees)">
+                                <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <rect width="10" height="10" fill="#F25022" />
+                                    <rect x="11" width="10" height="10" fill="#7FBA00" />
+                                    <rect y="11" width="10" height="10" fill="#00A4EF" />
+                                    <rect x="11" y="11" width="10" height="10" fill="#FFB900" />
+                                </svg>
+                                <span>Sign in with Azure Active Directory (State Employees)</span>
+                            </a>
+                        }
                     </div>
                 </form>
             </div>

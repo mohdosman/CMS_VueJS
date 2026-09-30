@@ -26,10 +26,13 @@ public class AccountController(
     private const string InvalidLogin = "Invalid user ID or password.";
 
     [HttpGet, AllowAnonymous]
-    public async Task<IActionResult> Login(string? returnUrl = null)
+    public async Task<IActionResult> Login(string? returnUrl = null, string? error = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
         ViewData["ApplicationName"] = config["ApplicationName"];
+        // Fixed messages by code, so nothing from the query string is ever shown.
+        if (error == "entra") ModelState.AddModelError("", "Microsoft sign-in did not complete. Please try again.");
+        else if (error == "entra-account") ModelState.AddModelError("", "Your Microsoft account is not linked to an active account in this application. Contact support.");
         return View(await WithInfoAsync(new LoginViewModel()));
     }
 
@@ -37,6 +40,7 @@ public class AccountController(
     // load them is logged and the page still lets people sign in.
     private async Task<LoginViewModel> WithInfoAsync(LoginViewModel model)
     {
+        model.Info.EntraEnabled = EntraSignIn.IsConfigured(config);
         try
         {
             model.Info.Notices = (await uow.Notifications.GetLatestAsync(1))

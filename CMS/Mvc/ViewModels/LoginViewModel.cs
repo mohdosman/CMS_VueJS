@@ -23,6 +23,7 @@ public sealed class LoginInfo
     public List<NoticeItem> Notices { get; set; } = [];
     public List<SupportContact> Support { get; set; } = [];
     public SchemaLinks? Schema { get; set; }
+    public bool EntraEnabled { get; set; }
 }
 
 public sealed record NoticeItem(DateTime CreatedOn, string Text);
