@@ -1,4 +1,6 @@
-using CMS.Features.PublicFiles.Repositories;
+using CMS.Data.Repositories.Interfaces;
+using CMS.Features.Users.Repositories;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace CMS.Data;
 
@@ -6,9 +8,22 @@ namespace CMS.Data;
 // one property per repository. Add a repository here as each feature is moved onto the pattern.
 public interface IUnitOfWork
 {
-    IPublicFilesRepository PublicFiles { get; }
+    IUserRepository Users { get; }
+    IRoleRepository Roles { get; }
+    IUserRoleRepository UserRoles { get; }
+    IProviderRepository Providers { get; }
+    IProviderUserRepository ProviderUsers { get; }
+    ILogonRepository Logons { get; }
+    IPasswordChangeLogRepository PasswordChangeLogs { get; }
+    IFacilityUserRepository FacilityUsers { get; }
+    IDocumentRepository Documents { get; }
+    IMenuRepository MenuItems { get; }
+    IPermissionRepository Permissions { get; }
 
     void SetCommandTimeout(int seconds);
     int SaveChanges();
     Task<int> SaveChangesAsync();
+
+    // Not in SafetyNet's interface: the user screens change several tables at once and need them atomic.
+    Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken ct = default);
 }

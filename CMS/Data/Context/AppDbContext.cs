@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using CMS.Data.Models;
 using CMS.Data.Models.Auth;
 using CMS.Data.Models.Domain;
@@ -9,13 +8,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CMS.Data.Context;
 
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IHttpContextAccessor http)
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     : IdentityDbContext<ApplicationUser, ApplicationRole, int,
         IdentityUserClaim<int>, ApplicationUserRole, IdentityUserLogin<int>,
         IdentityRoleClaim<int>, IdentityUserToken<int>>(options)
 {
-    // Set by HttpUnitOfWork (SafetyNet pattern) and stamped into the audit columns.
+    // Who is stamped into the audit columns (SafetyNet pattern). An explicit CurrentUserId wins; otherwise
+    // HttpUnitOfWork supplies a resolver that reads the signed-in user at save time. Resolving at save time
+    // matters: Identity can construct the unit of work during authentication, before the user is known.
     public int CurrentUserId { get; set; }
+    public Func<int>? CurrentUserIdResolver { get; set; }
 
     // Entity set list ported from the Blazor CMS AppDbContext. The database is pre-existing,
     // so there are no EF migrations here.
@@ -124,14 +126,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IHttpCo
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, ct);
     }
 
-    // The CreatedBy/UpdatedBy columns are NOT NULL, so unauthenticated writes stamp 0.
+    // CurrentUserId is set by HttpUnitOfWork. The CreatedBy/UpdatedBy columns are NOT NULL, so
+    // unauthenticated writes (sign-in bookkeeping) stamp 0.
     private void Audit()
     {
         var now = DateTime.Now;
-        // ponytail: the HTTP fallback covers code that saves without going through IUnitOfWork (Users,
-        // Account); drop it, and the IHttpContextAccessor parameter, once those use the unit of work.
-        var uid = CurrentUserId != 0 ? CurrentUserId
-            : int.TryParse(http.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
+        var uid = CurrentUserId != 0 ? CurrentUserId : CurrentUserIdResolver?.Invoke() ?? 0;
 
         foreach (var e in ChangeTracker.Entries<IAuditableEntity>())
         {

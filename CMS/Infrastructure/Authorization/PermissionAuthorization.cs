@@ -1,7 +1,6 @@
-using CMS.Data.Context;
+using CMS.Data;
 using CMS.Shared.Constants;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
@@ -29,14 +28,14 @@ public sealed class PermissionPolicyProvider(IOptions<AuthorizationOptions> opti
 
 // Known permission values from RBS_Permission, cached 2 minutes. A permission that is not
 // in the table never grants access, so a typo'd policy name fails closed.
-public sealed class PermissionCatalog(AppDbContext db, IMemoryCache cache)
+public sealed class PermissionCatalog(IUnitOfWork uow, IMemoryCache cache)
 {
     public async Task<bool> IsKnownAsync(string permission)
     {
         var all = await cache.GetOrCreateAsync("perm:catalog", async e =>
         {
             e.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
-            var values = await db.Permissions.AsNoTracking().Select(p => p.Value).ToListAsync();
+            var values = await uow.Permissions.GetAllValuesAsync();
             return values.ToHashSet(StringComparer.OrdinalIgnoreCase);
         });
         return all!.Contains(permission);

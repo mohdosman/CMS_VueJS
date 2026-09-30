@@ -1,26 +1,28 @@
 using System.ComponentModel.DataAnnotations;
-using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
-using CMS.Data.Context;
+using CMS.Data;
+using CMS.Data.Repositories.Interfaces;
 using CMS.Data.Models.Domain;
 using CMS.Data.Models.Identity;
+using CMS.Features.Users.Mapping;
+using CMS.Features.Users.Repositories;
 using CMS.Features.Users.ViewModels;
 using CMS.Infrastructure.Identity;
 using CMS.Shared.Common;
 using CMS.Shared.Constants;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace CMS.Features.Users.Services;
 
-// Port of the Blazor CMS UserService (search, read, create, update). Non-admins are scoped two ways:
+// Port of the Blazor CMS UserService (search, read, create, update, set password, delete). Data access goes
+// through the unit of work; UserManager is used only for Identity operations (hashing, create, delete). Non-admins are scoped two ways:
 //  - roles: only users/roles matching a "users.role.<slug>" permission claim
 //  - providers: only users sharing a provider with the provider_ids claim of the caller
-// Delete, set-password, MFA reset and agreement documents are not ported yet.
+// MFA reset and agreement documents are not ported yet.
 public sealed partial class UserService(
-    AppDbContext db,
+    IUnitOfWork uow,
     UserManager<ApplicationUser> users,
     IHttpContextAccessor http,
     IOptions<IdentityOptions> identityOptions,
@@ -35,136 +37,30 @@ public sealed partial class UserService(
 
     // ---------------------------------------------------------------- read
 
-    public async Task<PagedResult<UserListItem>> SearchAsync(UserSearchRequest req, CancellationToken ct)
-    {
-        var scope = await GetScopeAsync(ct);
-        var q = db.Users.AsNoTracking();
-
-        if (!IsAdmin)
-        {
-            var providerIds = ProviderIdsClaim();
-            if (providerIds.Length == 0 || scope.Count == 0) return new();
-
-            q = q.Where(u => db.UserRoles.Any(ur => ur.UserId == u.Id && scope.Contains(ur.RoleId)));
-            q = q.Where(u => db.ProviderUsers.Any(pu => pu.UserId == u.Id && providerIds.Contains(pu.ProviderId)));
-        }
-
-        if (Has(req.UserName)) { var v = $"%{req.UserName!.Trim()}%"; q = q.Where(u => EF.Functions.Like(u.UserName!, v)); }
-        if (Has(req.FirstName)) { var v = $"%{req.FirstName!.Trim()}%"; q = q.Where(u => EF.Functions.Like(u.FirstName, v)); }
-        if (Has(req.LastName)) { var v = $"%{req.LastName!.Trim()}%"; q = q.Where(u => EF.Functions.Like(u.LastName, v)); }
-        if (Has(req.Email)) { var v = $"%{req.Email!.Trim()}%"; q = q.Where(u => EF.Functions.Like(u.Email!, v)); }
-
-        if (ToBool(req.IsEnabled) is bool enabled) q = q.Where(u => u.IsActive == enabled);
-        if (ToBool(req.IsADAccount) is bool ad) q = q.Where(u => u.IsADAccount == ad);
-
-        var now = DateTimeOffset.UtcNow;
-        if (ToBool(req.IsLockedOut) is bool locked)
-            q = locked
-                ? q.Where(u => u.LockoutEnabled && u.LockoutEnd >= now)
-                : q.Where(u => !u.LockoutEnabled || u.LockoutEnd == null || u.LockoutEnd < now);
-
-        if (req.RoleIds.Count > 0)
-        {
-            // A non-admin can only filter by roles inside their own scope.
-            var roleIds = IsAdmin ? req.RoleIds : req.RoleIds.Where(scope.Contains).ToList();
-            if (roleIds.Count == 0) return new();
-            q = q.Where(u => db.UserRoles.Any(ur => ur.UserId == u.Id && roleIds.Contains(ur.RoleId)));
-        }
-        if (req.ProviderIds.Count > 0)
-        {
-            var providerIds = req.ProviderIds;
-            q = q.Where(u => db.ProviderUsers.Any(pu => pu.UserId == u.Id && providerIds.Contains(pu.ProviderId)));
-        }
-
-        q = (req.SortBy ?? "").ToLowerInvariant() switch
-        {
-            "firstname" => Order(q, u => u.FirstName, req.SortDesc),
-            "lastname" => Order(q, u => u.LastName, req.SortDesc),
-            "email" => Order(q, u => u.Email!, req.SortDesc),
-            "isadaccount" => Order(q, u => u.IsADAccount, req.SortDesc),
-            "isenabled" => Order(q, u => u.IsActive, req.SortDesc),
-            "islockedout" => Order(q, u => u.LockoutEnabled && u.LockoutEnd >= now, req.SortDesc),
-            _ => Order(q, u => u.UserName!, req.SortDesc)
-        };
-
-        var size = Math.Clamp(req.PageSize, 1, 200);
-        var page = Math.Max(1, req.PageIndex);
-        var total = await q.CountAsync(ct);
-        var items = await q.Skip((page - 1) * size).Take(size).Select(u => new UserListItem
-        {
-            UserKey = u.UserKey,
-            UserName = u.UserName!,
-            FirstName = u.FirstName,
-            LastName = u.LastName,
-            Email = u.Email ?? "",
-            IsEnabled = u.IsActive,
-            IsADAccount = u.IsADAccount,
-            IsLockedOut = u.LockoutEnabled && u.LockoutEnd >= now
-        }).ToListAsync(ct);
-
-        return new() { Items = items, TotalCount = total };
-    }
+    public async Task<PagedResult<UserListItem>> SearchAsync(UserSearchRequest req, CancellationToken ct) =>
+        await uow.Users.SearchAsync(req, new UserSearchScope(IsAdmin, await GetScopeAsync(), ProviderIdsClaim()));
 
     // Detail null + Allowed true = not found; Allowed false = a target role is outside the caller scope.
     public async Task<(UserDetail? Detail, bool Allowed)> GetAsync(Guid userKey, CancellationToken ct)
     {
-        var u = await db.Users.AsNoTracking().FirstOrDefaultAsync(x => x.UserKey == userKey, ct);
+        var u = await uow.Users.GetByKeyNoTrackingAsync(userKey);
         if (u is null) return (null, true);
 
-        var roles = await (from ur in db.UserRoles join r in db.Roles on ur.RoleId equals r.Id
-                           where ur.UserId == u.Id orderby r.Name select new { r.Id, Name = r.Name! }).ToListAsync(ct);
+        var roles = await uow.UserRoles.GetRolesForUserAsync(u.Id);
         if (!IsAdmin && !RolesWithinScope(roles.Select(r => r.Name))) return (null, false);
 
-        var providers = await (from pu in db.ProviderUsers join p in db.Providers on pu.ProviderId equals p.ProviderId
-                               where pu.UserId == u.Id orderby p.Name select new { p.ProviderId, p.Name }).ToListAsync(ct);
-        var lastLogon = await db.Logons.AsNoTracking().Where(l => l.UserId == u.Id)
-            .Select(l => (DateTime?)l.LogOnDateTime).MaxAsync(ct);
-        DateTime? own = u.LastLoginDate > new DateTime(1900, 1, 1) ? u.LastLoginDate : null;
-        var lastLogin = lastLogon > own ? lastLogon : own;
-
-        return (new UserDetail
-        {
-            UserKey = u.UserKey,
-            RowVersion = Convert.ToBase64String(u.Version),
-            UserName = u.UserName!,
-            FirstName = u.FirstName,
-            LastName = u.LastName,
-            Email = u.Email ?? "",
-            PhoneNumber = u.PhoneNumber,
-            Notes = u.Comment ?? "",
-            IsEnabled = u.IsActive,
-            IsADAccount = u.IsADAccount,
-            IsLockedOut = u.LockoutEnabled && u.LockoutEnd >= DateTimeOffset.UtcNow,
-            TwoFactorEnabled = u.TwoFactorEnabled,
-            LastLoginAt = lastLogin,
-            LastPasswordChangedDate = u.LastPasswordChangedDate,
-            CreatedOn = u.CreatedOn,
-            UpdatedOn = u.UpdatedOn,
-            Roles = roles.Select(r => r.Name).ToList(),
-            RoleIds = roles.Select(r => r.Id).ToList(),
-            Providers = providers.Select(p => p.Name).ToList(),
-            ProviderIds = providers.Select(p => p.ProviderId).ToList()
-        }, true);
+        var providers = await uow.ProviderUsers.GetProvidersForUserAsync(u.Id);
+        var lastLogon = await uow.Logons.GetLastLogOnAsync(u.Id);
+        return (u.ToDetail(roles, providers, lastLogon), true);
     }
 
-    public async Task<List<LookupItem>> GetRolesAsync(CancellationToken ct)
-    {
-        var scope = await GetScopeAsync(ct);
-        var q = db.Roles.AsNoTracking();
-        if (!IsAdmin) q = q.Where(r => scope.Contains(r.Id));
-        return await q.OrderBy(r => r.Name).Select(r => new LookupItem(r.Id, r.Name!)).ToListAsync(ct);
-    }
+    public async Task<List<LookupItem>> GetRolesAsync(CancellationToken ct) =>
+        (await uow.Roles.GetIdNamesAsync(IsAdmin ? null : await GetScopeAsync()))
+            .Select(r => new LookupItem(r.Id, r.Name)).ToList();
 
-    public async Task<List<LookupItem>> GetProvidersAsync(CancellationToken ct)
-    {
-        var q = db.Providers.AsNoTracking();
-        if (!IsAdmin)
-        {
-            var ids = ProviderIdsClaim();
-            q = q.Where(p => ids.Contains(p.ProviderId));
-        }
-        return await q.OrderBy(p => p.Name).Select(p => new LookupItem(p.ProviderId, p.Name)).ToListAsync(ct);
-    }
+    public async Task<List<LookupItem>> GetProvidersAsync(CancellationToken ct) =>
+        (await uow.Providers.GetIdNamesAsync(IsAdmin ? null : ProviderIdsClaim()))
+            .Select(p => new LookupItem(p.Id, p.Name)).ToList();
 
     public UserPolicy GetPolicy()
     {
@@ -185,7 +81,7 @@ public sealed partial class UserService(
     public async Task<UserDetail> CreateAsync(UserEditRequest r, CancellationToken ct)
     {
         var errors = Validate(r, isNew: true);
-        var roles = await ResolveRolesAsync(r.RoleIds, errors, ct);
+        var roles = await ResolveRolesAsync(r.RoleIds, errors);
         if (errors.Count > 0) throw new ValidationFailedException(errors.ToDictionary(e => e.Key, e => e.Value.ToArray()));
 
         if (!RolesWithinScope(roles.Select(x => x.Name)))
@@ -200,8 +96,7 @@ public sealed partial class UserService(
         var userName = r.IsADAccount ? r.UserName!.Trim() : email;
         var isAd = r.IsADAccount;
 
-        var normalized = users.NormalizeName(userName);
-        if (await db.Users.AnyAsync(x => x.NormalizedUserName == normalized, ct))
+        if (await uow.Users.UserNameExistsAsync(users.NormalizeName(userName)))
             throw isAd
                 ? ValidationFailedException.For("userName", "User ID must be unique.")
                 : ValidationFailedException.For("email", "An account with this email address already exists.");
@@ -223,15 +118,15 @@ public sealed partial class UserService(
             IsTemporaryPassword = !isAd
         };
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        await using var tx = await uow.BeginTransactionAsync(ct);
 
         var created = isAd ? await users.CreateAsync(u) : await users.CreateAsync(u, r.Password!);
         if (!created.Succeeded) throw ToValidation(created, "password");
 
         if (!isAd) history.Record(u);
-        db.UserRoles.AddRange(roles.Select(x => new ApplicationUserRole { UserId = u.Id, RoleId = x.Id }));
-        db.ProviderUsers.AddRange(providerIds.Select(pid => new ProviderUser { UserId = u.Id, ProviderId = pid }));
-        await db.SaveChangesAsync(ct);
+        uow.UserRoles.AddRange(roles.Select(x => new ApplicationUserRole { UserId = u.Id, RoleId = x.Id }));
+        uow.ProviderUsers.AddRange(providerIds.Select(pid => new ProviderUser { UserId = u.Id, ProviderId = pid }));
+        await uow.SaveChangesAsync();
         await tx.CommitAsync(ct);
 
         return (await GetAsync(u.UserKey, ct)).Detail!;
@@ -240,11 +135,11 @@ public sealed partial class UserService(
     // Null = user not found.
     public async Task<UserDetail?> UpdateAsync(Guid userKey, UserEditRequest r, CancellationToken ct)
     {
-        var u = await db.Users.FirstOrDefaultAsync(x => x.UserKey == userKey, ct);
+        var u = await uow.Users.GetByKeyAsync(userKey);
         if (u is null) return null;
 
         var errors = Validate(r, isNew: false, existing: u);
-        var desiredRoles = await ResolveRolesAsync(r.RoleIds, errors, ct);
+        var desiredRoles = await ResolveRolesAsync(r.RoleIds, errors);
 
         // Account type, user ID and a local account email are fixed at creation; reject rather than
         // silently ignore, so a caller editing a frozen field hears about it.
@@ -253,13 +148,12 @@ public sealed partial class UserService(
             Add(errors, "email", "Email cannot be changed for a local account, it is the user ID.");
         if (errors.Count > 0) throw new ValidationFailedException(errors.ToDictionary(e => e.Key, e => e.Value.ToArray()));
 
-        var currentRoleIds = await db.UserRoles.Where(x => x.UserId == u.Id).Select(x => x.RoleId).ToListAsync(ct);
-        var currentRoleNames = await db.Roles.Where(x => currentRoleIds.Contains(x.Id)).Select(x => x.Name!).ToListAsync(ct);
-        if (!RolesWithinScope(currentRoleNames.Concat(desiredRoles.Select(x => x.Name))))
+        var currentRoles = await uow.UserRoles.GetRolesForUserAsync(u.Id);
+        if (!RolesWithinScope(currentRoles.Select(x => x.Name).Concat(desiredRoles.Select(x => x.Name))))
             throw new ForbiddenAccessException("You can only manage users and roles within your role scope.");
 
         var desiredProviderIds = HasAdminRole(desiredRoles) ? [] : r.ProviderIds.Distinct().ToList();
-        var currentProviderRows = await db.ProviderUsers.Where(x => x.UserId == u.Id).ToListAsync(ct);
+        var currentProviderRows = await uow.ProviderUsers.GetForUserAsync(u.Id);
         if (!ProvidersWithinScope(currentProviderRows.Select(x => x.ProviderId).Concat(desiredProviderIds)))
             throw new ForbiddenAccessException("You can only manage users within your own provider scope.");
 
@@ -278,20 +172,21 @@ public sealed partial class UserService(
         // Turning this off stops requiring a code but keeps any enrollment.
         u.TwoFactorEnabled = r.TwoFactorEnabled && !u.IsADAccount;
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        await using var tx = await uow.BeginTransactionAsync(ct);
 
         var updated = await users.UpdateAsync(u);
         if (!updated.Succeeded) throw ToValidation(updated, "form");
 
         var desiredIds = desiredRoles.Select(x => x.Id).ToHashSet();
-        db.UserRoles.RemoveRange(await db.UserRoles.Where(x => x.UserId == u.Id && !desiredIds.Contains(x.RoleId)).ToListAsync(ct));
-        db.UserRoles.AddRange(desiredIds.Except(currentRoleIds).Select(id => new ApplicationUserRole { UserId = u.Id, RoleId = id }));
+        var currentRoleIds = currentRoles.Select(x => x.Id).ToHashSet();
+        uow.UserRoles.RemoveRange((await uow.UserRoles.GetForUserAsync(u.Id)).Where(x => !desiredIds.Contains(x.RoleId)));
+        uow.UserRoles.AddRange(desiredIds.Except(currentRoleIds).Select(id => new ApplicationUserRole { UserId = u.Id, RoleId = id }));
 
-        db.ProviderUsers.RemoveRange(currentProviderRows.Where(x => !desiredProviderIds.Contains(x.ProviderId)));
-        db.ProviderUsers.AddRange(desiredProviderIds.Except(currentProviderRows.Select(x => x.ProviderId))
+        uow.ProviderUsers.RemoveRange(currentProviderRows.Where(x => !desiredProviderIds.Contains(x.ProviderId)));
+        uow.ProviderUsers.AddRange(desiredProviderIds.Except(currentProviderRows.Select(x => x.ProviderId))
             .Select(pid => new ProviderUser { UserId = u.Id, ProviderId = pid }));
 
-        await db.SaveChangesAsync(ct);
+        await uow.SaveChangesAsync();
         await tx.CommitAsync(ct);
 
         return (await GetAsync(userKey, ct)).Detail;
@@ -300,14 +195,14 @@ public sealed partial class UserService(
     // False = user not found.
     public async Task<bool> SetPasswordAsync(Guid userKey, SetPasswordRequest r, CancellationToken ct)
     {
-        var u = await db.Users.FirstOrDefaultAsync(x => x.UserKey == userKey, ct);
+        var u = await uow.Users.GetByKeyAsync(userKey);
         if (u is null) return false;
 
         if (u.IsADAccount)
             throw ValidationFailedException.For("password", "AD accounts do not use local passwords.");
 
         // Resetting a password is account takeover if unscoped, so it follows the same scope as edit.
-        await EnsureTargetInScopeAsync(u, ct);
+        await EnsureTargetInScopeAsync(u);
 
         var errors = new Dictionary<string, List<string>>();
         foreach (var msg in PasswordErrors(r.Password)) Add(errors, "password", msg);
@@ -317,7 +212,7 @@ public sealed partial class UserService(
         if (await history.IsReusedAsync(u, r.Password!, ct))
             throw ValidationFailedException.For("password", $"You cannot reuse any of your last {PasswordHistory.Depth} passwords.");
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        await using var tx = await uow.BeginTransactionAsync(ct);
 
         // Remove then add: a reset without needing a token provider. Legacy-only users have no hash to remove.
         if (await users.HasPasswordAsync(u)) await users.RemovePasswordAsync(u);
@@ -329,7 +224,7 @@ public sealed partial class UserService(
         if (!flags.Succeeded) throw ToValidation(flags, "form");
 
         history.Record(u);
-        await db.SaveChangesAsync(ct);
+        await uow.SaveChangesAsync();
         await tx.CommitAsync(ct);
         return true;
     }
@@ -337,27 +232,25 @@ public sealed partial class UserService(
     // False = user not found.
     public async Task<bool> DeleteAsync(Guid userKey, CancellationToken ct)
     {
-        var u = await db.Users.FirstOrDefaultAsync(x => x.UserKey == userKey, ct);
+        var u = await uow.Users.GetByKeyAsync(userKey);
         if (u is null) return false;
 
         if (u.Id.ToString() == Principal.FindFirstValue(ClaimTypes.NameIdentifier))
             throw new ForbiddenAccessException("You cannot delete your own account.");
-        await EnsureTargetInScopeAsync(u, ct);
+        await EnsureTargetInScopeAsync(u);
 
         // Documents and facility links have no screen here yet, so refuse rather than orphan or destroy them.
-        var documents = await db.Database.SqlQuery<int>($"SELECT COUNT(*) AS Value FROM dbo.CMS_Document WHERE UserId = {u.Id}").SingleAsync(ct);
-        var facilities = await db.Database.SqlQuery<int>($"SELECT COUNT(*) AS Value FROM dbo.CMS_FacilityUser WHERE UserId = {u.Id}").SingleAsync(ct);
-        if (documents > 0 || facilities > 0)
+        if (await uow.Documents.AnyForUserAsync(u.Id) || await uow.FacilityUsers.AnyForUserAsync(u.Id))
             throw new ConflictException("This user has documents or facility assignments. Remove those before deleting the user.");
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        await using var tx = await uow.BeginTransactionAsync(ct);
 
         // The account own housekeeping rows; their FKs are NO ACTION, so they go first.
-        db.UserRoles.RemoveRange(await db.UserRoles.Where(x => x.UserId == u.Id).ToListAsync(ct));
-        db.ProviderUsers.RemoveRange(await db.ProviderUsers.Where(x => x.UserId == u.Id).ToListAsync(ct));
-        db.PasswordChangeLogs.RemoveRange(await db.PasswordChangeLogs.Where(x => x.UserId == u.Id).ToListAsync(ct));
-        await db.SaveChangesAsync(ct);
-        await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM dbo.RBS_Logon WHERE UserId = {u.Id}", ct);
+        uow.UserRoles.RemoveRange(await uow.UserRoles.GetForUserAsync(u.Id));
+        uow.ProviderUsers.RemoveRange(await uow.ProviderUsers.GetForUserAsync(u.Id));
+        uow.PasswordChangeLogs.RemoveRange(await uow.PasswordChangeLogs.GetForUserAsync(u.Id));
+        await uow.SaveChangesAsync();
+        await uow.Logons.DeleteForUserAsync(u.Id);
 
         var deleted = await users.DeleteAsync(u);
         if (!deleted.Succeeded) throw ToValidation(deleted, "form");
@@ -366,15 +259,13 @@ public sealed partial class UserService(
     }
 
     // Same rule as edit: every role and provider of the target must be inside the caller scope.
-    private async Task EnsureTargetInScopeAsync(ApplicationUser u, CancellationToken ct)
+    private async Task EnsureTargetInScopeAsync(ApplicationUser u)
     {
-        var roleNames = await (from ur in db.UserRoles join r in db.Roles on ur.RoleId equals r.Id
-                               where ur.UserId == u.Id select r.Name!).ToListAsync(ct);
-        if (!RolesWithinScope(roleNames))
+        var roles = await uow.UserRoles.GetRolesForUserAsync(u.Id);
+        if (!RolesWithinScope(roles.Select(r => r.Name)))
             throw new ForbiddenAccessException("You can only manage users and roles within your role scope.");
 
-        var providerIds = await db.ProviderUsers.Where(x => x.UserId == u.Id).Select(x => x.ProviderId).ToListAsync(ct);
-        if (!ProvidersWithinScope(providerIds))
+        if (!ProvidersWithinScope(await uow.ProviderUsers.GetProviderIdsForUserAsync(u.Id)))
             throw new ForbiddenAccessException("You can only manage users within your own provider scope.");
     }
 
@@ -473,27 +364,25 @@ public sealed partial class UserService(
 
     // ---------------------------------------------------------------- scope
 
-    private async Task<List<(int Id, string Name)>> ResolveRolesAsync(List<int> ids, Dictionary<string, List<string>> errors, CancellationToken ct)
+    private async Task<List<(int Id, string Name)>> ResolveRolesAsync(List<int> ids, Dictionary<string, List<string>> errors)
     {
         var distinct = ids.Distinct().ToList();
-        var found = (await db.Roles.AsNoTracking().Where(r => distinct.Contains(r.Id)).Select(r => new { r.Id, r.Name }).ToListAsync(ct))
-            .Select(r => (r.Id, Name: r.Name!)).ToList();
+        var found = (await uow.Roles.GetIdNamesAsync(distinct)).Select(r => (r.Id, r.Name)).ToList();
         if (found.Count != distinct.Count) Add(errors, "roleIds", "One or more selected roles do not exist.");
         return found;
     }
 
-    private static bool HasAdminRole(IEnumerable<(int Id, string Name)> roles) =>
-        roles.Any(r => string.Equals(r.Name, AppRoles.Admin, StringComparison.OrdinalIgnoreCase));
-
     // Admins: unrestricted (empty set is unused). Others: role ids whose slug they hold a users.role.<slug> claim for.
-    private async Task<HashSet<int>> GetScopeAsync(CancellationToken ct)
+    private async Task<HashSet<int>> GetScopeAsync()
     {
         if (IsAdmin) return [];
         var slugs = Slugs();
         if (slugs.Count == 0) return [];
-        var all = await db.Roles.AsNoTracking().Select(r => new { r.Id, r.Name }).ToListAsync(ct);
-        return all.Where(r => r.Name is not null && slugs.Contains(Slug(r.Name))).Select(r => r.Id).ToHashSet();
+        return (await uow.Roles.GetIdNamesAsync()).Where(r => slugs.Contains(Slug(r.Name))).Select(r => r.Id).ToHashSet();
     }
+
+    private static bool HasAdminRole(IEnumerable<(int Id, string Name)> roles) =>
+        roles.Any(r => string.Equals(r.Name, AppRoles.Admin, StringComparison.OrdinalIgnoreCase));
 
     // Every role must be in scope, and a caller with no users.role.* claims has no scope at all.
     private bool RolesWithinScope(IEnumerable<string> roleNames)
@@ -525,7 +414,4 @@ public sealed partial class UserService(
 
     private static bool Has(string? s) => !string.IsNullOrWhiteSpace(s);
     private static string? Blank(string? s) => Has(s) ? s!.Trim() : null;
-    private static bool? ToBool(YesNoFilter f) => f switch { YesNoFilter.Yes => true, YesNoFilter.No => false, _ => null };
-    private static IQueryable<ApplicationUser> Order<T>(IQueryable<ApplicationUser> q, Expression<Func<ApplicationUser, T>> key, bool desc) =>
-        desc ? q.OrderByDescending(key) : q.OrderBy(key);
 }

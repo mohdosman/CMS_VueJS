@@ -1,0 +1,21 @@
+using CMS.Data.Context;
+using CMS.Data.Models.Identity;
+using CMS.Data.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+namespace CMS.Data.Repositories;
+
+public sealed class UserRoleRepository(AppDbContext context) : Repository<ApplicationUserRole>(context), IUserRoleRepository
+{
+    private readonly AppDbContext _db = context;
+
+    public Task<List<IdName>> GetRolesForUserAsync(int userId) =>
+        (from ur in _entities.AsNoTracking()
+         join r in _db.Roles on ur.RoleId equals r.Id
+         where ur.UserId == userId
+         orderby r.Name
+         select new IdName(r.Id, r.Name!)).ToListAsync();
+
+    public Task<List<ApplicationUserRole>> GetForUserAsync(int userId) =>
+        _entities.Where(x => x.UserId == userId).ToListAsync();
+}

@@ -7,8 +7,8 @@ namespace CMS.Features.PublicFiles.Services;
 public sealed class PublicFilesService(IUnitOfWork unitOfWork) : IPublicFilesService
 {
     public Task<List<HelpFileViewModel>> GetHelpFilesAsync(CancellationToken ct) =>
-        unitOfWork.PublicFiles.GetHelpFilesAsync(ct);
+        unitOfWork.Documents.GetHelpFilesAsync(ct);
 
     public async Task<HelpFileContentViewModel?> GetHelpFileAsync(int id, CancellationToken ct) =>
-        (await unitOfWork.PublicFiles.GetHelpFileAsync(id, ct))?.ToContentViewModel();
+        (await unitOfWork.Documents.GetHelpFileAsync(id, ct))?.ToContentViewModel();
 }

@@ -1,4 +1,4 @@
-using CMS.Data.Context;
+using CMS.Data;
 using CMS.Data.Models.Identity;
 using CMS.Infrastructure.Identity;
 using CMS.Mvc.ViewModels;
@@ -12,7 +12,7 @@ namespace CMS.Mvc.Controllers;
 public class AccountController(
     SignInManager<ApplicationUser> signIn,
     UserManager<ApplicationUser> users,
-    AppDbContext db,
+    IUnitOfWork uow,
     PasswordHistory history,
     IConfiguration config,
     ILogger<AccountController> log) : Controller
@@ -97,7 +97,7 @@ public class AccountController(
             return View(model);
         }
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        await using var tx = await uow.BeginTransactionAsync(ct);
 
         var changed = await users.ChangePasswordAsync(user, model.CurrentPassword, model.Password);
         if (!changed.Succeeded)
@@ -120,7 +120,7 @@ public class AccountController(
             ModelState.AddModelError("", "Your password could not be saved. Please try again.");
             return View(model);
         }
-        await db.SaveChangesAsync(ct);
+        await uow.SaveChangesAsync();
         await tx.CommitAsync(ct);
 
         // The password change rotates the security stamp; refresh so this session stays signed in.

@@ -1,9 +1,8 @@
 using System.Security.Claims;
-using CMS.Data.Context;
+using CMS.Data;
 using CMS.Data.Models.Domain;
 using CMS.Data.Models.Identity;
 using CMS.Shared.Constants;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CMS.Features.Menus;
@@ -13,7 +12,7 @@ public sealed record MenuNode(int Id, string Name, string Icon, string Url, List
 // Builds the menu a user may see from their permission claims (the same rules as the
 // Blazor CMS MenuService): an item shows if it is always-enabled or the user holds one
 // of its permissions; parents of visible items show too; Administrators see everything.
-public sealed class MenuService(AppDbContext db, IMemoryCache cache)
+public sealed class MenuService(IUnitOfWork uow, IMemoryCache cache)
 {
     // RBS_MenuItem.Icon holds MudBlazor icon ids; the SPA uses Font Awesome 4.
     private static readonly Dictionary<string, string> IconMap = new(StringComparer.OrdinalIgnoreCase)
@@ -28,7 +27,7 @@ public sealed class MenuService(AppDbContext db, IMemoryCache cache)
         var rows = await cache.GetOrCreateAsync("menu:rows", async e =>
         {
             e.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
-            return await db.MenuItems.AsNoTracking().Include(m => m.Permissions).Where(m => m.IsEnabled).ToListAsync();
+            return await uow.MenuItems.GetEnabledWithPermissionsAsync();
         }) ?? [];
 
         // "Logout" is the header's own button.

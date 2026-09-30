@@ -1,12 +1,12 @@
 using CMS.Data.Context;
 using CMS.Data.Models.Domain;
-using CMS.Data.Repositories;
+using CMS.Data.Repositories.Interfaces;
 using CMS.Features.PublicFiles.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
-namespace CMS.Features.PublicFiles.Repositories;
+namespace CMS.Data.Repositories;
 
-public sealed class PublicFilesRepository(AppDbContext context) : Repository<Document>(context), IPublicFilesRepository
+public sealed class DocumentRepository(AppDbContext context) : Repository<Document>(context), IDocumentRepository
 {
     private const int HelpTypeId = 2;   // CMS_DocumentType: Help (3 = user agreement)
 
@@ -20,4 +20,6 @@ public sealed class PublicFilesRepository(AppDbContext context) : Repository<Doc
 
     public Task<Document?> GetHelpFileAsync(int id, CancellationToken ct = default) =>
         HelpDocuments.Where(d => d.DocumentId == id).FirstOrDefaultAsync(ct);
+
+    public Task<bool> AnyForUserAsync(int userId) => _entities.AnyAsync(d => d.UserId == userId);
 }
