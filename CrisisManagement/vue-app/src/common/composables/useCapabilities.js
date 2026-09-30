@@ -7,7 +7,11 @@ import { useAppStore } from '../../stores/useAppStore.js';
 //   const { can } = useCapabilities();
 //   const canEdit = can('users.edit');
 // Permissions that also grant another one, beyond "edit implies view" (same table as the server PermissionHandler).
-const GRANTED_BY = { 'assessments.files.view': ['assessments.fileupload'] };
+const GRANTED_BY = {
+    'assessments.files.view': ['assessments.fileupload'],
+    'services.files.view': ['services.fileupload'],
+    'services.enter': ['services.edit']
+};
 
 export function useCapabilities() {
     const appStore = useAppStore();

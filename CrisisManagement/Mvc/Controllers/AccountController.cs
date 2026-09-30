@@ -212,6 +212,7 @@ public class AccountController(
     public async Task<IActionResult> Logout()
     {
         await signIn.SignOutAsync();
+        Response.Cookies.Delete(CurrentSession.CookieName);   // the next sign-in is a new session
         return RedirectToAction(nameof(Login));
     }
 

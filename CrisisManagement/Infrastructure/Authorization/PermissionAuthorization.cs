@@ -49,7 +49,9 @@ public sealed class PermissionHandler(PermissionCatalog catalog) : Authorization
     // Beyond "x.edit implies x.view": a permission that also grants another one.
     private static readonly Dictionary<string, string[]> GrantedBy = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["assessments.files.view"] = ["assessments.fileupload"]
+        ["assessments.files.view"] = ["assessments.fileupload"],
+        ["services.files.view"] = ["services.fileupload"],
+        ["services.enter"] = ["services.edit"]
     };
 
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)

@@ -4,6 +4,7 @@ using CrisisManagement.Features.PublicFiles.Services;
 using CrisisManagement.Features.Notifications.Services;
 using CrisisManagement.Features.Providers.Services;
 using CrisisManagement.Features.Roles.Services;
+using CrisisManagement.Features.Services.Services;
 using CrisisManagement.Features.Users.Services;
 using CrisisManagement.Infrastructure.Identity;
 using CrisisManagement.Infrastructure.Messaging.Email;
@@ -16,6 +17,7 @@ public static class AppServiceExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<ProviderScope>();
+        services.AddScoped<CurrentSession>();
 
         // Sign-in helpers
         services.AddScoped<PasswordHistory>();
@@ -38,6 +40,9 @@ public static class AppServiceExtensions
         services.AddScoped<AssessmentEditorService>();
         services.AddScoped<AssessmentFileService>();
         services.AddScoped<UserDocumentService>();
+        services.AddScoped<ServiceSearchService>();
+        services.AddScoped<ServiceEditorService>();
+        services.AddScoped<ServiceFileService>();
 
         return services;
     }

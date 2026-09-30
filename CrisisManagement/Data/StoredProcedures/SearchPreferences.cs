@@ -15,6 +15,10 @@ public sealed class SearchPreferences
         return this;
     }
 
+    // For the procedures that build their query by string concatenation (services, service files, suicides): quotes are
+    // doubled. Check the value with TextSafety first.
+    public SearchPreferences AddEscaped(string name, string? value) => Add(name, value?.Replace("'", "''"));
+
     public SearchPreferences Add(string name, int? value) => value is > 0 ? Add(name, value.Value.ToString()) : this;
 
     // Dates travel as MM/dd/yyyy, which the procedures convert with style 101.
@@ -31,4 +35,20 @@ public sealed class SearchPreferences
     }
 
     public string ToXml() => _root.ToString(SaveOptions.DisableFormatting);
+}
+
+// A text filter that ends up inside quotes in a concatenated query must survive doubling, fit the procedure variable
+// (varchar(50)) and hold only characters that stay themselves when SQL Server converts nvarchar to varchar (a look-alike
+// such as U+02BC would otherwise turn into a real quote).
+public static class TextSafety
+{
+    public const int MaxEscapedLength = 50;
+
+    // Error text for the value, or null when it is fine.
+    public static string? Problem(string? value, string label)
+    {
+        var v = value?.Trim() ?? "";
+        if (v.Any(c => c > 0x17F || char.IsControl(c))) return $"{label} contains characters that cannot be searched.";
+        return v.Replace("'", "''").Length > MaxEscapedLength ? $"{label} must be {MaxEscapedLength} characters or fewer (apostrophes count twice)." : null;
+    }
 }

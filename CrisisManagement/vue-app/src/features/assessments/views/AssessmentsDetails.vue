@@ -2,10 +2,10 @@
 import { useAssessmentDetail } from '../composables/useAssessmentDetail.js';
 import AppDialog from '../../../common/components/AppDialog.vue';
 import ExpandPanel from '../components/ExpandPanel.vue';
-import FieldSelect from '../components/FieldSelect.vue';
-import FieldInput from '../components/FieldInput.vue';
-import FieldDateTime from '../components/FieldDateTime.vue';
-import FieldYesNo from '../components/FieldYesNo.vue';
+import FieldSelect from '../../../common/components/FieldSelect.vue';
+import FieldInput from '../../../common/components/FieldInput.vue';
+import FieldDateTime from '../../../common/components/FieldDateTime.vue';
+import FieldYesNo from '../../../common/components/FieldYesNo.vue';
 
 const {
     isNew, canEdit, canDelete, title, form, dt, lookups, providers, formError, dialog, isLoading, isSaving,
