@@ -20,8 +20,8 @@ const set = (part, e) => emit('update:modelValue', { ...props.modelValue, [part]
         <div class="row g-1">
             <div class="col-7">
                 <label class="form-label" :for="`${id}-date`">{{ label }} date <span v-if="required" class="f_req" aria-hidden="true">*</span></label>
-                <input :id="`${id}-date`" type="date" class="form-control form-control-sm" :value="modelValue.date" :disabled="disabled"
-                       :aria-invalid="!!error" :aria-describedby="`${id}-err`" @input="set('date', $event)" />
+                <DateInput :id="`${id}-date`" class="form-control form-control-sm" :model-value="modelValue.date" :disabled="disabled"
+                       :aria-invalid="!!error" :aria-describedby="`${id}-err`" @update:model-value="(v) => emit('update:modelValue', { ...modelValue, date: v })" />
             </div>
             <div class="col-5">
                 <label class="form-label" :for="`${id}-time`">{{ label }} time</label>

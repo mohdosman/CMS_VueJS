@@ -71,3 +71,9 @@ export const expectTitle = (page, text) => expect(page.locator('#main-title')).t
 
 // getByLabel matches the label text including the aria-hidden "*" of required fields, so an exact label is "Name" or "Name *".
 export const label = (text) => new RegExp('^' + [...text].map((c) => (/[a-z0-9 ]/i.test(c) ? c : '[' + c + ']')).join('') + '( [*])? *$');
+
+// The date fields take MM/DD/YYYY (M/D/YYYY is what they show back).
+export const mdy = (daysAgo = 0) => {
+    const d = new Date(Date.now() - daysAgo * 86_400_000);
+    return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+};

@@ -28,11 +28,11 @@ const size = (bytes) => (bytes == null ? '' : bytes >= 1048576 ? `${(bytes / 104
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="dateFrom">Date Processed (From)</label>
-                        <input id="dateFrom" v-model="criteria.dateFrom" type="date" class="form-control form-control-sm" />
+                        <DateInput id="dateFrom" v-model="criteria.dateFrom" class="form-control form-control-sm" />
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="dateTo">Date Processed (To)</label>
-                        <input id="dateTo" v-model="criteria.dateTo" type="date" class="form-control form-control-sm"
+                        <DateInput id="dateTo" v-model="criteria.dateTo" class="form-control form-control-sm"
                                :aria-invalid="!!msg('dateTo')" aria-describedby="dateTo-err" />
                         <div id="dateTo-err" class="form-text has-error" role="alert">{{ msg('dateTo') }}</div>
                     </div>

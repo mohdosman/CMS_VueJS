@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { label, callApi, expectNoErrorToast, expectSuccessToast, expectTitle, openPage, saveAndExpectOk, selectFirstOption, tableRow, uniqueId, ymd } from './helpers/e2eHelpers.js';
+import { label, callApi, expectNoErrorToast, expectSuccessToast, expectTitle, openPage, saveAndExpectOk, selectFirstOption, tableRow, uniqueId, ymd, mdy } from './helpers/e2eHelpers.js';
 
 const region = (page, name) => page.getByRole('region', { name });
 
@@ -25,10 +25,10 @@ test.describe('Assessments workflow', () => {
         await selectFirstOption(consumer.getByLabel(label('Provider')));
         await consumer.getByLabel('First Name').fill(first);
         await consumer.getByLabel('Last Name').fill(last);
-        await consumer.getByLabel('Date of Birth').fill('1980-05-05');
+        await consumer.getByLabel('Date of Birth').fill('5/5/1980');
 
         const phone = region(page, /^CRISIS TELEPHONE/);
-        await phone.getByLabel('Call End date').fill(ymd(2));
+        await phone.getByLabel('Call End date').fill(mdy(2));
         await phone.getByLabel('Call End time').fill('10:30');
         // Any disposition except the two that need extra fields (mobile crisis dispatched, other).
         const disposition = phone.getByLabel(label('Disposition'));

@@ -38,11 +38,11 @@ const fields = [
                     </div>
                     <div class="col-md-2 mb-3">
                         <label class="form-label" for="assessmentDateFrom">Assessment Date (From)</label>
-                        <input id="assessmentDateFrom" v-model="criteria.assessmentDateFrom" type="date" class="form-control form-control-sm" />
+                        <DateInput id="assessmentDateFrom" v-model="criteria.assessmentDateFrom" class="form-control form-control-sm" />
                     </div>
                     <div class="col-md-2 mb-3">
                         <label class="form-label" for="assessmentDateTo">Assessment Date (To)</label>
-                        <input id="assessmentDateTo" v-model="criteria.assessmentDateTo" type="date" class="form-control form-control-sm"
+                        <DateInput id="assessmentDateTo" v-model="criteria.assessmentDateTo" class="form-control form-control-sm"
                                :aria-invalid="!!msg('assessmentDateTo')" aria-describedby="assessmentDateTo-err" />
                         <div id="assessmentDateTo-err" class="form-text has-error" role="alert">{{ msg('assessmentDateTo') }}</div>
                     </div>

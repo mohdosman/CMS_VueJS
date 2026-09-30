@@ -6,6 +6,7 @@ import './assets/css/validation.css';
 
 import App from './App.vue';
 import AppButton from './common/components/AppButton.vue';
+import DateInput from './common/components/DateInput.vue';
 import DetailPanel from './common/components/DetailPanel.vue';
 import SearchPanel from './common/components/SearchPanel.vue';
 import SearchPaging from './common/components/SearchPaging.vue';
@@ -44,6 +45,7 @@ app.use(Toast, {
 
 // Page building blocks nearly every screen uses.
 app.component('AppButton', AppButton);
+app.component('DateInput', DateInput);
 app.component('DetailPanel', DetailPanel);
 app.component('SearchPanel', SearchPanel);
 app.component('SearchPaging', SearchPaging);

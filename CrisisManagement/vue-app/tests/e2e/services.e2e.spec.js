@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { label, callApi, expectSuccessToast, expectTitle, openPage, saveAndExpectOk, selectFirstOption, uniqueId, ymd } from './helpers/e2eHelpers.js';
+import { label, callApi, expectSuccessToast, expectTitle, openPage, saveAndExpectOk, selectFirstOption, uniqueId, ymd, mdy } from './helpers/e2eHelpers.js';
 
 const field = (page, text) => page.getByLabel(label(text));
 
@@ -20,13 +20,13 @@ test.describe('Services workflow', () => {
         await field(page, 'Provider Patient ID').blur();
         await field(page, 'First Name').fill('E2EFirst');
         await field(page, 'Last Name').fill(last);
-        await field(page, 'Date of Birth').fill('1975-03-04');
+        await field(page, 'Date of Birth').fill('3/4/1975');
         await selectFirstOption(field(page, 'Gender'));
         await selectFirstOption(field(page, 'County of Residence'));
         await selectFirstOption(field(page, 'Payor Billed for Service'));
         await selectFirstOption(field(page, 'Service'));
-        await field(page, 'DOS/Admit Date').fill(ymd(3));
-        await field(page, 'Discharge Date').fill(ymd(2));
+        await field(page, 'DOS/Admit Date').fill(mdy(3));
+        await field(page, 'Discharge Date').fill(mdy(2));
         await field(page, 'Duration Hours').fill('5');
         await selectFirstOption(field(page, 'County of Service'));
 
@@ -78,5 +78,33 @@ test.describe('Services workflow', () => {
         // No service chosen: both are required, as for an unknown code.
         await expect(page.getByText('Discharge Date *')).toBeVisible();
         await expect(page.getByText('Duration Hours *')).toBeVisible();
+    });
+
+    test('date fields work like the SafetyNet ones: T is today, digits spread out, a date that does not exist is cleared', async ({ page }) => {
+        await openPage(page, '/services');
+        const from = page.getByLabel('DOS/Admit Date (From)');
+        await expect(from).toHaveAttribute('placeholder', 'MM/DD/YYYY');
+
+        await from.fill('T');
+        await from.blur();
+        await expect(from).toHaveValue(mdy(0));
+
+        await from.fill('010224');
+        await from.blur();
+        await expect(from).toHaveValue('1/2/2024');
+
+        await from.fill('01022024');
+        await from.blur();
+        await expect(from).toHaveValue('1/2/2024');
+
+        await from.fill('13/45/2024');
+        await from.blur();
+        await expect(from).toHaveValue('');
+
+        // A range that is the wrong way round is refused by the server and shown next to the field.
+        await from.fill('2/1/2024');
+        await page.getByLabel('DOS/Admit Date (To)').fill('1/1/2024');
+        await page.getByRole('button', { name: /^Search$/ }).click();
+        await expect(page.getByText(/should be less than equal to/)).toBeVisible();
     });
 });

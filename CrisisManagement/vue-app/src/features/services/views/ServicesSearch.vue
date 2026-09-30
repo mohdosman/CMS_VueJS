@@ -52,11 +52,11 @@ const fields = [
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="dosAdmitDateFrom">DOS/Admit Date (From)</label>
-                        <input id="dosAdmitDateFrom" v-model="criteria.dosAdmitDateFrom" type="date" class="form-control form-control-sm" />
+                        <DateInput id="dosAdmitDateFrom" v-model="criteria.dosAdmitDateFrom" class="form-control form-control-sm" />
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="dosAdmitDateTo">DOS/Admit Date (To)</label>
-                        <input id="dosAdmitDateTo" v-model="criteria.dosAdmitDateTo" type="date" class="form-control form-control-sm"
+                        <DateInput id="dosAdmitDateTo" v-model="criteria.dosAdmitDateTo" class="form-control form-control-sm"
                                :aria-invalid="!!msg('dosAdmitDateTo')" aria-describedby="dosAdmitDateTo-err" />
                         <div id="dosAdmitDateTo-err" class="form-text has-error" role="alert">{{ msg('dosAdmitDateTo') }}</div>
                     </div>

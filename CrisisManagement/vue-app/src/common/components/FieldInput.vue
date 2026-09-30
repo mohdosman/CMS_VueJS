@@ -27,7 +27,10 @@ const onInput = (e) => {
 <template>
     <div class="mb-3" :class="col">
         <label class="form-label" :for="id">{{ label }} <span v-if="required" class="f_req" aria-hidden="true">*</span></label>
-        <input :id="id" class="form-control form-control-sm" :type="type" :value="modelValue ?? ''" :disabled="disabled" :maxlength="maxlength"
+        <DateInput v-if="type === 'date'" :id="id" class="form-control form-control-sm" :model-value="modelValue ?? ''" :disabled="disabled"
+                   :aria-required="required || undefined" :aria-invalid="!!error" :aria-describedby="`${hint ? `${id}-hint ` : ''}${id}-err`"
+                   @update:model-value="(v) => emit('update:modelValue', v)" />
+        <input v-else :id="id" class="form-control form-control-sm" :type="type" :value="modelValue ?? ''" :disabled="disabled" :maxlength="maxlength"
                :min="min" :max="max" :step="step" :aria-required="required || undefined" :aria-invalid="!!error"
                :aria-describedby="`${hint ? `${id}-hint ` : ''}${id}-err`" @input="onInput" />
         <div v-if="hint" :id="`${id}-hint`" class="form-text">{{ hint }}</div>
