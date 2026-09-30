@@ -27,9 +27,15 @@ const idCaption = computed(() => (form.isADAccount
                  main-labelledby="main-title" :can-save="canEdit && !isSaving && !isLoading"
                  :show-buttons="canEdit" @save="save" @cancel="cancel">
         <!-- Agreements sit with the title, not the save bar: they are not part of the edit. -->
-        <template v-if="!isNew && info" #heading-extra>
-            <AppButton action="preview" @click="dialog = 'agreements'">View User Agreement ({{ documentCount }})</AppButton>
-            <AppButton v-if="canEdit" action="preview" @click="dialog = 'upload'">Upload User Agreement</AppButton>
+        <template v-if="!isNew && info" #heading-docs>
+            <button type="button" class="link-btn" @click="dialog = 'agreements'">
+                <i class="fa fa-file-o" aria-hidden="true"></i>
+                View User Agreement ({{ documentCount }})
+            </button>
+            <button v-if="canEdit" type="button" class="link-btn" @click="dialog = 'upload'">
+                <i class="fa fa-upload" aria-hidden="true"></i>
+                Upload User Agreement
+            </button>
         </template>
 
         <template #fields>
