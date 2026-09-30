@@ -29,6 +29,7 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     private ISupportRepository? _supports;
     private IStoredProcedureRepository? _storedProcedures;
     private IFileUploadRepository? _fileUploads;
+    private IAssessmentRepository? _assessments;
 
     public IUserRepository Users => _users ??= new UserRepository(_context);
     public IRoleRepository Roles => _roles ??= new RoleRepository(_context);
@@ -47,6 +48,7 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     public ISupportRepository Supports => _supports ??= new SupportRepository(_context);
     public IStoredProcedureRepository StoredProcedures => _storedProcedures ??= new StoredProcedureRepository(_context);
     public IFileUploadRepository FileUploads => _fileUploads ??= new FileUploadRepository(_context);
+    public IAssessmentRepository Assessments => _assessments ??= new AssessmentRepository(_context);
 
     public void SetCommandTimeout(int seconds) => _context.Database.SetCommandTimeout(seconds);
 

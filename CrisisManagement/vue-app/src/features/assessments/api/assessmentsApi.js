@@ -10,6 +10,12 @@ export const assessmentsApi = {
         return data;
     },
 
+    lookups: async () => (await http.get('assessments/lookups')).data,
+    get: async (key) => (await http.get(`assessments/detail/${key}`)).data,
+    create: async (model) => (await http.post('assessments', model)).data,
+    update: async (key, model) => (await http.put(`assessments/${key}`, model)).data,
+    remove: async (key) => { await http.delete(`assessments/${key}`); },
+
     fileProviders: async () => (await http.get('assessments/files/providers')).data,
     async searchFiles(pageIndex, pageSize, criteria) {
         const { orderBy, reverse, ...filters } = criteria;

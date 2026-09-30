@@ -25,6 +25,7 @@ public interface IUnitOfWork
     ISupportRepository Supports { get; }
     IStoredProcedureRepository StoredProcedures { get; }
     IFileUploadRepository FileUploads { get; }
+    IAssessmentRepository Assessments { get; }
 
     void SetCommandTimeout(int seconds);
     int SaveChanges();

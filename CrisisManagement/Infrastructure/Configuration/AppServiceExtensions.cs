@@ -35,6 +35,7 @@ public static class AppServiceExtensions
         services.AddScoped<ProviderService>();
         services.AddScoped<NotificationService>();
         services.AddScoped<AssessmentSearchService>();
+        services.AddScoped<AssessmentEditorService>();
         services.AddScoped<AssessmentFileService>();
         services.AddScoped<UserDocumentService>();
 

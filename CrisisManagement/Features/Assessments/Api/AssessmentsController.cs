@@ -12,6 +12,7 @@ namespace CrisisManagement.Features.Assessments.Api;
 public sealed class AssessmentsController(
     AssessmentSearchService search,
     AssessmentFileService files,
+    AssessmentEditorService editor,
     ILogger<AssessmentsController> logger) : BaseApiController(logger)
 {
     private readonly ILogger<AssessmentsController> _logger = logger;
@@ -32,6 +33,70 @@ public sealed class AssessmentsController(
     {
         try { return Ok(await search.SearchAsync(request)); }
         catch (Exception ex) { return Failure(ex, "Searching assessments"); }
+    }
+
+    // ---------------------------------------------------------------- Enter/Edit Assessment
+
+    [HttpGet("lookups")]
+    [Authorize(Policy = "assessments.view")]
+    public async Task<IActionResult> Lookups()
+    {
+        try { return Ok(await editor.GetLookupsAsync()); }
+        catch (Exception ex) { return Failure(ex, "Loading the assessment lookups"); }
+    }
+
+    // key: "f2f-<id>" or "pa-<id>"; "0" is a blank form for a new assessment.
+    [HttpGet("detail/{key}")]
+    [Authorize(Policy = "assessments.view")]
+    public async Task<IActionResult> Detail(string key)
+    {
+        try
+        {
+            if (key == "0") return Ok(new AssessmentEditModel());
+            var model = await editor.GetAsync(key);
+            return model is null ? NotFound() : Ok(model);
+        }
+        catch (Exception ex) { return Failure(ex, $"Loading assessment {key}"); }
+    }
+
+    [HttpPost]
+    [Authorize(Policy = "assessments.edit")]
+    public async Task<IActionResult> Create([FromBody] AssessmentEditModel model)
+    {
+        try
+        {
+            var saved = await editor.CreateAsync(model);
+            _logger.LogInformation("Assessment {Key} created by {Actor}", saved.Key, User.Identity?.Name);
+            return Ok(saved);
+        }
+        catch (Exception ex) { return Failure(ex, "Creating an assessment"); }
+    }
+
+    [HttpPut("{key}")]
+    [Authorize(Policy = "assessments.edit")]
+    public async Task<IActionResult> Update(string key, [FromBody] AssessmentEditModel model)
+    {
+        try
+        {
+            var saved = await editor.UpdateAsync(key, model);
+            if (saved is null) return NotFound();
+            _logger.LogInformation("Assessment {Key} updated by {Actor}", key, User.Identity?.Name);
+            return Ok(saved);
+        }
+        catch (Exception ex) { return Failure(ex, $"Updating assessment {key}"); }
+    }
+
+    [HttpDelete("{key}")]
+    [Authorize(Policy = "assessments.delete")]
+    public async Task<IActionResult> Delete(string key)
+    {
+        try
+        {
+            if (!await editor.DeleteAsync(key)) return NotFound();
+            _logger.LogInformation("Assessment {Key} deleted by {Actor}", key, User.Identity?.Name);
+            return NoContent();
+        }
+        catch (Exception ex) { return Failure(ex, $"Deleting assessment {key}"); }
     }
 
     // ---------------------------------------------------------------- Display Files and upload
