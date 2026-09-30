@@ -10,4 +10,7 @@ public interface IMenuRepository : IRepository<MenuItem>
     // Untracked, every item: enough to order permissions the way the menu is laid out.
     Task<List<MenuItem>> GetAllAsync();
     Task<MenuItem?> GetByNameAsync(string menuItemName);
+    // Tracked, with its permissions, for update and delete.
+    Task<MenuItem?> GetTrackedAsync(int id);
+    Task<bool> NameExistsAsync(string name, int exceptId);
 }

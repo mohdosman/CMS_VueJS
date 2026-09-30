@@ -13,5 +13,9 @@ public sealed class MenuRepository(AppDbContext context) : Repository<MenuItem>(
 
     public Task<List<MenuItem>> GetAllAsync() => _entities.AsNoTracking().ToListAsync();
 
+    public Task<MenuItem?> GetTrackedAsync(int id) => _entities.Include(m => m.Permissions).FirstOrDefaultAsync(m => m.MenuItemId == id);
+
+    public Task<bool> NameExistsAsync(string name, int exceptId) => _entities.AnyAsync(m => m.MenuItemName == name && m.MenuItemId != exceptId);
+
     public Task<MenuItem?> GetByNameAsync(string menuItemName) => _entities.AsNoTracking().FirstOrDefaultAsync(m => m.MenuItemName == menuItemName);
 }

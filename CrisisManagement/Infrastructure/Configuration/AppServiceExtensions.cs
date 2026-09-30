@@ -25,6 +25,7 @@ public static class AppServiceExtensions
 
         // Features
         services.AddScoped<MenuService>();
+        services.AddScoped<MenuAdminService>();
         services.AddScoped<IPublicFilesService, PublicFilesService>();
         services.AddScoped<UserService>();
         services.AddScoped<RoleService>();
