@@ -1,7 +1,6 @@
 <script setup>
 import { useMenuTree } from '../composables/useMenuTree.js';
 import MenuTreeNode from '../components/MenuTreeNode.vue';
-import AppDialog from '../../../common/components/AppDialog.vue';
 
 const { tree, filter, isLoading, canEdit, confirming, search, clear, edit, addRoot, addChild, remove } = useMenuTree();
 </script>

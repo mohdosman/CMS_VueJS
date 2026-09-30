@@ -1,7 +1,6 @@
 <script setup>
 import { ref } from 'vue';
 import { usersApi } from '../api/usersApi.js';
-import AppDialog from '../../../common/components/AppDialog.vue';
 import PasswordChecklist from '../../../common/components/PasswordChecklist.vue';
 import { apiErrorMessage } from '../../../utils/apiError.js';
 

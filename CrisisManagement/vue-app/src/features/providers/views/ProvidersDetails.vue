@@ -1,14 +1,11 @@
 <script setup>
 import { useProviderDetail } from '../composables/useProviderDetail.js';
-import AppDialog from '../../../common/components/AppDialog.vue';
 
 const {
-    isNew, canEdit, title, form, info, states, counties, errors, formError, dialog,
+    msg, err, isNew, canEdit, title, form, info, states, counties, errors, formError, dialog,
     isLoading, isSaving, save, remove, cancel
 } = useProviderDetail();
 
-const err = (f) => errors.value[f]?.length ?? 0;
-const msg = (f) => errors.value[f]?.join(' ');
 const sections = [
     { key: 'physicalAddress', title: 'Physical address' },
     { key: 'remitAddress', title: 'Remit address' }

@@ -152,6 +152,9 @@ export function useAssessmentDetail() {
         }
     }
 
+    // A panel heading: the title, the record id when there is one, and the provider's own id for it.
+    const panelTitle = (label, id, providerNumber) => `${label}${id ? ` #${id}` : ''}${providerNumber ? ` (Provider ID: ${providerNumber})` : ''}`;
+
     const cancel = () => router.push('/assessments');
 
     const addDrug = () => form.drugs.push({ drugId: null, drugRouteId: null, drugFrequencyId: null });
@@ -177,7 +180,7 @@ export function useAssessmentDetail() {
 
     return {
         isNew, canEdit, canDelete, title, form, dt, lookups, providers, errors, formError, dialog, isLoading, isSaving,
-        isDispatched, isOther, referralAccepted, msg, allErrors,
+        panelTitle, isDispatched, isOther, referralAccepted, msg, allErrors,
         save, remove, cancel, addDrug, addAlternative, addHospitalization, removeRow, dispositionsFor
     };
 }

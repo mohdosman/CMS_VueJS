@@ -2,6 +2,7 @@ import { ref, reactive, onMounted } from 'vue';
 import { servicesApi } from '../api/servicesApi.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
+import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
 const DEFAULT_CRITERIA = () => ({ providerId: null, dateFrom: '', dateTo: '', orderBy: 'createdOn', reverse: true });
@@ -118,8 +119,10 @@ export function useServiceFiles() {
         if (hasSearched.value) await getFiles();
     });
 
+    const msg = fieldMessages(errors);
+
     return {
-        criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawText, fileErrors,
+        msg, criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawText, fileErrors,
         errorPaging, errorTotal, isLoadingDialog,
         search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, onErrorPageChanged, onErrorPageSizeChanged, open, closeDialog
     };

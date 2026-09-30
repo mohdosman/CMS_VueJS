@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { usersApi } from '../api/usersApi.js';
-import AppDialog from '../../../common/components/AppDialog.vue';
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { apiErrorMessage } from '../../../utils/apiError.js';
+import { formatDate, formatFileSize } from '../../../utils/formatters.js';
 
 // Lists a user's agreements with download and (for users.edit) delete. Closes with the count it ended on.
 const props = defineProps({
@@ -18,8 +18,6 @@ const error = ref('');
 const isLoading = ref(true);
 const confirming = ref(0);   // id of the document awaiting delete confirmation
 
-const size = (b) => (b >= 1048576 ? `${(b / 1048576).toFixed(2)} MB` : b >= 1024 ? `${Math.round(b / 1024)} KB` : `${b} Bytes`);
-const date = (v) => new Date(v).toLocaleDateString('en-US');
 
 async function load() {
     try {
@@ -61,8 +59,8 @@ onMounted(load);
             <tbody>
                 <tr v-for="d in docs" :key="d.documentId">
                     <td>{{ d.fileName }}</td>
-                    <td>{{ date(d.createdOn) }}</td>
-                    <td>{{ size(d.fileSize) }}</td>
+                    <td>{{ formatDate(d.createdOn) }}</td>
+                    <td>{{ formatFileSize(d.fileSize) }}</td>
                     <td class="text-nowrap">
                         <a class="btn btn-outline-secondary btn-sm" :href="usersApi.documentUrl(userKey, d.documentId)" download>
                             Download<span class="visually-hidden"> {{ d.fileName }}</span>

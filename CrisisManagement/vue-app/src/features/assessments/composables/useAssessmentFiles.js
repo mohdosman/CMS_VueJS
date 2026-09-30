@@ -2,6 +2,7 @@ import { ref, reactive, onMounted } from 'vue';
 import { assessmentsApi } from '../api/assessmentsApi.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
+import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
 const DEFAULT_CRITERIA = () => ({ providerId: null, dateFrom: '', dateTo: '', orderBy: 'createdOn', reverse: true });
@@ -97,8 +98,10 @@ export function useAssessmentFiles() {
         if (hasSearched.value) await getFiles();
     });
 
+    const msg = fieldMessages(errors);
+
     return {
-        criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawXml, fileErrors, isLoadingDialog,
+        msg, criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawXml, fileErrors, isLoadingDialog,
         search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, open, closeDialog
     };
 }

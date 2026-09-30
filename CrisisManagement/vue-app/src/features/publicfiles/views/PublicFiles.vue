@@ -1,15 +1,13 @@
 <script setup>
 import { usePublicFiles } from '../composables/usePublicFiles.js';
 import { publicFilesApi } from '../../../common/api/publicFilesApi.js';
-import AppDialog from '../../../common/components/AppDialog.vue';
+import { formatDateTime, formatFileSize } from '../../../utils/formatters.js';
 
 const {
     paging, files, totalRecords, canEdit, uploadError, isUploading, confirming,
     setOrder, sortIcon, onPageChanged, onPageSizeChanged, onPick, remove
 } = usePublicFiles();
 
-const size = (b) => (b >= 1048576 ? `${(b / 1048576).toFixed(2)} MB` : b >= 1024 ? `${Math.round(b / 1024)} KB` : `${b} Bytes`);
-const dateTime = (v) => new Date(v).toLocaleString('en-US');
 </script>
 
 <template>
@@ -57,8 +55,8 @@ const dateTime = (v) => new Date(v).toLocaleString('en-US');
                         <tr v-for="f in files" :key="f.id">
                             <td>{{ f.id }}</td>
                             <td>{{ f.fileName }}</td>
-                            <td>{{ dateTime(f.createdOn) }}</td>
-                            <td>{{ size(f.fileSize) }}</td>
+                            <td>{{ formatDateTime(f.createdOn) }}</td>
+                            <td>{{ formatFileSize(f.fileSize) }}</td>
                             <td class="text-nowrap">
                                 <a class="btn btn-outline-secondary btn-sm" :href="publicFilesApi.downloadUrl(f.id)" download>
                                     Download<span class="visually-hidden"> {{ f.fileName }}</span>

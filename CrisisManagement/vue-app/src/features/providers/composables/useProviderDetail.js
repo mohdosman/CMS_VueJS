@@ -3,6 +3,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { providersApi } from '../api/providersApi.js';
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
+import { fieldMessages } from '../../../utils/formErrors.js';
 import { apiErrorMessage } from '../../../utils/apiError.js';
 
 const blankContact = () => ({ title: '', firstName: '', lastName: '', emailAddress: '', phone: '', wirelessPhone: '' });
@@ -108,5 +109,8 @@ export function useProviderDetail() {
         }
     });
 
-    return { isNew, canEdit, title, form, info, states, counties, errors, formError, dialog, isLoading, isSaving, save, remove, cancel };
+    const msg = fieldMessages(errors);
+    const err = (f) => errors.value[f]?.length ?? 0;
+
+    return { msg, err, isNew, canEdit, title, form, info, states, counties, errors, formError, dialog, isLoading, isSaving, save, remove, cancel };
 }

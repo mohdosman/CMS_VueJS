@@ -1,7 +1,6 @@
 <script setup>
 import { useRoleDetail } from '../composables/useRoleDetail.js';
 import PermissionPicker from '../components/PermissionPicker.vue';
-import AppDialog from '../../../common/components/AppDialog.vue';
 
 const {
     isNew, canEdit, form, groups, errors, formError, dialog, isLoading, isSaving,

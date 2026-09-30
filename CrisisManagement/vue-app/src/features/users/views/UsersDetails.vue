@@ -7,7 +7,6 @@ import UserAgreementUploadDialog from '../components/UserAgreementUploadDialog.v
 import MultiSelectDropdown from '../../../common/components/MultiSelectDropdown.vue';
 import PasswordChecklist from '../../../common/components/PasswordChecklist.vue';
 import RoleChips from '../../../common/components/RoleChips.vue';
-import AppDialog from '../../../common/components/AppDialog.vue';
 
 const {
     isNew, canEdit, form, info, roles, providers, policy, errors, formError, dialog,

@@ -1,7 +1,6 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
 import { menusApi } from '../api/menusApi.js';
-import AppDialog from '../../../common/components/AppDialog.vue';
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 

@@ -1,14 +1,12 @@
 <script setup>
 import { useAssessmentFiles } from '../composables/useAssessmentFiles.js';
-import AppDialog from '../../../common/components/AppDialog.vue';
+import { formatDateTime } from '../../../utils/formatters.js';
 
 const {
-    criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawXml, fileErrors, isLoadingDialog,
+    msg, criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawXml, fileErrors, isLoadingDialog,
     search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, open, closeDialog
 } = useAssessmentFiles();
 
-const msg = (f) => errors.value[f]?.join(' ');
-const dateTime = (v) => new Date(v).toLocaleString('en-US');
 </script>
 
 <template>
@@ -79,7 +77,7 @@ const dateTime = (v) => new Date(v).toLocaleString('en-US');
                             <td>{{ f.f2FTotal }}</td>
                             <td>{{ f.f2FImported }}</td>
                             <td>{{ f.f2FErrors }}</td>
-                            <td>{{ dateTime(f.createdOn) }}</td>
+                            <td>{{ formatDateTime(f.createdOn) }}</td>
                             <td><AppButton action="cancel" size="xs" @click="open('raw', f)">View<span class="visually-hidden"> raw file {{ f.fileName }}</span></AppButton></td>
                             <td><AppButton action="cancel" size="xs" :disabled="!f.isProcessed" @click="open('errors', f)">View<span class="visually-hidden"> errors of {{ f.fileName }}</span></AppButton></td>
                         </tr>
@@ -111,7 +109,7 @@ const dateTime = (v) => new Date(v).toLocaleString('en-US');
                 <thead><tr><th scope="col">Error Table</th><th scope="col">Record ID</th><th scope="col">Error Code</th><th scope="col">Created On</th></tr></thead>
                 <tbody>
                     <tr v-for="e in fileErrors" :key="e.id">
-                        <td>{{ e.errorTable }}</td><td>{{ e.recordId }}</td><td>{{ e.errorCode }}</td><td>{{ dateTime(e.createdOn) }}</td>
+                        <td>{{ e.errorTable }}</td><td>{{ e.recordId }}</td><td>{{ e.errorCode }}</td><td>{{ formatDateTime(e.createdOn) }}</td>
                     </tr>
                 </tbody>
             </table>

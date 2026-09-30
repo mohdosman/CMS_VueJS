@@ -4,6 +4,7 @@ import { assessmentsApi } from '../api/assessmentsApi.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
+import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
 const DEFAULT_CRITERIA = () => ({
@@ -95,8 +96,10 @@ export function useAssessmentSearch() {
         await (hasSearched.value ? getAssessments() : search());
     });
 
+    const msg = fieldMessages(errors);
+
     return {
-        criteria, paging, assessments, totalRecords, providers, isSearching, errors,
+        msg, criteria, paging, assessments, totalRecords, providers, isSearching, errors,
         search, showAll, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, keyOf, gotoAssessment, canAdd, add
     };
 }

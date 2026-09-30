@@ -2,7 +2,6 @@
 import { ref, onMounted } from 'vue';
 import { publicFilesApi } from '../api/publicFilesApi.js';
 import { apiErrorMessage } from '../../utils/apiError.js';
-import AppDialog from './AppDialog.vue';
 
 const emit = defineEmits(['close']);
 

@@ -1,7 +1,6 @@
 <script setup>
 import { ref } from 'vue';
 import { usersApi } from '../api/usersApi.js';
-import AppDialog from '../../../common/components/AppDialog.vue';
 import { apiErrorMessage } from '../../../utils/apiError.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 

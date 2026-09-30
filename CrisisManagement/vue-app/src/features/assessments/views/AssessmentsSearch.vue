@@ -1,13 +1,12 @@
 <script setup>
 import { useAssessmentSearch } from '../composables/useAssessmentSearch.js';
+import { formatDate } from '../../../utils/formatters.js';
 
 const {
-    criteria, paging, assessments, totalRecords, providers, isSearching, errors,
+    msg, criteria, paging, assessments, totalRecords, providers, isSearching, errors,
     search, showAll, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, keyOf, gotoAssessment, canAdd, add
 } = useAssessmentSearch();
 
-const msg = (f) => errors.value[f]?.join(' ');
-const date = (v) => (v ? new Date(v).toLocaleDateString('en-US') : '-');
 const fields = [
     { f: 'lastName', label: 'Last Name', col: 'col-md-3' },
     { f: 'firstName', label: 'First Name', col: 'col-md-3' },
@@ -100,9 +99,9 @@ const fields = [
                             <td>{{ a.assessmentType }}</td>
                             <td>{{ a.f2FAssessmentId || '' }}</td>
                             <td>{{ a.phoneAssessmentId || '' }}</td>
-                            <td>{{ date(a.assessmentDate) }}</td>
+                            <td>{{ formatDate(a.assessmentDate) }}</td>
                             <td>{{ a.ssn }}</td>
-                            <td>{{ date(a.dob) }}</td>
+                            <td>{{ formatDate(a.dob) }}</td>
                             <td>{{ a.abbreviation }}</td>
                         </tr>
                     </tbody>

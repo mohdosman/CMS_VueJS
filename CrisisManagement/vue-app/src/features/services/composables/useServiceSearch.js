@@ -4,6 +4,7 @@ import { servicesApi } from '../api/servicesApi.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
+import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
 const DEFAULT_CRITERIA = () => ({
@@ -87,8 +88,10 @@ export function useServiceSearch() {
         if (hasSearched.value) await getServices();
     });
 
+    const msg = fieldMessages(errors);
+
     return {
-        criteria, paging, services, totalRecords, providers, serviceCodes, hasSearched, isSearching, errors,
+        msg, criteria, paging, services, totalRecords, providers, serviceCodes, hasSearched, isSearching, errors,
         search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, canAdd, add
     };
 }

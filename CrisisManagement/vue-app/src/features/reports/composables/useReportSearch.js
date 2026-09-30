@@ -5,6 +5,7 @@ import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../util
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { apiErrorMessage } from '../../../utils/apiError.js';
+import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
 const DEFAULT_CRITERIA = () => ({ reportName: '', description: '', orderBy: 'reportName', reverse: false });
@@ -81,13 +82,16 @@ export function useReportSearch() {
         }
     }
 
+    const exportLabel = (option) => (option === 'MSExcel' ? 'Excel' : option);
     const canAdd = can('reports.edit');
     const add = () => router.push('/reports/0');
 
     onMounted(getReports);
 
+    const msg = fieldMessages(errors);
+
     return {
-        criteria, paging, reports, totalRecords, isSearching, errors, runningKey,
+        exportLabel, msg, criteria, paging, reports, totalRecords, isSearching, errors, runningKey,
         search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, run, canAdd, add
     };
 }

@@ -1,13 +1,12 @@
 <script setup>
 import { useNotificationSearch } from '../composables/useNotificationSearch.js';
-import AppDialog from '../../../common/components/AppDialog.vue';
+import { formatDateTime } from '../../../utils/formatters.js';
 
 const {
     paging, notifications, totalRecords, isSearching, confirming,
     search, remove, setOrder, sortIcon, onPageChanged, onPageSizeChanged, gotoNotification, canEdit, add
 } = useNotificationSearch();
 
-const dateTime = (v) => new Date(v).toLocaleString('en-US');
 </script>
 
 <template>
@@ -43,7 +42,7 @@ const dateTime = (v) => new Date(v).toLocaleString('en-US');
                         <tr v-for="n in notifications" :key="n.id" style="cursor:pointer" @click="gotoNotification(n)">
                             <td><router-link :to="`/notifications/${n.id}`" @click.stop>{{ n.id }}</router-link></td>
                             <td>{{ n.notification }}</td>
-                            <td>{{ dateTime(n.createdOn) }}</td>
+                            <td>{{ formatDateTime(n.createdOn) }}</td>
                             <td v-if="canEdit" @click.stop>
                                 <AppButton action="cancel" @click="confirming = n">Delete<span class="visually-hidden"> notification {{ n.id }}</span></AppButton>
                             </td>

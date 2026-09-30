@@ -1,8 +1,5 @@
 <script setup>
 import { useServiceDetail } from '../composables/useServiceDetail.js';
-import AppDialog from '../../../common/components/AppDialog.vue';
-import FieldSelect from '../../../common/components/FieldSelect.vue';
-import FieldInput from '../../../common/components/FieldInput.vue';
 
 const {
     isNew, canSave, canDelete, title, form, lookups, providers, formError, dialog, isLoading, isSaving,
@@ -10,7 +7,6 @@ const {
     findExistingPatient, save, remove, cancel
 } = useServiceDetail();
 
-const opts = (list) => list ?? [];
 </script>
 
 <template>
@@ -36,16 +32,16 @@ const opts = (list) => list ?? [];
                     <FieldInput v-model="form.firstName" label="First Name" required :maxlength="150" :disabled="!isNew" :error="msg('firstName')" col="col-md-6 col-lg-4" />
                     <FieldInput v-model="form.lastName" label="Last Name" required :maxlength="150" :disabled="patientLocked" :error="msg('lastName')" col="col-md-6 col-lg-4" />
                     <FieldInput v-model="form.dob" label="Date of Birth" type="date" required :disabled="patientLocked" :error="msg('dob')" col="col-md-6 col-lg-4" />
-                    <FieldSelect v-model="form.genderId" label="Gender" required :options="opts(lookups.genders)" :disabled="!isNew" :error="msg('genderId')" col="col-md-6 col-lg-4" />
-                    <FieldSelect v-model="form.countyId" label="County of Residence" required :options="opts(lookups.counties)" :error="msg('countyId')" col="col-md-6 col-lg-4" />
-                    <FieldSelect v-model="form.payorSourceId" label="Payor Billed for Service" required :options="opts(lookups.payorSources)" :error="msg('payorSourceId')" col="col-md-6 col-lg-4" />
-                    <FieldSelect v-model="form.primaryInsurerId" label="Primary Insurer" :options="opts(lookups.payorSources)" :error="msg('primaryInsurerId')" col="col-md-6 col-lg-4" />
-                    <FieldSelect v-model="form.serviceCodeId" label="Service" required :options="opts(lookups.serviceCodes)" :error="msg('serviceCodeId')" col="col-md-6 col-lg-4" />
+                    <FieldSelect v-model="form.genderId" label="Gender" required :options="lookups.genders" :disabled="!isNew" :error="msg('genderId')" col="col-md-6 col-lg-4" />
+                    <FieldSelect v-model="form.countyId" label="County of Residence" required :options="lookups.counties" :error="msg('countyId')" col="col-md-6 col-lg-4" />
+                    <FieldSelect v-model="form.payorSourceId" label="Payor Billed for Service" required :options="lookups.payorSources" :error="msg('payorSourceId')" col="col-md-6 col-lg-4" />
+                    <FieldSelect v-model="form.primaryInsurerId" label="Primary Insurer" :options="lookups.payorSources" :error="msg('primaryInsurerId')" col="col-md-6 col-lg-4" />
+                    <FieldSelect v-model="form.serviceCodeId" label="Service" required :options="lookups.serviceCodes" :error="msg('serviceCodeId')" col="col-md-6 col-lg-4" />
                     <FieldInput v-model="form.dosAdmitDate" label="DOS/Admit Date" type="date" required :error="msg('dosAdmitDate')" col="col-md-6 col-lg-4" />
                     <FieldInput v-model="form.dischargeDate" label="Discharge Date" type="date" :required="dischargeRequired" :error="msg('dischargeDate')" col="col-md-6 col-lg-4" />
                     <FieldInput v-model="form.durationHours" label="Duration Hours" type="number" :min="1" :max="999" :required="durationRequired"
                                 :error="msg('durationHours')" col="col-md-6 col-lg-4" />
-                    <FieldSelect v-model="form.serviceCountyId" label="County of Service" required :options="opts(lookups.counties)" :error="msg('serviceCountyId')" col="col-md-6 col-lg-4" />
+                    <FieldSelect v-model="form.serviceCountyId" label="County of Service" required :options="lookups.counties" :error="msg('serviceCountyId')" col="col-md-6 col-lg-4" />
                 </div>
             </fieldset>
         </template>

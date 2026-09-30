@@ -1,14 +1,12 @@
 <script setup>
 import { useReportSearch } from '../composables/useReportSearch.js';
+import { truncate } from '../../../utils/formatters.js';
 
 const {
-    criteria, paging, reports, totalRecords, isSearching, errors, runningKey,
+    exportLabel, msg, criteria, paging, reports, totalRecords, isSearching, errors, runningKey,
     search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, run, canAdd, add
 } = useReportSearch();
 
-const msg = (f) => errors.value[f]?.join(' ');
-const short = (text) => (text.length > 50 ? `${text.slice(0, 50)}...` : text);
-const exportLabel = (o) => (o === 'MSExcel' ? 'Excel' : o);
 </script>
 
 <template>
@@ -63,7 +61,7 @@ const exportLabel = (o) => (o === 'MSExcel' ? 'Excel' : o);
                                 </button>
                             </td>
                             <td><router-link :to="`/reports/${r.id}`">{{ r.reportName }}</router-link></td>
-                            <td :title="r.description">{{ short(r.description) }}</td>
+                            <td :title="r.description">{{ truncate(r.description) }}</td>
                             <td><span class="badge text-bg-secondary">{{ exportLabel(r.exportOption) }}</span></td>
                         </tr>
                     </tbody>

@@ -1,8 +1,5 @@
 <script setup>
 import { useReportDetail } from '../composables/useReportDetail.js';
-import AppDialog from '../../../common/components/AppDialog.vue';
-import FieldSelect from '../../../common/components/FieldSelect.vue';
-import FieldInput from '../../../common/components/FieldInput.vue';
 
 const { isNew, title, form, fileName, available, formError, dialog, isLoading, isSaving, msg, save, remove, cancel } = useReportDetail();
 

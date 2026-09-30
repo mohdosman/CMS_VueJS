@@ -2,6 +2,7 @@ import { ref, reactive, onMounted } from 'vue';
 import { suicidesApi } from '../api/suicidesApi.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
+import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
 const DEFAULT_CRITERIA = () => ({ fileName: '', dateFrom: '', dateTo: '', orderBy: 'createdOn', reverse: true });
@@ -87,8 +88,10 @@ export function useSuicideFiles() {
 
     onMounted(getFiles);
 
+    const msg = fieldMessages(errors);
+
     return {
-        criteria, paging, files, totalRecords, isSearching, errors, current, records, recordTotal, recordPaging, isLoadingRecords,
+        msg, criteria, paging, files, totalRecords, isSearching, errors, current, records, recordTotal, recordPaging, isLoadingRecords,
         search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged,
         openRecords, closeRecords, setRecordOrder, recordSortIcon, onRecordPageChanged, onRecordPageSizeChanged,
         downloadUrl: suicidesApi.downloadUrl

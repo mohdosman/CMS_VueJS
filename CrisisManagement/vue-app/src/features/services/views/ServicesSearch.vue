@@ -2,11 +2,10 @@
 import { useServiceSearch } from '../composables/useServiceSearch.js';
 
 const {
-    criteria, paging, services, totalRecords, providers, serviceCodes, hasSearched, isSearching, errors,
+    msg, criteria, paging, services, totalRecords, providers, serviceCodes, hasSearched, isSearching, errors,
     search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, canAdd, add
 } = useServiceSearch();
 
-const msg = (f) => errors.value[f]?.join(' ');
 const fields = [
     { f: 'providerPatientNo', label: 'Provider Patient ID', col: 'col-md-3' },
     { f: 'ssn', label: 'SSN', col: 'col-md-3' },

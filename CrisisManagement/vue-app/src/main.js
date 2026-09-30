@@ -7,6 +7,12 @@ import './assets/css/validation.css';
 import App from './App.vue';
 import AppButton from './common/components/AppButton.vue';
 import DateInput from './common/components/DateInput.vue';
+import AppDialog from './common/components/AppDialog.vue';
+import ExpandPanel from './common/components/ExpandPanel.vue';
+import FieldSelect from './common/components/FieldSelect.vue';
+import FieldInput from './common/components/FieldInput.vue';
+import FieldDateTime from './common/components/FieldDateTime.vue';
+import FieldYesNo from './common/components/FieldYesNo.vue';
 import DetailPanel from './common/components/DetailPanel.vue';
 import SearchPanel from './common/components/SearchPanel.vue';
 import SearchPaging from './common/components/SearchPaging.vue';
@@ -46,6 +52,12 @@ app.use(Toast, {
 // Page building blocks nearly every screen uses.
 app.component('AppButton', AppButton);
 app.component('DateInput', DateInput);
+app.component('AppDialog', AppDialog);
+app.component('ExpandPanel', ExpandPanel);
+app.component('FieldSelect', FieldSelect);
+app.component('FieldInput', FieldInput);
+app.component('FieldDateTime', FieldDateTime);
+app.component('FieldYesNo', FieldYesNo);
 app.component('DetailPanel', DetailPanel);
 app.component('SearchPanel', SearchPanel);
 app.component('SearchPaging', SearchPaging);

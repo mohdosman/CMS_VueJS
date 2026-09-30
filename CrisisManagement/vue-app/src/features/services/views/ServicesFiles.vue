@@ -1,15 +1,13 @@
 <script setup>
 import { useServiceFiles } from '../composables/useServiceFiles.js';
-import AppDialog from '../../../common/components/AppDialog.vue';
+import { formatDateTime } from '../../../utils/formatters.js';
 
 const {
-    criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawText, fileErrors,
+    msg, criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawText, fileErrors,
     errorPaging, errorTotal, isLoadingDialog,
     search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, onErrorPageChanged, onErrorPageSizeChanged, open, closeDialog
 } = useServiceFiles();
 
-const msg = (f) => errors.value[f]?.join(' ');
-const dateTime = (v) => new Date(v).toLocaleString('en-US');
 </script>
 
 <template>
@@ -75,7 +73,7 @@ const dateTime = (v) => new Date(v).toLocaleString('en-US');
                             <td>{{ f.serviceCount }}</td>
                             <td>{{ f.postedCount }}</td>
                             <td>{{ f.errorCount }}</td>
-                            <td>{{ dateTime(f.createdOn) }}</td>
+                            <td>{{ formatDateTime(f.createdOn) }}</td>
                             <td><AppButton action="cancel" size="xs" @click="open('raw', f)">View<span class="visually-hidden"> raw file {{ f.fileName }}</span></AppButton></td>
                             <td>
                                 <AppButton v-if="f.isProcessed && f.errorCount > 0" action="cancel" size="xs" @click="open('errors', f)">View<span class="visually-hidden"> errors of {{ f.fileName }}</span></AppButton>
