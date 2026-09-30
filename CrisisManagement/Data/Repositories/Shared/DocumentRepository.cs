@@ -3,13 +3,14 @@ using CrisisManagement.Data.Models.Domain;
 using CrisisManagement.Data.Repositories.Interfaces;
 using CrisisManagement.Features.PublicFiles.ViewModels;
 using CrisisManagement.Features.Users.ViewModels;
+using CrisisManagement.Shared.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace CrisisManagement.Data.Repositories;
 
 public sealed class DocumentRepository(AppDbContext context) : Repository<Document>(context), IDocumentRepository
 {
-    private const int HelpTypeId = 2;   // CMS_DocumentType: Help (3 = user agreement)
+    public const int HelpTypeId = 2;   // CMS_DocumentType: Help (3 = user agreement)
 
     private IQueryable<Document> HelpDocuments =>
         _entities.AsNoTracking().Where(d => d.DocumentTypeId == HelpTypeId && d.UserId == null && d.IsActive);
@@ -23,6 +24,28 @@ public sealed class DocumentRepository(AppDbContext context) : Repository<Docume
         HelpDocuments.Where(d => d.DocumentId == id).FirstOrDefaultAsync(ct);
 
     public Task<bool> AnyForUserAsync(int userId) => _entities.AnyAsync(d => d.UserId == userId);
+
+    public async Task<PagedResult<HelpFileViewModel>> SearchPublicFilesAsync(string? fileName, string? sortBy, bool desc, int page, int size)
+    {
+        var q = HelpDocuments;
+        if (!string.IsNullOrWhiteSpace(fileName)) { var v = $"%{fileName.Trim()}%"; q = q.Where(d => EF.Functions.Like(d.FileName, v)); }
+
+        q = (sortBy ?? "").ToLowerInvariant() switch
+        {
+            "id" => desc ? q.OrderByDescending(d => d.DocumentId) : q.OrderBy(d => d.DocumentId),
+            "filename" => desc ? q.OrderByDescending(d => d.FileName) : q.OrderBy(d => d.FileName),
+            "filesize" => desc ? q.OrderByDescending(d => d.FileContent.Length) : q.OrderBy(d => d.FileContent.Length),
+            _ => sortBy is null || desc ? q.OrderByDescending(d => d.CreatedOn) : q.OrderBy(d => d.CreatedOn)
+        };
+
+        var total = await q.CountAsync();
+        var items = await q.Skip((page - 1) * size).Take(size)
+            .Select(d => new HelpFileViewModel(d.DocumentId, d.FileName, d.CreatedOn, d.FileContent.Length)).ToListAsync();
+        return new PagedResult<HelpFileViewModel> { Items = items, TotalCount = total };
+    }
+
+    public Task<int> DeletePublicFileAsync(int id) =>
+        _entities.Where(d => d.DocumentId == id && d.DocumentTypeId == HelpTypeId && d.UserId == null).ExecuteDeleteAsync();
 
     public const int UserAgreementTypeId = 3;
 

@@ -21,12 +21,7 @@ public sealed class UserDocumentService(IUnitOfWork uow, UserService users)
     {
         if (await users.ResolveScopedUserIdAsync(userKey) is not int id) return null;
 
-        var name = Path.GetFileName(fileName ?? "");
-        if (content.Length == 0) throw ValidationFailedException.For("file", "The file is empty.");
-        if (content.Length > MaxFileBytes) throw ValidationFailedException.For("file", $"The file exceeds the {MaxFileBytes / (1024 * 1024)} MB limit.");
-        // Extension and magic bytes must both say PDF, so a renamed file is refused.
-        if (!name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) || !content.AsSpan().StartsWith("%PDF-"u8))
-            throw ValidationFailedException.For("file", $"Only PDF files are accepted. [{name}]");
+        var name = UploadChecks.RequirePdf(fileName, content, MaxFileBytes);
 
         var doc = new Document
         {
