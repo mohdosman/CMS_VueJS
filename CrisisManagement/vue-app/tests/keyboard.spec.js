@@ -29,7 +29,7 @@ async function focusSnapshot(page) {
 // Tab through a page: focus never drops to <body>, never traps, and every focused control shows a focus indicator.
 async function traverse(page, route) {
     const landed = await openRoute(page, route);
-    if (landed === '/' && route !== '/') return false;
+    if (route !== '/' && landed !== route) return false;
 
     await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
     const seen = new Set();

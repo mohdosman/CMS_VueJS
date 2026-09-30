@@ -36,7 +36,10 @@ export function createAppRouter(permittedRoutes) {
     return createRouter({
         history: createWebHashHistory(),
         routes: [
-            { path: '/', component: Home, meta: { title: 'Home' } },
+            // Signing in lands on Search Assessments for anyone who can open it; the welcome page is the fallback.
+            permittedRoutes.some((r) => r.url === '/assessments')
+                ? { path: '/', redirect: '/assessments' }
+                : { path: '/', component: Home, meta: { title: 'Home' } },
             // Not a menu item: opened from the user menu.
             { path: '/profile', component: Profile, meta: { title: 'My Profile' } },
             ...routes,

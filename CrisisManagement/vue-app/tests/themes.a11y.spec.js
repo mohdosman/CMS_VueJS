@@ -15,7 +15,7 @@ for (const theme of THEMES) {
         const problems = [];
         for (const route of ROUTES) {
             const landed = await openRoute(page, route);
-            if (landed === '/' && route !== '/') continue;
+            if (route !== '/' && landed !== route) continue;
             const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
             problems.push(...results.violations.map((v) => `${theme} ${route}: ${v.id} ${v.help}\n    ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join('\n    ')}`));
         }

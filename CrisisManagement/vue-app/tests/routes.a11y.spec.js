@@ -9,7 +9,7 @@ const excludedRules = [];
 
 async function scan(page, route) {
     const landed = await openRoute(page, route);
-    if (landed === '/' && route !== '/') return null;   // not registered or not permitted for this user
+    if (route !== '/' && landed !== route) return null;   // not registered or not permitted for this user
     return new AxeBuilder({ page }).withTags(TAGS).disableRules(excludedRules).analyze();
 }
 
