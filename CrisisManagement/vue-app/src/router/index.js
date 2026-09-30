@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import Home from '../views/Home.vue';
 import ComingSoon from '../views/ComingSoon.vue';
+import Profile from '../features/profile/views/Profile.vue';
 
 // Views are picked by the last url segment, case-insensitive (same convention as SafetyNet):
 //   /admin/users -> UsersSearch.vue (or Users.vue), detail /admin/users/:key -> UsersDetails.vue
@@ -36,6 +37,8 @@ export function createAppRouter(permittedRoutes) {
         history: createWebHashHistory(),
         routes: [
             { path: '/', component: Home, meta: { title: 'Home' } },
+            // Not a menu item: opened from the user menu.
+            { path: '/profile', component: Profile, meta: { title: 'My Profile' } },
             ...routes,
             // Only urls the server permitted are registered; anything else goes home.
             { path: '/:pathMatch(.*)*', redirect: '/' }
