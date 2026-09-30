@@ -59,6 +59,9 @@ public sealed class ProviderRepository(AppDbContext context) : Repository<Provid
         _entities.AnyAsync(p => p.ProviderId == id &&
             (p.ProviderUsers.Any() || p.Contracts.Any() || p.F2FAssessments.Any() || p.PhoneAssessments.Any() || p.ServiceFiles.Any() || p.Services.Any()));
 
+    public Task<IdName?> GetIdNameByNpiAsync(string npi) =>
+        _entities.AsNoTracking().Where(p => p.Npi == npi).Select(p => new IdName(p.ProviderId, p.Name, p.Abbreviation)).FirstOrDefaultAsync();
+
     public Task<List<LookupItem>> GetStatesAsync() =>
         _db.Set<State>().AsNoTracking().OrderBy(s => s.StateDescription)
             .Select(s => new LookupItem(s.StateId, s.StateDescription, s.StateCode)).ToListAsync();

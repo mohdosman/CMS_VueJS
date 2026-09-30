@@ -46,6 +46,12 @@ public sealed class PermissionCatalog(IUnitOfWork uow, IMemoryCache cache)
 
 public sealed class PermissionHandler(PermissionCatalog catalog) : AuthorizationHandler<PermissionRequirement>
 {
+    // Beyond "x.edit implies x.view": a permission that also grants another one.
+    private static readonly Dictionary<string, string[]> GrantedBy = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["assessments.files.view"] = ["assessments.fileupload"]
+    };
+
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
     {
         var user = context.User;
@@ -59,7 +65,8 @@ public sealed class PermissionHandler(PermissionCatalog catalog) : Authorization
         // x.edit implies x.view.
         var editEquivalent = required.EndsWith(".view", StringComparison.OrdinalIgnoreCase) ? required[..^5] + ".edit" : null;
         if (user.HasClaim(AppClaimTypes.Permission, required) ||
-            (editEquivalent is not null && user.HasClaim(AppClaimTypes.Permission, editEquivalent)))
+            (editEquivalent is not null && user.HasClaim(AppClaimTypes.Permission, editEquivalent)) ||
+            (GrantedBy.TryGetValue(required, out var grantors) && grantors.Any(g => user.HasClaim(AppClaimTypes.Permission, g))))
             context.Succeed(requirement);
     }
 }

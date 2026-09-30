@@ -1,3 +1,4 @@
+using CrisisManagement.Features.Assessments.Services;
 using CrisisManagement.Features.Menus;
 using CrisisManagement.Features.PublicFiles.Services;
 using CrisisManagement.Features.Notifications.Services;
@@ -14,6 +15,8 @@ public static class AppServiceExtensions
     // Feature services and the small infrastructure services they use. Add a line here for each new feature.
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddScoped<ProviderScope>();
+
         // Sign-in helpers
         services.AddScoped<PasswordHistory>();
         services.Configure<MfaOptions>(configuration.GetSection("Mfa"));
@@ -31,6 +34,8 @@ public static class AppServiceExtensions
         services.AddScoped<RoleService>();
         services.AddScoped<ProviderService>();
         services.AddScoped<NotificationService>();
+        services.AddScoped<AssessmentSearchService>();
+        services.AddScoped<AssessmentFileService>();
         services.AddScoped<UserDocumentService>();
 
         return services;

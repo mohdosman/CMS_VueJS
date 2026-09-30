@@ -23,6 +23,8 @@ public interface IUnitOfWork
     IRoleClaimRepository RoleClaims { get; }
     INotificationRepository Notifications { get; }
     ISupportRepository Supports { get; }
+    IStoredProcedureRepository StoredProcedures { get; }
+    IFileUploadRepository FileUploads { get; }
 
     void SetCommandTimeout(int seconds);
     int SaveChanges();

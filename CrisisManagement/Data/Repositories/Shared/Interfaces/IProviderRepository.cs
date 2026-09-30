@@ -22,6 +22,9 @@ public interface IProviderRepository : IRepository<Provider>
     // True when users, contracts, assessments or services still point at the provider.
     Task<bool> HasReferencesAsync(int id);
 
+    // Id, name and abbreviation of the provider with this NPI; null when none.
+    Task<IdName?> GetIdNameByNpiAsync(string npi);
+
     Task<List<LookupItem>> GetStatesAsync();
     Task<List<LookupItem>> GetCountiesAsync();
 

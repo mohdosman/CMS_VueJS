@@ -4,7 +4,8 @@ import ComingSoon from '../views/ComingSoon.vue';
 
 // Views are picked by the last url segment, case-insensitive (same convention as SafetyNet):
 //   /admin/users -> UsersSearch.vue (or Users.vue), detail /admin/users/:key -> UsersDetails.vue
-// Menu urls with no matching view fall back to ComingSoon until the screen is ported.
+// When several screens share a last segment (/assessments/files, /services/files, /suicides/files) the whole path
+// wins: /assessments/files -> AssessmentsFiles.vue. Menu urls with no matching view fall back to ComingSoon.
 const views = {
     ...import.meta.glob('../views/*.vue', { eager: true }),
     ...import.meta.glob('../features/*/views/*.vue', { eager: true })
@@ -16,15 +17,18 @@ export function createAppRouter(permittedRoutes) {
     const routes = permittedRoutes
         .filter((r) => r.url !== '/')
         .flatMap((r) => {
-            const seg = r.url.split('/').pop().toLowerCase();
+            const parts = r.url.split('/').filter(Boolean).map((x) => x.toLowerCase());
+            const seg = parts[parts.length - 1];
+            const full = parts.join('');
+            const pick = (suffix) => byName[`${full}${suffix}`] ?? byName[`${seg}${suffix}`];
             const list = [{
                 path: r.url,
-                component: byName[`${seg}search`] ?? byName[seg] ?? ComingSoon,
+                component: pick('search') ?? pick('') ?? ComingSoon,
                 meta: { title: r.name }
             }];
             // A detail view is only reachable through its permitted list url.
-            if (byName[`${seg}details`])
-                list.push({ path: `${r.url}/:key`, component: byName[`${seg}details`], meta: { title: `${r.name} - Details` } });
+            if (pick('details'))
+                list.push({ path: `${r.url}/:key`, component: pick('details'), meta: { title: `${r.name} - Details` } });
             return list;
         });
 
