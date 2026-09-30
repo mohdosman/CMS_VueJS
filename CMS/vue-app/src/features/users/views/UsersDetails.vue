@@ -10,7 +10,7 @@ import AppDialog from '../../../common/components/AppDialog.vue';
 
 const {
     isNew, canEdit, form, info, roles, providers, policy, errors, formError, dialog,
-    isLoading, isSaving, hasAdminRole, documentCount, save, remove, passwordSet, agreementsClosed, uploadClosed, cancel
+    isLoading, isSaving, hasAdminRole, documentCount, resetMfa, save, remove, passwordSet, agreementsClosed, uploadClosed, cancel
 } = useUserDetail();
 
 const err = (f) => errors.value[f]?.length ?? 0;
@@ -130,6 +130,7 @@ const idCaption = computed(() => (form.isADAccount
         <template #actions>
             <template v-if="!isNew && canEdit">
                 <AppButton v-if="!form.isADAccount" action="preview" @click="dialog = 'password'">Set password</AppButton>
+                <AppButton v-if="!form.isADAccount && info?.twoFactorEnabled" action="preview" @click="dialog = 'mfa'">Reset MFA</AppButton>
                 <AppButton action="delete" @click="dialog = 'delete'">Delete</AppButton>
             </template>
         </template>
@@ -141,6 +142,15 @@ const idCaption = computed(() => (form.isADAccount
         <template #below>
             <SetPasswordDialog v-if="dialog === 'password'" :user-key="info.userKey" :rules="policy.passwordRules"
                                @close="dialog = ''" @saved="passwordSet" />
+            <AppDialog v-if="dialog === 'mfa'" title="Reset MFA" @close="dialog = ''">
+                <p>
+                    Reset two-factor authentication for <strong>{{ info?.userName }}</strong>? This turns the requirement
+                    off and removes their authenticator, so their current device stops working. Turn "Require two-factor"
+                    back on if they should enroll a new device at next sign-in.
+                </p>
+                <AppButton action="run" @click="resetMfa">Reset MFA</AppButton>
+                <AppButton action="cancel" @click="dialog = ''" />
+            </AppDialog>
             <UserAgreementsDialog v-if="dialog === 'agreements'" :user-key="info.userKey" :can-edit="canEdit"
                                   @close="agreementsClosed" />
             <UserAgreementUploadDialog v-if="dialog === 'upload'" :user-key="info.userKey" @close="uploadClosed" />

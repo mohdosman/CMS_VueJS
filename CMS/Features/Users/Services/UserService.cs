@@ -19,14 +19,14 @@ namespace CMS.Features.Users.Services;
 // through the unit of work; UserManager is used only for Identity operations (hashing, create, delete). Non-admins are scoped two ways:
 //  - roles: only users/roles matching a "users.role.<slug>" permission claim
 //  - providers: only users sharing a provider with the provider_ids claim of the caller
-// MFA reset and agreement documents are not ported yet.
 public sealed class UserService(
     IUnitOfWork uow,
     UserManager<ApplicationUser> users,
     IHttpContextAccessor http,
     IOptions<IdentityOptions> identityOptions,
     IOptions<UserNamePolicyOptions> userNamePolicy,
-    PasswordHistory history)
+    PasswordHistory history,
+    MfaService mfa)
 {
     private const string RolePrefix = "users.role.";
     private const int MaxNameLength = 256, MaxEmailLength = 100, MaxLocalUserNameLength = 50, MaxPhoneLength = 32;
@@ -225,6 +225,20 @@ public sealed class UserService(
         history.Record(u);
         await uow.SaveChangesAsync();
         await tx.CommitAsync(ct);
+        return true;
+    }
+
+    // Administrator action: lifts the two-factor requirement and forgets the enrolled device. False = user not found.
+    public async Task<bool> ResetMfaAsync(Guid userKey, CancellationToken ct)
+    {
+        var u = await uow.Users.GetByKeyAsync(userKey);
+        if (u is null) return false;
+
+        if (u.IsADAccount)
+            throw ValidationFailedException.For("form", "AD accounts get MFA from Microsoft, not from this application.");
+        await EnsureTargetInScopeAsync(u);
+
+        await mfa.ResetAsync(u);
         return true;
     }
 

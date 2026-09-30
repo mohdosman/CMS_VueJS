@@ -9,6 +9,7 @@ public sealed class HomeViewModel
     public string UserName { get; init; } = "";
     public string FullName { get; init; } = "";
     public bool IsAdmin { get; init; }
+    public bool IsADAccount { get; init; }
     public IReadOnlyList<string> Roles { get; init; } = [];
     public IReadOnlyList<string> Permissions { get; init; } = [];
     public IReadOnlyList<MenuNode> Menu { get; init; } = [];

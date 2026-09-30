@@ -80,6 +80,8 @@ services.AddScoped<PermissionCatalog>();
 services.AddScoped<MenuService>();
 services.AddHttpContextAccessor();
 services.AddScoped<PasswordHistory>();
+services.Configure<MfaOptions>(config.GetSection("Mfa"));
+services.AddScoped<MfaService>();
 services.AddScoped<IUnitOfWork, HttpUnitOfWork>();
 services.AddScoped<IPublicFilesService, PublicFilesService>();
 services.AddScoped<UserService>();
@@ -94,6 +96,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
+app.UseMiddleware<RequiredAccountActionMiddleware>();   // pins users who owe a password change or MFA setup
 app.UseAuthorization();
 app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
 

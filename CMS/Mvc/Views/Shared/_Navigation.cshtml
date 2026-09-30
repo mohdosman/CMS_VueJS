@@ -110,6 +110,15 @@
                                         </a>
                                     </li>
                                 }
+                                @* Local accounts only: AD accounts get MFA from Microsoft. *@
+                                @if (!Model.IsADAccount)
+                                {
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Account" asp-action="SetupMfa">
+                                            <span class="fa fa-mobile" aria-hidden="true"></span> Two-Factor Authentication
+                                        </a>
+                                    </li>
+                                }
                                 <li class="user-link-compact">
                                     <a class="dropdown-item" href="#" role="button" onclick="document.getElementById('logout-form').submit(); return false;">
                                         <span class="fa fa-sign-out" aria-hidden="true"></span> Logout

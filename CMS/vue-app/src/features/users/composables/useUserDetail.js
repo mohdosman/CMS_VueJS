@@ -107,6 +107,19 @@ export function useUserDetail() {
         if (uploaded) documentCount.value = (await usersApi.documents(route.params.key)).length;
     }
 
+    // Administrator lifts the two-factor requirement and forgets the user's device; reload so the form shows the result.
+    async function resetMfa() {
+        try {
+            await usersApi.resetMfa(route.params.key);
+            fill(await usersApi.get(route.params.key));
+            dialog.value = '';
+            logSuccess('MFA reset. The user can enroll a new device.');
+        } catch (e) {
+            dialog.value = '';
+            logApiError(e);
+        }
+    }
+
     const cancel = () => router.push('/admin/users');
 
     onMounted(async () => {
@@ -126,6 +139,6 @@ export function useUserDetail() {
 
     return {
         isNew, canEdit, form, info, roles, providers, policy, errors, formError, dialog,
-        isLoading, isSaving, hasAdminRole, documentCount, save, remove, passwordSet, agreementsClosed, uploadClosed, cancel
+        isLoading, isSaving, hasAdminRole, documentCount, resetMfa, save, remove, passwordSet, agreementsClosed, uploadClosed, cancel
     };
 }

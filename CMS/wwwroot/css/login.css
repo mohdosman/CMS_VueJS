@@ -753,3 +753,17 @@ div.basicText a:focus,
     color: var(--login-accent);
     text-decoration: underline;
 }
+
+/* MFA setup */
+.mfa-qr {
+    background: #fff;
+    padding: 6px;
+    border: 1px solid var(--login-border);
+    border-radius: 6px;
+}
+
+.mfa-key {
+    font-family: Consolas, "Courier New", monospace;
+    letter-spacing: 0.04em;
+    overflow-wrap: anywhere;
+}

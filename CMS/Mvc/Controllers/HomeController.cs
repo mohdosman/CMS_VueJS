@@ -24,6 +24,7 @@ public class HomeController(UserManager<ApplicationUser> users, MenuService menu
             UserName = user.UserName ?? "",
             FullName = user.FullName,
             IsAdmin = User.IsInRole(AppRoles.Admin),
+            IsADAccount = user.IsADAccount,
             Roles = User.FindAll(User.Identities.First().RoleClaimType).Select(c => c.Value).ToList(),
             Permissions = User.FindAll(AppClaimTypes.Permission).Select(c => c.Value).Distinct().ToList(),
             Menu = await menus.GetMenuAsync(User),

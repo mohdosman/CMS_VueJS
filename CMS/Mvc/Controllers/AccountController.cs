@@ -18,6 +18,7 @@ public class AccountController(
     UserManager<ApplicationUser> users,
     IUnitOfWork uow,
     PasswordHistory history,
+    MfaService mfa,
     IConfiguration config,
     IEmailSender email,
     IOptions<DataProtectionTokenProviderOptions> resetTokens,
@@ -75,17 +76,136 @@ public class AccountController(
             return View(await WithInfoAsync(model));
         }
 
-        var result = await signIn.PasswordSignInAsync(user, model.Password, isPersistent: false, lockoutOnFailure: true);
-        if (!result.Succeeded)
+        var check = await signIn.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: true);
+        if (!check.Succeeded)
         {
-            log.LogWarning("Login failed for {UserName} (lockedOut={LockedOut})", model.UserName, result.IsLockedOut);
+            log.LogWarning("Login failed for {UserName} (lockedOut={LockedOut})", model.UserName, check.IsLockedOut);
             ModelState.AddModelError("", InvalidLogin);
             return View(await WithInfoAsync(model));
         }
 
+        // An account that requires MFA and has an authenticator answers a code before it is signed in. One that
+        // requires MFA but has not enrolled yet is signed in and pinned to setup by RequiredAccountActionMiddleware.
+        if (mfa.IsRequired(user) && await mfa.IsEnrolledAsync(user))
+        {
+            var pending = await signIn.PasswordSignInAsync(user, model.Password, isPersistent: false, lockoutOnFailure: false);
+            if (pending.RequiresTwoFactor)
+                return RedirectToAction(nameof(VerifyMfa), new { returnUrl });
+
+            log.LogWarning("MFA challenge could not be started for user {UserId}", user.Id);
+            ModelState.AddModelError("", InvalidLogin);
+            return View(await WithInfoAsync(model));
+        }
+
+        await signIn.SignInAsync(user, isPersistent: false);
+        return await CompleteSignInAsync(user, returnUrl);
+    }
+
+    private async Task<IActionResult> CompleteSignInAsync(ApplicationUser user, string? returnUrl)
+    {
         user.LastLoginDate = DateTime.Now;
         await users.UpdateAsync(user);
         return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction("Index", "Home");
+    }
+
+    // ---------------------------------------------------------------- MFA
+
+    // Second step of sign-in: the password was right, so Identity holds a short-lived two-factor cookie for the user.
+    [HttpGet, AllowAnonymous]
+    public async Task<IActionResult> VerifyMfa(string? returnUrl = null)
+    {
+        if (await signIn.GetTwoFactorAuthenticationUserAsync() is null) return RedirectToAction(nameof(Login));
+        ViewData["ReturnUrl"] = returnUrl;
+        return View(new VerifyMfaViewModel());
+    }
+
+    [HttpPost, AllowAnonymous, ValidateAntiForgeryToken]
+    public async Task<IActionResult> VerifyMfa(VerifyMfaViewModel model, string? returnUrl = null)
+    {
+        ViewData["ReturnUrl"] = returnUrl;
+        var user = await signIn.GetTwoFactorAuthenticationUserAsync();
+        if (user is null) return RedirectToAction(nameof(Login));
+        if (!ModelState.IsValid) return View(model);
+
+        // A wrong code counts towards lockout (Identity does it), otherwise the second factor could be guessed freely.
+        var result = await signIn.TwoFactorAuthenticatorSignInAsync(MfaService.Clean(model.Code), isPersistent: false, rememberClient: false);
+        if (result.Succeeded) return await CompleteSignInAsync(user, returnUrl);
+
+        log.LogWarning("MFA code rejected for user {UserId} (lockedOut={LockedOut})", user.Id, result.IsLockedOut);
+        ModelState.AddModelError("", result.IsLockedOut
+            ? "Your account is locked. Try again later or contact support."
+            : "That code is not valid. Try again.");
+        model.Code = "";
+        return View(model);
+    }
+
+    // Enrollment (and re-enrollment on a new phone). Local accounts only: AD accounts get MFA from Entra.
+    [HttpGet]
+    public async Task<IActionResult> SetupMfa()
+    {
+        var user = await users.GetUserAsync(User);
+        if (user is null) return Challenge();
+        if (user.IsADAccount) return RedirectToAction("Index", "Home");
+
+        // Someone already enrolled sees the status and must choose to replace the device: starting setup rotates the
+        // key, which would lock them out of their current one if they walked away.
+        if (await mfa.IsEnrolledAsync(user))
+            return View(new SetupMfaViewModel { Enrolled = true, Required = mfa.IsRequired(user) });
+
+        return await BeginSetupViewAsync(user);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> BeginMfaSetup()
+    {
+        var user = await users.GetUserAsync(User);
+        if (user is null) return Challenge();
+        if (user.IsADAccount) return RedirectToAction("Index", "Home");
+        return await BeginSetupViewAsync(user);
+    }
+
+    private async Task<IActionResult> BeginSetupViewAsync(ApplicationUser user)
+    {
+        var setup = await mfa.BeginSetupAsync(user);
+        // Resetting the key rotates the security stamp; refresh so this session is not signed out at the next check.
+        await signIn.RefreshSignInAsync(user);
+        log.LogInformation("Authenticator key issued for user {UserId}", user.Id);
+        return View("SetupMfa", new SetupMfaViewModel { Required = mfa.IsRequired(user), SharedKey = setup.SharedKey, QrCodeDataUri = setup.QrCodeDataUri });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetupMfa(SetupMfaViewModel model)
+    {
+        var user = await users.GetUserAsync(User);
+        if (user is null) return Challenge();
+        if (user.IsADAccount) return RedirectToAction("Index", "Home");
+
+        if (!MfaService.IsSixDigits(model.Code))
+            return await ShowSetupAgainAsync(user, model, "Enter the six digit code from your authenticator app.");
+
+        if (!await mfa.EnableAsync(user, model.Code))
+        {
+            log.LogWarning("MFA enable rejected, wrong code. UserId {UserId}", user.Id);
+            return await ShowSetupAgainAsync(user, model, "That code is not valid. Check your authenticator app and try again.");
+        }
+
+        // The requirement is settled, so refresh the cookie: it drops the requires_mfa_setup claim.
+        await signIn.RefreshSignInAsync(user);
+        log.LogInformation("MFA enabled for user {UserId}", user.Id);
+        TempData["StatusMessage"] = "Two-factor authentication is on.";
+        return RedirectToAction("Index", "Home");
+    }
+
+    // A wrong code shows the same QR code again: the key issued for this enrollment is kept, not re-rolled.
+    private async Task<IActionResult> ShowSetupAgainAsync(ApplicationUser user, SetupMfaViewModel model, string error)
+    {
+        ModelState.AddModelError("", error);
+        var setup = await mfa.CurrentSetupAsync(user);
+        model.Required = mfa.IsRequired(user);
+        model.SharedKey = setup.SharedKey;
+        model.QrCodeDataUri = setup.QrCodeDataUri;
+        model.Code = "";
+        return View("SetupMfa", model);
     }
 
     [HttpPost, ValidateAntiForgeryToken]

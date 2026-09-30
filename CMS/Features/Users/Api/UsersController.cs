@@ -146,6 +146,26 @@ public sealed class UsersController(
         }
     }
 
+    [HttpPost("{key:guid}/mfa/reset")]
+    [Authorize(Policy = "users.edit")]
+    public async Task<IActionResult> ResetMfa(Guid key, CancellationToken ct)
+    {
+        try
+        {
+            var found = await users.ResetMfaAsync(key, ct);
+
+            if (!found)
+                return NotFound();
+
+            _logger.LogInformation("MFA of user {UserKey} reset by {Actor}", key, User.Identity?.Name);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return Failure(ex, $"Resetting MFA of user {key}");
+        }
+    }
+
     [HttpDelete("{key:guid}")]
     [Authorize(Policy = "users.edit")]
     public async Task<IActionResult> Delete(Guid key, CancellationToken ct)

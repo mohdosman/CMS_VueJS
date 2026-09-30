@@ -16,6 +16,7 @@ export const usersApi = {
     update: async (key, body) => (await http.put(`users/${key}`, body)).data,
     setPassword: async (key, body) => { await http.post(`users/${key}/password`, body); },
     remove: async (key) => { await http.delete(`users/${key}`); },
+    resetMfa: async (key) => { await http.post(`users/${key}/mfa/reset`); },
     documents: async (key) => (await http.get(`users/${key}/documents`)).data,
     uploadDocument: async (key, file) => {
         const body = new FormData();
