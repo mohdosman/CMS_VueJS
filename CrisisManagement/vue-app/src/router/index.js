@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-import Home from '../views/Home.vue';
+import Home from '../features/home/views/Home.vue';
 import ComingSoon from '../views/ComingSoon.vue';
 import Profile from '../features/profile/views/Profile.vue';
 
