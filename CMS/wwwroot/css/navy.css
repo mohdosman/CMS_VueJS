@@ -1,0 +1,39 @@
+/* ================================================
+   Navy theme — consistent with login page branding
+   ================================================ */
+
+:root {
+    --bcms-panel-heading-bg:    #002D65;
+    --bcms-panel-heading-color: #ffffff;
+    --bcms-panel-border-color:  #C7D7F5;
+    --bcms-btn-hover:           #001B40;
+}
+
+/* ── Navbar background (shape/shadow is shared, see cms-theme.css) ── */
+.navbar-inner {
+    background: #002D65;
+}
+
+/* ── Dropdown item hover / active / focus ── */
+.dropdown-menu li > a:hover,
+.dropdown-menu li > a:focus,
+.dropdown-menu .active > a,
+.dropdown-menu .active > a:hover,
+.nav-pills > .active > a,
+.nav-pills > .active > a:hover,
+span.dynatree-active a {
+    background: #004A9F !important;
+    color: #fff !important;
+    border-radius: 6px;
+}
+
+/* ── Table column headers ── */
+.table thead th {
+    background-color: #EEF3FB !important;
+    color: #002D65;
+}
+
+.dataTables_wrapper th.sorting_asc,
+.dataTables_wrapper th.sorting_desc {
+    background-color: #D6E4F7 !important;
+}

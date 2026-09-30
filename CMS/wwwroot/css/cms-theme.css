@@ -1,0 +1,672 @@
+/*
+ * CMS Theme Bridge 
+ *
+ * Loaded after app.css in Index.cshtml so these rules win without.
+ * CSS variables are defined by the active theme file (navy.css, blue.css, etc.)
+ * and cascade into these rules automatically when the user switches themes.
+ */
+
+/* ════════════════════════════════════════════════════════════════════
+   Navbar & dropdown shell — shape, not colour
+   These lived in navy.css, so only the navy theme had them: every other
+   theme fell back to Bootstrap's square dropdown and to style.css's
+   hardcoded #005f8d hover, which is blue on a green/brown/red navbar.
+   Colours stay in the theme files; each one's !important background
+   still wins over the neutral defaults here.
+   ════════════════════════════════════════════════════════════════════ */
+
+.navbar-inner {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    border-bottom: none;
+}
+
+/* Translucent so it reads correctly on any navbar colour */
+.navbar .nav > li > a:hover,
+.navbar .nav > li > a:focus,
+.navbar .nav > li > button:hover,
+.navbar .nav > li > button:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+/* Bootstrap's .navbar-default .navbar-nav > .active > a paints the active item
+   #555 on #e7e7e7 — unreadable on a coloured navbar (1.4:1 on green). Same
+   specificity, so this wins by loading later. */
+.navbar .nav .active > a,
+.navbar .nav .active > a:hover,
+.navbar .nav .active > a:focus,
+.navbar .nav .open > a,
+.navbar .nav .open > a:hover,
+.navbar .nav .open > a:focus {
+    background-color: rgba(0, 0, 0, 0.25);
+    color: #fff;
+    border-radius: 4px;
+}
+
+.navbar .nav li.dropdown.open > .dropdown-toggle,
+.navbar .nav li.dropdown.active > .dropdown-toggle,
+.navbar .nav li.dropdown.open.active > .dropdown-toggle {
+    background-color: rgba(0, 0, 0, 0.2);
+    color: #fff;
+    border-radius: 4px;
+}
+
+.dropdown-menu {
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-top: 6px;
+    padding: 4px;
+    overflow: hidden;
+}
+
+    /* Bootstrap squares the top corners of a navbar dropdown; keep all four
+       rounded, which is what the navy theme has always looked like. */
+    .navbar-nav > li > .dropdown-menu {
+        border-radius: 10px;
+    }
+
+    .dropdown-menu li > a {
+        border-radius: 6px;
+    }
+
+/* ── Panel container ── */
+.card {
+    --bs-card-inner-border-radius: 7px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--bcms-panel-border-color, #ddd);
+    margin-bottom: 20px;
+    /* overflow:hidden intentionally omitted — it clips absolutely-positioned
+       children such as TypeAhead dropdowns. Corner rounding is handled by
+       border-radius on .card-header and .card-footer instead. */
+}
+
+/* ── Panel heading ── */
+.card-header,
+.card > .card-header {
+    background-color: #f8f9fa;
+    color: var(--bcms-panel-heading-bg, #002D65);
+    border-bottom: 1px solid var(--bcms-panel-border-color, #ddd);
+    border-left: 4px solid var(--bcms-panel-heading-bg, #002D65);
+    border-top: none;
+    border-right: none;
+    padding: 10px 12px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+}
+
+    /* Icons match the accent colour */
+    .card-header .fa,
+    .card-header i {
+        margin-right: 6px;
+        opacity: 0.8;
+    }
+
+/* ── Panel body ── */
+.card-body {
+    padding: 16px;
+    background-color: #ffffff;
+}
+
+/* Round the bottom corners of whatever is the last child in the panel
+   (card-body when there is no footer, card-footer when there is one).
+   Avoids overflow:hidden which clips TypeAhead / Flatpickr popups. */
+.card > .card-body:last-child {
+    border-bottom-left-radius: 7px;
+    border-bottom-right-radius: 7px;
+}
+
+.card > *:last-child {
+    border-bottom-left-radius: 7px;
+    border-bottom-right-radius: 7px;
+}
+
+/* ── Panel footer ── */
+.card-footer {
+    padding: 10px 15px;
+    background-color: #f9fafb;
+    border-top: 1px solid var(--bcms-panel-border-color, #ddd);
+    border-bottom-left-radius: 7px;
+    border-bottom-right-radius: 7px;
+}
+
+/* ── Buttons ──
+   Bootstrap 5 buttons read their colours from --bs-btn-* variables in every
+   state (:hover, :focus-visible, :active, .disabled), so the variants below
+   set those instead of background/border/color. Pressed takes the hover
+   colours and disabled keeps the resting ones (Bootstrap fades it). */
+.btn-primary,
+.btn-outline-secondary,
+.btn-danger,
+.btn-success,
+.btn-warning,
+.btn-info {
+    --bs-btn-active-color: var(--bs-btn-hover-color);
+    --bs-btn-active-bg: var(--bs-btn-hover-bg);
+    --bs-btn-active-border-color: var(--bs-btn-hover-border-color);
+    --bs-btn-disabled-color: var(--bs-btn-color);
+    --bs-btn-disabled-bg: var(--bs-btn-bg);
+    --bs-btn-disabled-border-color: var(--bs-btn-border-color);
+}
+
+/* Bootstrap 5 swaps the outline for a translucent glow on .btn:focus-visible
+   (0,2,0, above the themed ring further down); keep the single themed ring. */
+.btn:focus-visible {
+    outline: 2px solid var(--bcms-panel-heading-bg, #002D65);
+    outline-offset: 1px;
+    box-shadow: none;
+}
+
+.btn-primary {
+    --bs-btn-color: #ffffff;
+    --bs-btn-bg: var(--bcms-panel-heading-bg, #002D65);
+    --bs-btn-border-color: var(--bcms-panel-heading-bg, #002D65);
+    --bs-btn-hover-color: #ffffff;
+    --bs-btn-hover-bg: var(--bcms-btn-hover, #001B40);
+    --bs-btn-hover-border-color: var(--bcms-btn-hover, #001B40);
+}
+
+/* Neutral actions (Add / Clear / Cancel / Preview / Close) — a tinted outline
+   of the active theme instead of Bootstrap's white-on-#ccc, which read as
+   disabled next to the filled primary. Still clearly secondary: tint, not fill.
+   The border takes the theme colour at full strength — a tinted mix reads
+   nicer but only clears the 3:1 non-text minimum above ~80% on the lighter
+   themes (blue, green, eastern_blue), and Bootstrap's own #ccc is 1.6:1.
+   dark.css restates .btn-outline-secondary and loads after this file, so the dark theme
+   keeps its own surface colours. */
+.btn-outline-secondary {
+    --bs-btn-color: var(--bcms-panel-heading-bg, #002D65);
+    --bs-btn-bg: color-mix(in srgb, var(--bcms-panel-heading-bg, #002D65) 5%, white);
+    --bs-btn-border-color: var(--bcms-panel-heading-bg, #002D65);
+    --bs-btn-hover-color: var(--bcms-btn-hover, #001B40);
+    --bs-btn-hover-bg: color-mix(in srgb, var(--bcms-panel-heading-bg, #002D65) 12%, white);
+    --bs-btn-hover-border-color: var(--bcms-btn-hover, #001B40);
+}
+
+.btn-danger {
+    --bs-btn-color: #ffffff;
+    --bs-btn-bg: #C0392B;
+    --bs-btn-border-color: #C0392B;
+    --bs-btn-hover-color: #ffffff;
+    --bs-btn-hover-bg: #a93226;
+    --bs-btn-hover-border-color: #a93226;
+}
+
+/* ── TypeAhead dropdown ── */
+
+/* Keyboard-active item */
+.typeahead-dropdown > li.active > a,
+.typeahead-dropdown > li.active > a:hover,
+.typeahead-dropdown > li.active > a:focus {
+    background-color: var(--bcms-panel-heading-bg, #002D65);
+    color: #ffffff;
+}
+
+/* Mouse hover */
+.typeahead-dropdown > li > a:hover,
+.typeahead-dropdown > li > a:focus {
+    background-color: color-mix(in srgb, var(--bcms-panel-heading-bg, #002D65) 8%, white);
+    color: var(--bcms-panel-heading-bg, #002D65);
+    text-decoration: none;
+}
+
+/* ── Tables ── */
+
+/* Header cells — theme-colored text, uppercase label style */
+.table > thead > tr > th {
+    background-color: #f8f9fa;
+    color: var(--bcms-panel-heading-bg, #002D65);
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    border-bottom: 2px solid var(--bcms-panel-heading-bg, #002D65);
+    padding: 8px 6px;
+    white-space: nowrap;
+}
+
+    /* Sort links inside th */
+    .table > thead > tr > th a,
+    .table > thead > tr > th a:hover {
+        color: var(--bcms-panel-heading-bg, #002D65);
+        text-decoration: none;
+    }
+
+/* Visible table title — replaces <caption class="alert alert-info">, whose
+   Bootstrap blue ignored the theme. Tint mixes into transparent, not white,
+   so the dark theme's light accent lands on its own surface with no override
+   there. 5% is the same tint/text pairing .btn-outline-secondary already uses. */
+.table-caption {
+    padding: 8px 12px;
+    background-color: color-mix(in srgb, var(--bcms-panel-heading-bg, #002D65) 5%, transparent);
+    color: var(--bcms-panel-heading-bg, #002D65);
+    border-left: 4px solid var(--bcms-panel-heading-bg, #002D65);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* DataTables sort icons inherit theme colour */
+.dataTables_wrapper th.sorting_asc,
+.dataTables_wrapper th.sorting_desc {
+    background-color: color-mix(in srgb, var(--bcms-panel-heading-bg, #002D65) 15%, white);
+    color: var(--bcms-panel-heading-bg, #002D65);
+}
+
+/* Body cells — lighter, cleaner borders */
+.table > tbody > tr > td,
+.table > tbody > tr > th {
+    border-color: #f0f2f5;
+    vertical-align: top;
+    font-size: 13px;
+    padding: 6px 6px;
+}
+
+/* Bootstrap 5 paints stripe/hover as an inset box-shadow over the cell's
+   background-color, so these set its variables rather than the background. */
+
+/* Striped rows — very subtle alternation */
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    --bs-table-bg-type: #fafbfc;
+}
+
+/* Hover — very subtle theme tint, consistent across all themes */
+.table-hover > tbody > tr:hover > * {
+    --bs-table-bg-state: color-mix(in srgb, var(--bcms-panel-heading-bg, #002D65) 6%, white);
+}
+
+/* Outer border matches theme */
+.table-bordered {
+    border: 1px solid var(--bcms-panel-border-color, #dde3f0);
+}
+
+    .table-bordered > thead > tr > th,
+    .table-bordered > tbody > tr > td,
+    .table-bordered > tfoot > tr > td {
+        border-color: #e8ecf2;
+    }
+
+/* Rounded corners on the table wrapper (Bootstrap wraps in .table-responsive or direct) */
+.table-responsive,
+.card-body > .table-bordered:first-child,
+.card > .table-bordered:first-child {
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+/* ── Pagination (Bootstrap 3 .pagination used by SearchPaging) ── */
+
+.pagination > li > a,
+.pagination > li > span {
+    color: var(--bcms-panel-heading-bg, #002D65);
+    border-color: #dde3f0;
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+    .pagination > li > a:hover,
+    .pagination > li > span:hover {
+        background-color: var(--bcms-panel-border-color, #eef3fb);
+        border-color: var(--bcms-panel-heading-bg, #002D65);
+        color: var(--bcms-panel-heading-bg, #002D65);
+    }
+
+/* Active page pill */
+.pagination > .active > a,
+.pagination > .active > a:hover,
+.pagination > .active > a:focus,
+.pagination > .active > span,
+.pagination > .active > span:hover {
+    background-color: var(--bcms-panel-heading-bg, #002D65);
+    border-color: var(--bcms-panel-heading-bg, #002D65);
+    color: #ffffff;
+}
+
+/* Disabled arrows — #6b6b6b, not a lighter grey: this is still text (4.6:1) */
+.pagination > .disabled > a,
+.pagination > .disabled > span {
+    color: #6b6b6b;
+    border-color: #e8ecf2;
+}
+
+/* ── SearchPaging component ── */
+
+/* Page-size slider accent colour follows the active theme */
+.legacy-page-size-slider__input {
+    accent-color: var(--bcms-panel-heading-bg, #002D65);
+    width: 100%;
+    cursor: pointer;
+}
+
+/* Tick labels beneath the slider */
+.legacy-page-size-slider__label {
+    font-size: 11px;
+    color: #6b7280;
+}
+
+/* "Records per page" heading */
+.legacy-page-size-heading {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--bcms-panel-heading-bg, #002D65);
+    -webkit-font-smoothing: antialiased;
+    margin-bottom: 4px;
+}
+
+/* Record count text */
+.legacy-record-count {
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.6;
+}
+
+/* ── Accessibility: visible keyboard focus (WCAG 2.4.7) ──
+   Bootstrap 3 removes/weakens outlines; restore a clear indicator that
+   follows the active theme colour. :focus-visible keeps it keyboard-only
+   for buttons/links while still showing on text inputs. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible {
+    outline: 2px solid var(--bcms-panel-heading-bg, #002D65);
+    outline-offset: 1px;
+}
+
+/* Route-change focus targets — container focus is programmatic, no ring needed.
+   #vue-app is the one main.js actually focuses in router.afterEach; this rule
+   named only #contentwrapper, so it never applied to the real target. That
+   mattered because #vue-app is zero-height (its only child, #contentwrapper,
+   floats, so the parent collapses) and because a programmatic .focus() still
+   matches :focus-visible once the user has touched the keyboard — which signing
+   in with Enter does. The browser's own :focus-visible ring then painted around
+   a zero-height full-width box, i.e. as a horizontal line across the page.
+   Suppressing the ring does not affect the announcement: the container still
+   takes focus, which is the point of the pattern. */
+#vue-app:focus,
+#contentwrapper:focus {
+    outline: none;
+}
+
+/* ── Sortable column headers: real <button> replaces mouse-only <a @click> (WCAG 2.1.1) ── */
+th .sort-btn {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    font-weight: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+th .sort-btn:hover {
+    text-decoration: underline;
+}
+
+/* ── Accessibility: color contrast (WCAG 1.4.3) ── */
+/* Bootstrap link blue #337ab7 is 4.17:1 on the #f5f5f5 panel background; darken to pass 4.5:1 */
+a {
+    color: #2a6496;
+}
+/* "No records found" red (#ff0000 on near-white = 3.85:1) → darker red at 5.5:1 */
+.msg-error,
+.msg-error strong,
+.has-error,
+tr.error,
+tr.error strong {
+    color: #b3251e;
+}
+
+.act-success {
+    color: #4d7110;
+}
+
+/* Document links in a panel heading sit right-aligned next to each other */
+.card-header .link-btn + .link-btn {
+    margin-left: 14px;
+}
+
+.card-header .link-btn .fa {
+    margin-right: 4px;
+    opacity: 0.9;
+}
+
+/* ── Button styled as a link: keyboard-accessible row actions in detail tables ── */
+.link-btn {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: #2a6496;
+    text-decoration: none;
+    cursor: pointer;
+}
+.link-btn:hover,
+.link-btn:focus {
+    text-decoration: underline;
+}
+
+.act-warning {
+    color: #a16207;
+}
+
+/* Bootstrap's default success/warning/info fills are too light for white
+   text → darker variants ≥4.5:1, white text on all three */
+.btn-success {
+    --bs-btn-color: #ffffff;
+    --bs-btn-bg: #1e7e34;
+    --bs-btn-border-color: #1c7430;
+    --bs-btn-hover-color: #ffffff;
+    --bs-btn-hover-bg: #186429;
+    --bs-btn-hover-border-color: #155724;
+}
+.btn-warning {
+    --bs-btn-color: #ffffff;
+    --bs-btn-bg: #a16207;
+    --bs-btn-border-color: #92580a;
+    --bs-btn-hover-color: #ffffff;
+    --bs-btn-hover-bg: #854d0e;
+    --bs-btn-hover-border-color: #713f12;
+}
+.btn-info {
+    --bs-btn-color: #ffffff;
+    --bs-btn-bg: #0369a1;
+    --bs-btn-border-color: #075985;
+    --bs-btn-hover-color: #ffffff;
+    --bs-btn-hover-bg: #075985;
+    --bs-btn-hover-border-color: #0c4a6e;
+}
+
+/* Group/caption text converted from orphan <label> elements (a11y lint) */
+.group-label,
+span.form-label {
+    display: block;
+    font-weight: normal;
+    margin-bottom: 5px;
+    max-width: 100%;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Modern form controls — app-wide refined polish (2026-07)
+   Restyles the existing Bootstrap 3 markup (.form-control, .form-label,
+   legend, .has-error) with no DOM or logic changes. Accent colours pull
+   from the active theme via --bcms-panel-heading-bg, so it recolours with
+   the theme switcher. Loads last, so no needed.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Inputs, selects, textareas ── */
+.form-control {
+    height: 30px;
+    padding: 4px 12px;
+    font-size: 14px;
+    color: #1f2733;
+    border: 1px solid #d3dbe7;
+    border-radius: 8px;
+    box-shadow: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.form-control-sm.form-control {
+    height: 30px;
+    min-height: 30px;
+}
+textarea.form-control {
+    height: auto;
+    min-height: 72px;
+}
+.form-control:hover {
+    border-color: #b9c4d6;
+}
+.form-control:focus {
+    border-color: var(--bcms-panel-heading-bg, #002D65);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bcms-panel-heading-bg, #002D65) 14%, transparent);
+    outline: none;
+}
+.form-control[readonly],
+.form-control[disabled],
+fieldset[disabled] .form-control {
+    background: #f4f6fa;
+    color: #5f6673;
+}
+
+/* ── Custom dropdown chevron ── */
+select.form-control:not([multiple]) {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    /* Bootstrap 3 forces select.form-control-sm { line-height: 30px }; reset it so the
+       text centres with the same padding the inputs use. */
+    line-height: 1.5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238792a3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 34px;
+}
+
+/* ── Field labels: quieter micro-labels ── */
+.form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #5b6472;
+    letter-spacing: .02em;
+    margin-bottom: 6px;
+}
+
+/* ── Error state: reuse .has-error (set on blur/submit by the views) ── */
+.has-error .form-control {
+    border-color: #b3251e;
+    background: #fdf5f5;
+}
+.has-error .form-control:focus {
+    border-color: #b3251e;
+    box-shadow: 0 0 0 3px rgba(179, 37, 30, .14);
+}
+.has-error .form-label {
+    color: #a3384a;
+}
+
+/* ── Section headers: fieldset legends styled like the accent panel headings ── */
+legend.h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--bcms-panel-heading-bg, #002D65);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--bcms-panel-border-color, #dbe3f0);
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+}
+
+/* ── Radio / checkbox groups: a little breathing room (kept native, not segmented) ── */
+.radio-inline,
+.checkbox-inline {
+    font-size: 13px;
+}
+/* Radio groups are laid out without a .mb-3 wrapper, so they miss the
+   standard row spacing — give them the same 15px bottom margin as a field. */
+[role="radiogroup"] {
+    margin-bottom: 15px;
+}
+/* ════════════════════════════════════════════════════════════════════
+   Accessibility (merged from accessibility.css, 2026-08)
+   Kept as the last section so these contrast fixes settle after the
+   component styles above. Rules that were dead (.toast-info), no-ops
+   (button.btn resetting shadows nothing sets) or duplicates of colours
+   already defined above (.msg-error, .has-error, the disabled-pager
+   grey) were dropped — the survivors below all change something.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* Skip-to-content: hidden until keyboard focus, then above the fixed navbar */
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    z-index: 1100; /* above .fixed-top (1030) */
+    padding: 8px 16px;
+    background: #ffffff;
+    color: #0056b3;
+}
+
+.skip-link:focus {
+    left: 8px;
+    top: 8px;
+    /* Themed, not #ffcc00: this link paints its own white background, so the
+       yellow ring was 1.51:1 against the thing directly inside it. */
+    outline: 2px solid var(--bcms-panel-heading-bg, #002D65);
+    outline-offset: 1px;
+}
+
+/* No button-specific ring here. The yellow one that was (#ffcc00, justified as
+   staying legible on all seven navbar/panel colours) sits at outline-offset 2px,
+   i.e. on the surface *behind* the button — the white panel body, where it
+   measured 1.51:1 against the 3:1 WCAG 1.4.11 wants. Buttons fall through
+   to the themed `button:focus-visible` ring above, 4.98:1 or better in
+   every theme. */
+
+/* Class-only, not button.btn-link: the theme file loads after this one and
+   must be able to recolour it — an element-qualified selector would outrank a
+   theme's plain .btn-link and leave dark themes with 2.4:1 link text. */
+.btn-link {
+    color: #0056b3;
+    text-decoration: none; /* Bootstrap 5 underlines at rest; 3 only did on hover */
+    background-color: transparent;
+    border: none;
+    padding: 6px 12px;
+}
+
+    /* The outline used to be on this pair, which meant hover carried it too. That
+       was invisible while style.css suppressed outlines; with that gone, merely
+       moving the mouse over a link button would have painted a focus ring.
+       Colour and underline still respond to hover; only the ring is focus-only. */
+    .btn-link:hover,
+    .btn-link:focus-visible {
+        color: #003d80;
+        text-decoration: underline;
+        background-color: #f0f0f0;
+    }
+
+    .btn-link:focus-visible {
+        outline: 2px solid var(--bcms-panel-heading-bg, #002D65);
+        outline-offset: 1px;
+    }
+
+/* Same red as the other error text above. Bootstrap's own #a94442 is 4.53:1
+   on the alert background and accessibility.css's #c62828 was actually worse
+   at 4.36:1; this is 5.09:1 there and 6.56:1 on white. No !important — the
+   theme file loads last and has to be able to recolour it (a dark alert needs
+   a light red). */
+.alert-danger {
+    color: #b3251e;
+}

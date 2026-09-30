@@ -1,0 +1,826 @@
+/* ================================================================
+   Dark theme — full dark UI, not just a dark navbar.
+
+   Loaded as <link id="link_theme"> LAST in the <head> — after app.css and
+   cms-theme.css — so plain load order wins almost everything here. The few
+   remaining !importants each answer a rule that outranks load order: a
+   competing !important, higher specificity, or a Vue <style scoped>
+   [data-v-*] attribute selector. They are commented where they appear.
+
+   Contrast (WCAG 2.1 AA — 4.5:1 text, 3:1 UI boundaries), measured:
+     text #e7eef6 on surface #171e27 .......... 14.35:1
+     text on page bg #10151c .................. 15.67:1
+     muted #a3b1c2 on surface ................. 7.69:1
+     accent #7cb0f5 on surface ................ 7.50:1
+     accent on heading surface #1e2836 ........ 6.65:1
+     white on solid accent #2b6cb0 ............ 5.42:1
+     input border #6d7f95 on input bg ......... 4.27:1
+     focus ring #2b6cb0 on surface ............ 3.10:1
+   Panel/table separators sit below 3:1 on purpose — they divide two
+   surfaces, they are not control boundaries.
+   ================================================================ */
+
+:root {
+    /* Native dark UA widgets: scrollbars, date pickers, select popups */
+    color-scheme: dark;
+
+    --cms-bg: #10151c; /* page */
+    --cms-surface: #171e27; /* panel body, modal, dropdown */
+    --cms-surface-2: #1e2836; /* panel heading, table head, navbar */
+    --cms-surface-3: #1b232e; /* panel footer, striped rows */
+    --cms-input-bg: #131a23;
+    --cms-row-hover: #22303f;
+    --cms-border: #2e3a49; /* surface separators */
+    --cms-border-strong: #6d7f95; /* control boundaries (4.27:1) */
+    --cms-text: #e7eef6;
+    --cms-muted: #a3b1c2;
+    --cms-accent: #7cb0f5; /* accent as TEXT on dark */
+    --cms-accent-solid: #2b6cb0; /* accent as FILL under white text */
+    --cms-danger: #ff8a80;
+    --cms-success: #7ee2a8;
+    --cms-warning: #ffc971;
+
+    /* Shared theme contract consumed by cms-theme.css */
+    --bcms-panel-heading-bg: var(--cms-accent);
+    --bcms-panel-heading-color: #0b0f14;
+    --bcms-panel-border-color: var(--cms-border);
+    --bcms-btn-hover: #23578e;
+
+    /* Login pages (_LoginLayout), overriding the defaults in login.css.
+       login.css collapses accent-as-text and accent-as-fill into one token,
+       which no single colour can satisfy on a dark surface. The tokens below
+       take the FILL reading (white text sits on --login-primary); the handful
+       of places login.css uses them as text are re-pointed at --cms-accent
+       in the login section at the foot of this file. */
+    --login-ink: var(--cms-text);
+    --login-muted: var(--cms-muted);
+    --login-border: var(--cms-border);
+    --login-panel: var(--cms-surface);
+    --login-page: var(--cms-bg);
+    --login-primary: var(--cms-accent-solid);
+    --login-primary-dark: var(--cms-accent);
+    --login-accent: var(--cms-accent);
+    --login-focus: var(--cms-warning);
+
+    /* Bootstrap 5 components (tables, cards, dropdowns, badges' muted text)
+       resolve their colours from these rather than from their own rules. */
+    --bs-body-bg: var(--cms-bg);
+    --bs-body-color: var(--cms-text);
+    --bs-emphasis-color: var(--cms-text);
+    --bs-secondary-color: var(--cms-muted);
+    --bs-secondary-bg: #1a222c;
+    --bs-tertiary-bg: var(--cms-surface-3);
+    --bs-border-color: var(--cms-border);
+}
+
+/* ── Page ──
+   html is painted too: the canvas keeps the UA white otherwise, and it shows
+   through as a hairline at fractional layout boundaries (#contentwrapper is
+   floated, body is height:100% + overflow-x:hidden). */
+html,
+body {
+    background: var(--cms-bg);
+    color: var(--cms-text);
+}
+
+/* .main_content is the white page canvas every view renders into
+   (style.css:166) — without this the panels float on white. */
+#maincontainer,
+#contentwrapper,
+.main_content,
+.sidebar_hidden,
+.sidebar_right.sidebar_hidden #maincontainer {
+    background: var(--cms-bg);
+}
+
+/* style.css puts a white text-shadow on table headers for the light skin;
+   on dark it turns the header text into a white smear. */
+.table th,
+.fc thead th,
+.dataTables_wrapper .sorting_asc,
+.dataTables_wrapper .sorting_desc {
+    text-shadow: none;
+}
+
+/* Remaining hardcoded white surfaces from the legacy skin */
+.tt-dropdown-menu,
+.ui-spinner,
+.dataTables_empty,
+.dataTables_processing,
+.dataTables_wrapper .details table td,
+.pagination > li > div > a,
+.pagination > li > div > span {
+    background: var(--cms-surface);
+    color: var(--cms-text);
+    border-color: var(--cms-border);
+}
+
+hr {
+    border-top-color: var(--cms-border);
+}
+
+/* :not(.btn) so link-styled buttons keep their own text colour */
+a:not(.btn) {
+    color: var(--cms-accent);
+}
+
+    a:not(.btn):hover,
+    a:not(.btn):focus {
+        color: #a9cbfa;
+    }
+
+.text-muted,
+small,
+.form-text {
+    color: var(--cms-muted);
+}
+
+/* ── Navbar ── */
+.navbar {
+    background-color: var(--cms-surface-2);
+    border-color: var(--cms-border);
+}
+
+.navbar-inner {
+    background: var(--cms-surface-2);
+    border-bottom: 1px solid var(--cms-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.navbar .nav > li > a:hover,
+.navbar .nav > li > a:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+}
+
+.navbar .nav .active > a,
+.navbar .nav .active > a:hover {
+    background: var(--cms-accent-solid);
+    border-radius: 4px;
+}
+
+/* Navbar links are inside a dark bar in every theme — keep them light.
+   !important: theme files set these colours with higher specificity. */
+.navbar .nav > li > a,
+.navbar .nav > li > button,
+.navbar .brand {
+    color: #fff !important;
+}
+
+/* ── Dropdown menus (navbar + typeahead + selects) ── */
+.dropdown-menu {
+    background: var(--cms-surface-2);
+    border: 1px solid var(--cms-border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+    .dropdown-menu li > a {
+        color: var(--cms-text);
+    }
+
+    .dropdown-menu li > a:hover,
+    .dropdown-menu li > a:focus,
+    .dropdown-menu .active > a,
+    .dropdown-menu .active > a:hover,
+    .nav-pills > .active > a,
+    .nav-pills > .active > a:hover,
+    span.dynatree-active a {
+        background: var(--cms-accent-solid);
+        color: #fff;
+    }
+
+.dropdown-divider {
+    border-top-color: var(--cms-border);
+}
+
+/* ── Panels ── */
+.card {
+    background: var(--cms-surface);
+    border-color: var(--cms-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.card-header,
+.card > .card-header {
+    background-color: var(--cms-surface-2);
+    color: var(--cms-accent);
+    border-bottom-color: var(--cms-border);
+}
+
+.card-body {
+    background-color: var(--cms-surface);
+    color: var(--cms-text);
+}
+
+.card-footer {
+    background-color: var(--cms-surface-3);
+    border-top-color: var(--cms-border);
+    color: var(--cms-text);
+}
+
+legend,
+legend.h4 {
+    color: var(--cms-accent);
+    border-bottom-color: var(--cms-border);
+}
+
+/* ── Tables ──
+   cms-theme.css marks the header, stripe, hover and grid-border declarations
+   !important, so these have to answer in kind. */
+.table > thead > tr > th {
+    background-color: var(--cms-surface-2);
+    color: var(--cms-accent);
+    border-bottom-color: var(--cms-accent-solid);
+}
+
+    .table > thead > tr > th a,
+    .table > thead > tr > th a:hover,
+    .table > thead > tr > th .sort-btn {
+        color: var(--cms-accent);
+    }
+
+.table > tbody > tr > td,
+.table > tbody > tr > th,
+.table > tfoot > tr > td {
+    background-color: transparent;
+    border-color: var(--cms-border);
+    color: var(--cms-text);
+}
+
+/* Stripe and hover are Bootstrap 5's inset box-shadow overlay; see cms-theme.css. */
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    --bs-table-bg-type: var(--cms-surface-3);
+}
+
+.table-hover > tbody > tr:hover > * {
+    --bs-table-bg-state: var(--cms-row-hover);
+}
+
+.table tbody tr.rowlink:hover td {
+    background-color: var(--cms-row-hover);
+}
+
+.table-bordered,
+.table-bordered > thead > tr > th,
+.table-bordered > tbody > tr > td,
+.table-bordered > tbody > tr > th,
+.table-bordered > tfoot > tr > td {
+    border-color: var(--cms-border);
+}
+
+.dataTables_wrapper th.sorting_asc,
+.dataTables_wrapper th.sorting_desc {
+    background-color: var(--cms-row-hover);
+    color: var(--cms-accent);
+}
+
+/* ── Forms ── */
+.form-control {
+    background-color: var(--cms-input-bg);
+    color: var(--cms-text);
+    border-color: var(--cms-border-strong);
+}
+
+    .form-control:hover {
+        border-color: #8698ad;
+    }
+
+    .form-control:focus {
+        border-color: var(--cms-accent);
+        box-shadow: 0 0 0 3px rgba(124, 176, 245, 0.22);
+    }
+
+    .form-control::placeholder {
+        color: #8592a3;
+    }
+
+    /* fieldset[disabled]: bootstrap's own `fieldset[disabled] .form-control`
+       (0,2,1) outranks the two above and paints #eee under light text. */
+    .form-control[readonly],
+    .form-control[disabled],
+    fieldset[disabled] .form-control {
+        background: #1a222c;
+        color: var(--cms-muted);
+    }
+
+/* Native chevron on selects is drawn as a light-grey SVG data URI in
+   cms-theme.css; it reads fine on the dark input, so only the popup
+   list (handled by color-scheme: dark) needed changing. */
+
+/* Field micro-labels stay quiet (7.69:1); option text next to a radio or
+   checkbox is content, so it keeps full-strength text colour. */
+.form-label,
+.group-label,
+span.form-label {
+    color: var(--cms-muted);
+}
+
+label,
+.radio-inline,
+.checkbox-inline {
+    color: var(--cms-text);
+}
+
+/* color-scheme: dark leaves radios and checkboxes on the UA's grey, which
+   reads as disabled next to the blue they get in every other theme. */
+input[type="radio"],
+input[type="checkbox"] {
+    accent-color: var(--cms-accent);
+}
+
+.input-group-text {
+    background: var(--cms-surface-2);
+    border-color: var(--cms-border-strong);
+    color: var(--cms-muted);
+}
+
+.has-error .form-control {
+    border-color: var(--cms-danger);
+    background: #241618;
+}
+
+.has-error .form-label,
+.has-error .form-text,
+.errorMessage {
+    color: var(--cms-danger);
+}
+
+/* ── Buttons ── */
+/* Bootstrap 5 --bs-btn-* variables; cms-theme.css maps the pressed and
+   disabled states onto these. */
+.btn-outline-secondary {
+    --bs-btn-color: var(--cms-text);
+    --bs-btn-bg: var(--cms-surface-2);
+    --bs-btn-border-color: var(--cms-border-strong);
+    --bs-btn-hover-color: var(--cms-text);
+    --bs-btn-hover-bg: var(--cms-row-hover);
+    --bs-btn-hover-border-color: #8698ad;
+}
+
+.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--cms-accent-solid);
+    --bs-btn-border-color: var(--cms-accent-solid);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #3f82c9;
+    --bs-btn-hover-border-color: #3f82c9;
+}
+
+.btn-link,
+.link-btn {
+    color: var(--cms-accent);
+}
+
+/* ── Pagination ── */
+.pagination > li > a,
+.pagination > li > span {
+    background-color: var(--cms-surface-2);
+    border-color: var(--cms-border);
+    color: var(--cms-accent);
+}
+
+    .pagination > li > a:hover,
+    .pagination > li > span:hover {
+        background-color: var(--cms-row-hover);
+        border-color: var(--cms-accent);
+    }
+
+/* !important: cms-theme.css marks the active page pill !important. */
+.pagination > .active > a,
+.pagination > .active > a:hover,
+.pagination > .active > a:focus,
+.pagination > .active > span,
+.pagination > .active > span:hover {
+    background-color: var(--cms-accent-solid);
+    border-color: var(--cms-accent-solid);
+    color: #fff;
+}
+
+.pagination > .disabled > a,
+.pagination > .disabled > span {
+    background-color: var(--cms-surface);
+    border-color: var(--cms-border);
+    color: #7f8b9b;
+}
+
+/* ── Typeahead ──
+   The option row is a <span class="typeahead-option"> from TypeaheadInput.vue's
+   <style scoped>, so these carry a [data-v-*] hash and need !important. Its light
+   theme hover is a near-white color-mix() with accent-coloured text, which is
+   unreadable on a dark dropdown. */
+.typeahead-dropdown {
+    background: var(--cms-surface-2);
+}
+
+    .typeahead-dropdown > li > .typeahead-option {
+        color: var(--cms-text) !important;
+    }
+
+    .typeahead-dropdown > li > .typeahead-option:hover {
+        background-color: var(--cms-row-hover) !important;
+        color: var(--cms-text) !important;
+    }
+
+    /* Keyboard-highlighted row: white on the solid accent (5.42:1) */
+    .typeahead-dropdown > li.active > .typeahead-option,
+    .typeahead-dropdown > li.active > .typeahead-option:hover {
+        background-color: var(--cms-accent-solid) !important;
+        color: #fff !important;
+    }
+
+/* ── Modals (Bootstrap + the Vue AppDialog) ──
+   The .cc-* half is AppDialog.vue's <style scoped>, so those declarations
+   carry a [data-v-*] hash and need !important, same as the role chips. */
+.modal-content,
+.cc-modal-content {
+    background: var(--cms-surface) !important;
+    color: var(--cms-text) !important;
+    border-color: var(--cms-border) !important;
+}
+
+.modal-header,
+.cc-modal-header {
+    background: var(--cms-surface-2) !important;
+    border-color: var(--cms-border) !important;
+    color: var(--cms-text) !important;
+}
+
+.modal-footer,
+.cc-modal-footer {
+    background: var(--cms-surface-3) !important;
+    border-color: var(--cms-border) !important;
+}
+
+.modal-header .close,
+.cc-modal-close {
+    color: var(--cms-text) !important;
+    opacity: 0.8;
+    text-shadow: none;
+}
+
+    .cc-modal-close:hover {
+        color: #fff !important;
+    }
+
+.modal-backdrop,
+.modal-backdrop.fade.in {
+    background: rgba(0, 0, 0, 0.65);
+}
+
+/* ── Alerts and inline notes ── */
+.alert-info {
+    background: #12303f;
+    border-color: #1d4f68;
+    color: #b6e3f7;
+}
+
+.alert-success {
+    background: #12301f;
+    border-color: #1f5636;
+    color: var(--cms-success);
+}
+
+.alert-warning {
+    background: #33280f;
+    border-color: #6a5218;
+    color: var(--cms-warning);
+}
+
+/* accessibility.css pins .alert-danger to a dark red with !important — that
+   red is 2.87:1 on a dark alert, so it has to be overridden here. */
+.alert-danger,
+.alert-error {
+    background: #331a1a;
+    border-color: #6b2b2b;
+    color: var(--cms-danger);
+}
+
+/* Required-field markers and error text from accessibility.css (#c62828) */
+.f_req,
+.has-error {
+    color: var(--cms-danger);
+}
+
+/* validation.css ships .form-text.has-error{color:#a94442} (WCAG 1.4.3:
+   2.87:1 on this theme's dark surface) — that compound selector's (0,2,0)
+   specificity beats the plain .has-error above regardless of load order, so
+   it has to be matched here explicitly rather than just re-stated. */
+.form-text.has-error {
+    color: var(--cms-danger);
+}
+
+/* Vue ContextNote */
+.context-note--warning {
+    background: #33280f;
+    border-color: #6a5218;
+    color: var(--cms-warning);
+}
+
+.context-note--danger {
+    background: #331a1a;
+    border-color: #6b2b2b;
+    color: var(--cms-danger);
+}
+
+/* "No records found" / error rows read as light red on dark */
+.msg-error,
+.msg-error strong,
+tr.error,
+tr.error strong {
+    color: var(--cms-danger);
+}
+
+.act-success {
+    color: var(--cms-success);
+}
+
+.act-warning {
+    color: var(--cms-warning);
+}
+
+/* ── Role chips (Users search/detail) ──
+   role-chips.css is a Vue <style scoped> import, so its selectors carry a
+   [data-v-*] hash that changes every build — !important, not specificity. */
+/* Separator border, not the input-boundary one: like the light theme's faint
+   #d1d5db, the chip outline only groups; the checkbox inside and the filled
+   .active state carry the control contrast. The strong border outlined all
+   ~50 chips at 4:1 and made the grid the loudest thing on the page. */
+.role-chip {
+    background-color: var(--cms-surface-2) !important;
+    border-color: var(--cms-border) !important;
+    color: var(--cms-muted) !important;
+}
+
+    .role-chip:hover {
+        background-color: var(--cms-row-hover) !important;
+        border-color: var(--cms-accent) !important;
+        color: var(--cms-accent) !important;
+    }
+
+    /* Selected: white on the light accent is 2:1, so fill with the solid one */
+    .role-chip.active {
+        background-color: var(--cms-accent-solid) !important;
+        border-color: var(--cms-accent-solid) !important;
+        color: #fff !important;
+    }
+
+.role-section-label,
+.role-hint {
+    color: var(--cms-muted) !important;
+}
+
+/* ── Role details permission tree ──
+   The group header is a .card-header, so it is already dark — but
+   role-details.css (Vue <style scoped>, so [data-v-*] specificity) keeps its
+   near-black text and light hover states on top of it. */
+.capability-section-title {
+    color: var(--cms-accent) !important;
+}
+
+    .capability-section-title .fa {
+        color: var(--cms-muted) !important;
+    }
+
+.capability-section-header:hover,
+.permission-cell:hover {
+    background-color: var(--cms-row-hover) !important;
+}
+
+.permission-cell {
+    color: var(--cms-text) !important;
+}
+
+/* Toggle: off reads as a muted track, on as the solid accent so the white
+   knob stays legible against it (5.42:1). */
+.permission-switch {
+    background-color: var(--cms-border-strong) !important;
+}
+
+.permission-switch-input:checked + .permission-switch {
+    background-color: var(--cms-accent-solid) !important;
+}
+
+.permission-switch-input:focus-visible + .permission-switch {
+    outline-color: var(--cms-accent) !important;
+}
+
+/* Paired View/Manage report rows: same [data-v-*] problem — role-details.css
+   ships near-black text on a white zebra stripe. */
+.permission-pair-table {
+    color: var(--cms-text) !important;
+    border-color: var(--cms-border) !important;
+}
+
+.pair-row:not(.pair-head):nth-child(even) {
+    background-color: var(--cms-surface-3) !important;
+}
+
+.pair-head {
+    color: var(--cms-muted) !important;
+    border-bottom-color: var(--cms-border) !important;
+}
+
+.pair-none {
+    color: var(--cms-muted) !important;
+}
+
+.capability-section-count {
+    color: var(--cms-muted) !important;
+    border-color: var(--cms-border-strong) !important;
+}
+
+/* ── Misc ── */
+.legacy-record-count,
+.legacy-page-size-slider__label,
+.theme-picker-label {
+    color: var(--cms-muted);
+}
+
+.legacy-page-size-heading {
+    color: var(--cms-accent);
+}
+
+.progress {
+    background-color: var(--cms-surface-3);
+    box-shadow: none;
+}
+
+.overlayContent {
+    background-color: var(--cms-surface);
+    color: var(--cms-text);
+    border-color: var(--cms-border);
+}
+
+.page-splash-message {
+    color: var(--cms-text);
+}
+
+/* Keyboard focus ring: the accent is too dark as a fill here, use the
+   light accent so it stays visible on every dark surface. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible {
+    outline-color: var(--cms-accent);
+}
+
+/* Anything else that takes focus (containers with tabindex, programmatic
+   focus targets) gets Chrome's default ring, which is WHITE under
+   color-scheme: dark — a full-width white line around a full-width element. */
+:focus-visible {
+    outline-color: var(--cms-accent);
+}
+
+.skip-link {
+    background: var(--cms-surface-2);
+    color: var(--cms-accent);
+}
+
+/* ── Login pages (_LoginLayout + login.css) ──
+   login.css hardcodes a light palette in the places the --login-* tokens
+   don't reach, and several of its selectors outrank the generic rules above
+   (`.login_page body` is 0,1,1 against this file's `body`), so load order
+   alone doesn't carry them. Each rule below matches login.css's own selector
+   so plain source order decides.
+
+   Contrast (measured, same method as the file header):
+     text #e7eef6 on panel #171e27 ............ 14.35:1
+     muted #a3b1c2 on panel ................... 7.69:1
+     accent #7cb0f5 on panel .................. 7.50:1
+     accent on rules panel #1e2836 ............ 6.65:1
+     white on submit fill #2b6cb0 ............. 5.42:1
+     input border #6d7f95 on input bg ......... 4.27:1 */
+
+html.login_page,
+.login_page body {
+    background:
+        linear-gradient(135deg, rgba(124, 176, 245, 0.05), rgba(43, 108, 176, 0.04)),
+        var(--cms-bg);
+}
+
+/* ── Agency header ──
+   login.css paints it white with navy #002D65 labels; on the dark page that
+   reads as a light theme bar. Match the app navbar surface instead. The TN
+   badge is a self-contained red tile, so it needs no white ground. */
+.login_page #PageHeader {
+    background-color: var(--cms-surface-2);
+    border-bottom: 1px solid var(--cms-border);
+}
+
+.login_page .agency-state-label {
+    color: var(--cms-muted);
+}
+
+.login_page #PageHeader .agency-name-label {
+    color: var(--cms-text);
+}
+
+.login_page .login_box {
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+}
+
+.login_page label {
+    color: var(--cms-text);
+}
+
+.login_page .form-control {
+    background: var(--cms-input-bg);
+    border-color: var(--cms-border-strong);
+}
+
+/* ── TN lockup ──
+   tn_logo.png is a transparent PNG whose wordmark is navy #1f3a6e — roughly
+   1.5:1 on this page. It is an official state lockup, so a brightness/invert
+   filter is the wrong fix: it would shift the mandated navy and wash the red
+   mark out to pink. Give it the white ground it was drawn for instead.
+   Supersede this with a reversed (white-wordmark) lockup as tn_logo_dark.png
+   if the TDMHSAS brand kit publishes one.
+
+   The ground goes on the wrapper, not the <img>: the image is capped at
+   max-width 410px inside a 430px column, so plating the image itself stops
+   20px short of the card below it. */
+.login-brand {
+    background: #fff;
+    padding: 10px 14px;
+    border-radius: 8px;
+}
+
+/* ── Acknowledgement + support cards ──
+   login.css floats these on rgba(255,255,255,0.88) — a literal, not a token,
+   so nothing above reaches it. Same surface and alpha, dark side. */
+.acknowledgement,
+.support-panel {
+    background: rgba(23, 30, 39, 0.88);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* ── Submit button ──
+   --login-primary is the fill (white text on it), so only the hover state
+   needs re-pointing: the token now resolves to the light accent-as-text. */
+.login_page .btn-primary.login-submit:hover,
+.login_page .btn-primary.login-submit:focus {
+    background: #23578e;
+    border-color: #23578e;
+}
+
+/* ── Errors ── */
+.login_page .text-danger,
+.login_page .error {
+    color: var(--cms-danger);
+}
+
+.login_page .f_error .form-control {
+    border-color: var(--cms-danger);
+    box-shadow: 0 0 0 3px rgba(255, 138, 128, 0.16);
+}
+
+/* ── Federated sign-in button ── */
+.openid-link {
+    background: var(--cms-surface-2);
+    border-color: var(--cms-border-strong);
+}
+
+    .openid-link:hover,
+    .openid-link:focus {
+        background: var(--cms-row-hover);
+    }
+
+/* ── Password rules panel ── */
+.password-rules-panel {
+    background: var(--cms-surface-2);
+}
+
+/* h2 and met-rule text read --login-primary as a colour, not a fill */
+.password-rules-panel h2,
+.password-rules-panel li.is-met {
+    color: var(--cms-accent);
+}
+
+.password-rules-panel ul {
+    color: var(--cms-text);
+}
+
+.password-rules-panel li {
+    color: var(--cms-muted);
+}
+
+/* Unmet marker; once met, login.css fills it with --login-primary and the
+   white ::before tick lands on #2b6cb0 at 5.42:1. */
+.password-rules-panel .rule-status {
+    background: var(--cms-input-bg);
+    border-color: var(--cms-border-strong);
+}
+
+/* ── Body copy across the confirmation / access-denied / secret-key pages ── */
+.confirmation-content p,
+.acknowledgement p,
+.support-contact {
+    color: var(--cms-text);
+}
+
+.secret-key-intro,
+.field-help {
+    color: var(--cms-muted);
+}

@@ -1,0 +1,393 @@
+/* ============================================================
+   style.css — base skin, loaded by both layouts right after
+   Bootstrap and Font Awesome (_Layout adds cms-theme.css and the
+   theme file on top; _LoginLayout adds login.css).
+   ============================================================ */
+
+/* ── Base ── */
+	body {color: #222;padding: 0;overflow-x:hidden;font-size: 13px}
+	html,body {height:100%}
+
+	/* fix for inputs inline shadow */
+	input[type="text"], input[type="email"], input[type="search"], input[type="password"] {
+		-webkit-appearance: none;
+		-moz-appearance: none;
+	}
+
+	/* This used to be "a,button,input {outline:none !important}", commented
+	   "remove buttons borders (ie7)". The !important outranked every focus rule in
+	   every other stylesheet, so no link, button or input in the app ever painted a
+	   focus outline -- including the rules in login.css and cms-theme.css written
+	   specifically to provide one. They were all dead.
+
+	   The modern equivalent of the same intent: suppress the ring only when focus
+	   did not come from the keyboard. :focus-visible rules below and elsewhere then
+	   paint normally, and a mouse click still leaves nothing behind. */
+	:focus:not(:focus-visible) {
+		outline: none;
+	}
+
+	/* Bootstrap's ".btn:active:focus {outline: -webkit-focus-ring-color auto 5px}"
+	   is 0,3,0 and so outranks both the reset above and every :focus-visible ring
+	   in the app, which are 0,2,0 to 0,2,1. Holding the mouse down on a button
+	   would flash the browser's default ring. 0,4,0 puts it back, and the
+	   :not(:focus-visible) keeps the keyboard ring intact. */
+	.btn:active:focus:not(:focus-visible) {
+		outline: none;
+	}
+
+	caption.visually-hidden,
+	caption .visually-hidden {
+		/* Was hardcoded #000 to beat Bootstrap's caption color (#777, itself only
+		   4.48:1 on white — already borderline) — fine on light themes, but
+		   1.15:1 on dark theme's near-black surface. --cms-text (set by
+		   dark.css) is 14.35:1 there; #000 stays the fallback everywhere else. */
+		color: var(--cms-text, #000) !important;
+	}
+
+	.control-span {display: inline-block; margin-bottom: 5px !important;}
+
+	/* webkit extra margin fix */
+	@media screen and (-webkit-min-device-pixel-ratio:0) {
+		button {margin: 0}
+	}
+
+/* ── Bootstrap 5 baseline, pinned back to the Bootstrap 3 metrics this skin
+      was drawn against so the upgrade doesn't reflow every screen. html stays
+      at Bootstrap 5's 16px root; the app's own sizes are px. ── */
+	:root {
+		--bs-body-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+		--bs-body-line-height: 1.42857143;
+	}
+	a {text-decoration:none}
+	a:not(.btn, .dropdown-item):hover, a:not(.btn, .dropdown-item):focus {text-decoration:underline}
+	p, ul, ol {margin-bottom:10px}
+	caption {caption-side:top}
+	legend {float:none;margin-bottom:20px;font-size:21px;line-height:inherit;color:#333;border-bottom:1px solid #e5e5e5}
+	.row, .container, .container-fluid {--bs-gutter-x:30px}
+	.btn {--bs-btn-padding-y:6px;--bs-btn-padding-x:12px;--bs-btn-font-size:14px;--bs-btn-line-height:1.42857143;--bs-btn-border-radius:4px}
+	.btn-sm {--bs-btn-padding-y:5px;--bs-btn-padding-x:10px;--bs-btn-font-size:12px;--bs-btn-line-height:1.5;--bs-btn-border-radius:3px}
+	/* Bootstrap 5 dropped .btn-xs; AppButton size="xs" still uses it */
+	.btn-xs {--bs-btn-padding-y:1px;--bs-btn-padding-x:5px;--bs-btn-font-size:12px;--bs-btn-line-height:1.5;--bs-btn-border-radius:3px}
+	.pagination-sm {--bs-pagination-font-size:12px}
+	.progress {--bs-progress-height:20px;margin-bottom:20px}
+
+/* ── Type ── */
+	h1,h2,h3,h4,h5,h6{font-family:inherit;font-weight:700;color:inherit;text-rendering:optimizelegibility;margin:0}
+	h1 small,h2 small,h3 small,h4 small,h5 small,h6 small{font-weight:400;color:#999}
+	h1{font-size:30px;line-height:36px}
+	h2{font-size:24px;line-height:36px}
+	h3{font-size:18px;line-height:27px}
+	h4,h5,h6{line-height:18px}
+	h6{font-size:11px;color:#999;text-transform:uppercase}
+	h1 small,h2 small{font-size:18px}
+	h3 small,h4{font-size:14px}
+	h4 small,h5{font-size:12px}
+
+	label {font-weight:normal;display:block}
+	textarea {resize: none}
+	input[type="radio"], input[type="checkbox"] {margin-top:2px;}
+
+/* ── Components ── */
+	.alert {padding:8px 14px}
+	.alert ul {margin:0 0 10px 20px;padding:0}
+	.alert p + p {margin-top:10px}
+	.alert p { text-transform: uppercase; }
+
+	.modal-title {font-size: 14px;line-height: 26px;text-transform: uppercase}
+
+	.table th {text-shadow: 1px 1px 0 #fff;cursor: pointer}
+	.table-hover tbody tr:hover > td {cursor: pointer}
+
+	.pagination {height:26px}
+	.pagination li {cursor: pointer}
+	.pagination > li > a,.pagination > li > span {line-height: 24px;padding:0 10px}
+
+/* ── Forms ── */
+	.form-text {display:block;margin:5px 0 10px;font-size:11px;line-height:14px}
+	legend+.mb-3 {margin-top:20px}
+	.f_req {font-size:13px;color:#ff0000;font-family: helvetica, arial, sans-serif}
+
+	/* Set by wwwroot/js/validation.js on the login pages */
+	.f_error input,.f_error select,.f_error textarea{color:#b94a48;border-color:#b94a48}
+	.f_error input:focus,.f_error select:focus,.f_error textarea:focus{-webkit-box-shadow:0 0 6px #d59392;-moz-box-shadow:0 0 6px #d59392;box-shadow:0 0 6px #d59392;border-color:#953b39}
+
+	.msg-error {
+		font-size:14px; /* colour lives with the other error text in cms-theme.css */
+	}
+
+	.errorMessage {
+		position:absolute;
+		padding: 5px;
+		background-color: #E03930;
+		color:black;
+	}
+
+/* ── Navbar ── */
+	.navbar.fixed-top {margin:0;padding:0;min-height:40px}
+	.navbar-inner {width:100%}
+
+	/* Brand / app name — theme-independent so the navbar title renders the same
+	   on every theme. */
+	.navbar .brand {
+		padding: 0 18px 0 0;
+		font: 700 20px/38px "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
+		letter-spacing: -0.01em;
+		text-decoration: none;
+		color: #fff;
+		text-shadow: none;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	/* Hover was a hardcoded blue box that clashed on brown/tamarillo/green. */
+	.navbar .brand:hover,
+	.navbar .brand:focus {
+		background: rgba(255, 255, 255, 0.1) !important;
+		border-radius: 4px;
+		text-decoration: none; /* the a:hover underline baseline would otherwise apply */
+	}
+
+	/* Second half of the wordmark ("SafetyNet") — lighter weight. Not dimmed: opacity .75 fell
+	   below 4.5:1 on the blue, green, eastern_blue and tamarillo navbars. */
+	.navbar .brand .brand-alt {
+		font-weight: 400;
+	}
+
+	/* Environment tag (TEST, UAT...) beside the wordmark. Amber on near-black reads on
+	   all 7 navbar themes (red was low-contrast on navy/tamarillo). Sized in px:
+	   Bootstrap 5's .badge is 0.75em, i.e. 15px against the 20px wordmark. */
+	.navbar .brand .env-badge {
+		margin-left: 6px;
+		padding: 3px 6px;
+		font-size: 11px;
+		letter-spacing: .15em;
+		vertical-align: 3px;
+		background: #ffc107;
+		color: #212529;
+		border-radius: 3px;
+	}
+
+	.navbar .nav > li > a {color: #fff;text-shadow:none;padding:10px 10px 9px;display:block;line-height:20px}
+	/* Menu text (top level + dropdowns); the brand sets its own size. */
+	.navbar .nav, .navbar .nav .dropdown-menu li a {font-size:14px}
+	/* Hover and focus share the colour swap; the ring is focus-only. They were
+	   one rule while outlines were suppressed app-wide, so hovering a nav item
+	   would otherwise now paint a 3px gold ring. */
+	.navbar .nav > li > a:hover, .navbar .nav > li > a:focus-visible {background-color: #005f8d;color: #fff;border-color: #fff;text-decoration: none;}
+	.navbar .nav > li > a:focus-visible {outline: 2px solid #ffd700; outline-offset: 1px;}
+	.navbar-nav > li > a > .fa {font-size: 12px;padding-right:2px}
+
+	/* The nav's action controls (dropdown toggles, Help, Logout) used to be
+	   <a href="javascript:void(0)" role="button"> — WAVE flagged them as
+	   redundant links since they all shared that same href. They're real
+	   <button> elements now (the correct native element for a non-navigating
+	   action); browsers style <button> with their own background/border/font,
+	   so the plain-link look above has to be restated here for the new tag. */
+	.navbar .nav > li > button {background:none;border:0;margin:0;font:inherit;line-height:20px;cursor:pointer;text-align:left;color: #fff;text-shadow:none;padding:10px 10px 9px}
+	.navbar .nav > li > button:hover, .navbar .nav > li > button:focus-visible {background-color: #005f8d;color: #fff;border-color: #fff;text-decoration: none;}
+	.navbar .nav > li > button:focus-visible {outline: 2px solid #ffd700; outline-offset: 1px;}
+	.navbar-nav > li > button > .fa {font-size: 12px;padding-right:2px}
+
+	.navbar .user_menu {margin-left: 0}
+	.navbar .user_menu a.dropdown-toggle, .navbar .user_menu button.dropdown-toggle {white-space:nowrap}
+	.navbar .nav li.dropdown.active > .dropdown-toggle {background:none;color:#fff}
+
+	/* User icon in the navbar user menu: solid white circle with a dark glyph,
+	   which reads correctly on every theme's navbar color. */
+	.user_menu .fa-user {
+		display: inline-block;
+		width: 20px;
+		height: 20px;
+		line-height: 20px;
+		text-align: center;
+		font-size: 11px;
+		background: #fff;
+		color: #444;
+		border-radius: 50%;
+		vertical-align: middle;
+		margin-right: 4px;
+	}
+
+	/* Help / Change Password / Logout: in the top bar on wide screens; below
+	   1440px they move into the user dropdown so the fixed navbar never wraps
+	   onto a second row. ponytail: fixed breakpoint, raise it if more menus are added. */
+	.user_menu .user-link-compact {display: none}
+	@media (max-width: 1439px) {
+		.user_menu .user-link-wide {display: none}
+		.user_menu .user-link-compact {display: block}
+	}
+
+/* ── Dropdown menus (common.js opens them; Bootstrap's JS isn't loaded) ── */
+	.dropdown-menu li {position:relative;padding:0 5px}
+	.dropdown-menu li a {padding:3px 20px 3px 8px;position:relative;font-size:13px;border-radius: 4px}
+	.dropdown-menu > li > a:hover,
+	.dropdown-menu > li > a:focus {color:#fff;}
+	.navHover .dropdown-menu {display:block}
+	/* Bootstrap 5 places menus through Popper, which isn't loaded, so pin them
+	   under their toggle. No top gap: the pointer crosses it on the way in. */
+	.navbar-nav > li > .dropdown-menu {top:100%;left:0;margin-top:0}
+	.navbar-nav > li > .dropdown-menu-end {left:auto;right:0}
+	/* Nested menus: common.js tags a <ul> inside a menu item as .sub-menu */
+	.dropdown-menu .sub-menu {left: 100%;position: absolute;top: 0;visibility: hidden;margin-top: -1px}
+	.dropdown-menu .sub-open {visibility: visible;display: block}
+
+	/*#region Theme Switcher */
+	.theme-picker-item {
+		padding: 6px 14px 8px;
+		cursor: default;
+	}
+
+	.theme-picker-label {
+		display: block;
+		font-size: 11px;
+		color: #767676; /* 4.55:1 on white dropdown bg (WCAG AA) — dark theme overrides via --cms-muted */
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		margin-bottom: 6px;
+	}
+
+	.theme-swatches {
+		display: flex;
+		gap: 6px;
+	}
+
+	.theme-swatch {
+		width: 22px;
+		height: 22px;
+		border-radius: 50%;
+		border: 2px solid transparent;
+		cursor: pointer;
+		padding: 0;
+		outline: none;
+		transition: border-color 0.15s, box-shadow 0.15s;
+	}
+
+	.theme-swatch:hover,
+	.theme-swatch:focus {
+		border-color: #333;
+		box-shadow: 0 0 0 2px #333;
+	}
+
+	.theme-swatch.active {
+		border-color: #fff;
+		box-shadow: 0 0 0 2px #333;
+	}
+	/*#endregion */
+
+/* ── Page shell ── */
+	#maincontainer {min-height:100%}
+	#contentwrapper{float: left;width: 100%}
+	.main_content{padding:64px 30px 30px;background:#fff;border-left:1px solid transparent;margin-left:240px}
+	.main_content li{line-height:22px}
+	.sidebar_hidden {background: #fff}
+	.sidebar_hidden .main_content {margin:0;border-left:none}
+
+	/* Splash / spinner */
+	.page-splash {
+		z-index: 99999 !important;
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: #333;
+		opacity: .9;
+		pointer-events: auto;
+		backface-visibility: hidden;
+		transition: opacity 0.3s linear;
+	}
+
+	.page-splash-message {
+		text-align: center;
+		margin: 20% auto 0 auto;
+		font-size: 400%;
+		font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+		font-weight: normal;
+		text-shadow: 2px 2px rgba(0, 0, 0, 0.15);
+		text-transform: uppercase;
+		text-decoration: none;
+		color: #F58A00;
+		padding: 0;
+	}
+
+	.page-splash-message.page-splash-message-subtle {
+		margin: 30% auto 0 auto;
+		font-size: 200%;
+	}
+
+	.spinner {
+		margin: 20% auto 0 auto;
+		left: auto;
+		top: auto !important;
+	}
+
+	/* Back to top */
+	.totop {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		z-index: 104400;
+		background: #fa3031;
+		display: none;
+	}
+
+	.totop a, .totop a:visited {
+		display: block;
+		width: 30px;
+		height: 30px;
+		color: #fff;
+		text-align: center;
+		line-height: 30px;
+	}
+
+	.totop a:hover {
+		color: #eee;
+		text-decoration: none;
+	}
+
+/* ── Login page (_LoginLayout) ── */
+	.login_page {overflow:auto}
+	.login_page body {height:100%;max-width:inherit;margin:0 20px}
+	.login_page .login_box {position:relative;top:35%;width:380px;margin:0 auto 24px;background:#fff;border:1px solid #ccc;border-radius: 6px;box-shadow: 0 0 6px rgba(0,0,0,0.2)}
+	.login_page .top_b {text-shadow:0 1px 0 rgba(255,255,255,.5);font: 100 18px/42px 'PT Sans', sans-serif;height:42px;padding:0 20px;background: #e0e0e0;border-bottom:1px solid #ccc;border-radius: 6px 6px 0px 0px;font-size:15px}
+	.login_page .cnt_b {padding:30px 0;width:66%;margin:0 auto}
+	.login_page form {margin-bottom:0}
+	.login_page .btm_b {padding:12px 20px;border-top:1px solid #e7e7e7;background:#f7f7f7;border-radius: 0px 0px 6px 6px}
+	.login_page .links_b {width:100%;font-size:11px;text-align:center;position:absolute;bottom:-24px}
+
+/* ── Media queries ── */
+	@media (min-width: 980px) {
+		.selectnav {display:none}
+	}
+
+	@media (max-width: 979px) {
+		#maincontainer {background: #fff}
+		.navbar.fixed-top {margin:0 !important}
+		.navbar .brand {margin:9px 0 9px 34px}
+		.navbar .user_menu .dropdown-menu {margin:10px 10px 0 0;left:0 !important;right:auto}
+		.navbar .user_menu > li > a {padding:0 10px 0 0}
+		.navbar .user_menu > li > button {padding:0 10px 0 0}
+		.navbar-inner {position:relative;z-index:990;min-height:28px}
+		.user_menu .dropdown {margin-left:10px}
+		.main_content {margin:0 !important;border:none !important;padding:56px 14px 20px}
+		.main_content .row + .row {margin-top:20px}
+		#mobile-nav {display:none}
+		.selectnav {margin:8px 0 0 20px;margin-bottom:0}
+		.page-splash-message {font-size: 300%}
+	}
+
+	@media (max-width: 767px) {
+		.main_content {padding-top:20px}
+		.navbar.fixed-top {position:static}
+		.navbar .user-nav {width:100%;margin:6px 10px 10px !important}
+		.selectnav {margin:5px 9px 0;display:block;clear:both}
+		.page-splash-message {font-size: 200%;margin: 40% auto 0 auto}
+		.page-splash-message.page-splash-message-subtle {font-size: 150%}
+	}
+
+	@media (max-width: 479px) {
+		.login_page .login_box {width:100%}
+		.login_page .cnt_b {padding:20px 0;width:68%;margin:0 auto}
+		.navbar .user_menu .dropdown-menu {left:0 !important;right:auto !important}
+	}

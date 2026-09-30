@@ -1,0 +1,54 @@
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment HostEnv
+@{
+    // Same cache-busting token as _Layout: the theme <link> href is rewritten client-side.
+    var themeVer = new System.IO.DirectoryInfo(System.IO.Path.Combine(HostEnv.WebRootPath, "css"))
+        .GetFiles("*.css").Max(f => f.LastWriteTimeUtc).Ticks.ToString("x");
+}
+<!DOCTYPE html>
+<html lang="en" class="login_page">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewBag.Title ?? $"{ViewData["ApplicationName"]} Login Page")</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/Font-Awesome/css/font-awesome.min.css" />
+    <link href="//fonts.googleapis.com/css?family=PT+Sans:400,700&display=swap" rel="stylesheet" type="text/css" />
+
+    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
+
+    <link rel="icon" type="image/png" href="~/img/favicon.png" />
+    <link rel="shortcut icon" href="~/img/favicon.ico" />
+
+    @*  The active theme loads LAST so its --login-* block outranks the defaults in login.css.
+        This page is pre-auth, so the choice can only come from localStorage; a first visit gets navy. *@
+    <link rel="stylesheet" href="~/css/navy.css?v=@themeVer" type="text/css" id="link_theme" />
+    <script>
+        (function () {
+            var base = '@Url.Content("~/css/")';
+            var t = localStorage.getItem('cms_theme');
+            if (t) { document.getElementById('link_theme').href = base + t + '.css?v=@themeVer'; }
+        })();
+    </script>
+</head>
+<body>
+    <header id="PageHeader" role="banner" aria-label="Tennessee Department of Mental Health and Substance Abuse Services">
+        <div id="TNLogo">
+            <a href="https://www.tn.gov" aria-label="Tennessee.gov">
+                <img src="~/img/tn-logo.png" alt="" />
+            </a>
+        </div>
+        <div id="PageHeader-divider" aria-hidden="true"></div>
+        <div id="AgencyName">
+            <span class="agency-state-label">State of Tennessee</span>
+            <p class="agency-name-label">Department of Mental Health and Substance Abuse Services</p>
+        </div>
+    </header>
+
+    @RenderBody()
+
+    <script src="~/js/validation.js" asp-append-version="true"></script>
+</body>
+</html>

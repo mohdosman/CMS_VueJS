@@ -1,0 +1,74 @@
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment HostEnv
+@{
+    // The theme <link> href is rewritten client-side by the scripts below, so asp-append-version
+    // cannot version it. One token from the newest file in /css busts all seven theme files
+    // whenever any of them changes.
+    var themeVer = new System.IO.DirectoryInfo(System.IO.Path.Combine(HostEnv.WebRootPath, "css"))
+        .GetFiles("*.css").Max(f => f.LastWriteTimeUtc).Ticks.ToString("x");
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
+    <title>@ViewData["ApplicationName"]</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/Font-Awesome/css/font-awesome.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true" />
+    <link href="//fonts.googleapis.com/css?family=PT+Sans:400,700&display=swap" rel="stylesheet" type="text/css" />
+
+    <link rel="icon" type="image/png" href="~/img/favicon.png" />
+    <link rel="shortcut icon" href="~/img/favicon.ico" />
+
+    @RenderSection("styles", false)
+    <link rel="stylesheet" href="~/css/cms-theme.css" asp-append-version="true" />
+
+    @*  The active theme loads LAST, after app.css and cms-theme.css, so a theme file is the
+        final word on colour without needing !important or specificity hacks. *@
+    <link rel="stylesheet" href="~/css/navy.css?v=@themeVer" type="text/css" id="link_theme" />
+    <script>
+        (function () {
+            var base = '@Url.Content("~/css/")';
+            var t = localStorage.getItem('cms_theme');
+            if (t) { document.getElementById('link_theme').href = base + t + '.css?v=@themeVer'; }
+        })();
+    </script>
+</head>
+<body class="full_width sidebar_hidden menu_hover">
+    @RenderBody()
+
+    @RenderSection("scripts", required: false)
+
+    <script>
+        (function () {
+            var THEMES = ['navy', 'blue', 'dark', 'green', 'brown', 'eastern_blue', 'tamarillo'];
+            var base = '@Url.Content("~/css/")';
+            var current = localStorage.getItem('cms_theme') || 'navy';
+
+            function markActive(name) {
+                document.querySelectorAll('.theme-swatch').forEach(function (el) {
+                    var on = el.getAttribute('data-theme') === name;
+                    el.classList.toggle('active', on);
+                    el.setAttribute('aria-pressed', on ? 'true' : 'false');
+                });
+            }
+
+            function applyTheme(name) {
+                if (THEMES.indexOf(name) === -1) return;
+                document.getElementById('link_theme').href = base + name + '.css?v=@themeVer';
+                localStorage.setItem('cms_theme', name);
+                markActive(name);
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                markActive(current);
+                document.querySelectorAll('.theme-swatch').forEach(function (el) {
+                    el.addEventListener('click', function () { applyTheme(this.getAttribute('data-theme')); });
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

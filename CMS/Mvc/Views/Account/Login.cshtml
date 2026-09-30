@@ -1,0 +1,75 @@
+@model CMS.Mvc.ViewModels.LoginViewModel
+@{
+    ViewBag.Title = "Login";
+    Layout = "_LoginLayout";
+    var modelErrors = ViewData.ModelState.TryGetValue("", out var entry)
+        ? entry.Errors.Select(e => e.ErrorMessage).Where(m => !string.IsNullOrWhiteSpace(m)).ToList()
+        : new List<string>();
+}
+
+<main class="login-shell" aria-labelledby="main-title">
+    <section class="login-panel" aria-labelledby="main-title">
+        <h1 id="main-title" class="visually-hidden">Sign in</h1>
+
+        <div class="login_box">
+            <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" id="login_form" aria-labelledby="login-form-title">
+                <h2 id="login-form-title" class="top_b">
+                    Sign into the Crisis Management System
+                </h2>
+
+                @if (modelErrors.Count > 0)
+                {
+                    <div class="alert alert-danger" role="alert" tabindex="-1" id="validation-summary">
+                        <h2 class="visually-hidden">There were problems with your submission</h2>
+                        <ul class="mb-0">
+                            @foreach (var error in modelErrors)
+                            {
+                                <li>@error</li>
+                            }
+                        </ul>
+                    </div>
+                    <script>
+                        setTimeout(function () { document.getElementById('validation-summary')?.focus(); }, 100);
+                    </script>
+                }
+
+                <div class="cnt_b">
+                    <div class="mb-3">
+                        <label asp-for="UserName">Username</label>
+                        <input asp-for="UserName" class="form-control" autocomplete="username" aria-required="true" />
+                        <span asp-validation-for="UserName" class="text-danger" role="alert"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Password">Password</label>
+                        <input asp-for="Password" class="form-control" autocomplete="current-password" aria-required="true" />
+                        <span asp-validation-for="Password" class="text-danger" role="alert"></span>
+                    </div>
+                </div>
+
+                <div class="btm_b">
+                    <button class="btn btn-primary login-submit" type="submit">Sign in</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section class="login-info" aria-label="Access acknowledgement">
+        <article class="acknowledgement" tabindex="0" aria-labelledby="acknowledgement-title">
+            <h2 id="acknowledgement-title">Acknowledgement</h2>
+            <p>BY LOGGING INTO THIS APPLICATION, I CERTIFY THAT:</p>
+            <p>
+                I understand that violation of any program policies and procedures, altering the application, disclosing the contents of this application to others not properly authorized without proper releases of information, entering fraudulent data and/or sharing the user ID assigned to me with
+                my password may result in termination of system/application access; and
+            </p>
+            <p>I am authorized to perform the function(s) which I am about to perform.</p>
+            <p>I am using the User ID assigned to me with its associated password, and that I have not shared this User ID and password with anyone else.</p>
+            <p>
+                This system may contain Government information, which is restricted to authorized users ONLY. Unauthorized access, use, misuse, or modification of this computer system or of the data contained herein or in transit to/from this system constitutes a violation of state and federal laws including, but not limited to Title 18, United States Code, Section 1030, and may subject the individual to Criminal and Civil penalties pursuant to Title 26, United States Code, Sections 7213(a), 7213A (the Taxpayer Browsing Protection Act), and 7431.
+            </p>
+            <p>
+                This system and equipment are subject to monitoring to ensure proper performance of applicable security features or procedures. Such monitoring may result in the acquisition, recording and analysis of all data being communicated, transmitted, processed or stored in this system by a user. If monitoring reveals possible evidence of criminal activity, such evidence may be provided to law enforcement personnel.
+            </p>
+            <p>ANYONE USING THIS SYSTEM EXPRESSLY CONSENTS TO SUCH MONITORING and SHOULD HAVE NO EXPECTATION OF PRIVACY for any information stored or communicated via this system.</p>
+        </article>
+    </section>
+</main>

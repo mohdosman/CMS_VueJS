@@ -1,0 +1,40 @@
+/* ---- blue theme ---- */
+
+/* Without these the var() fallbacks in cms-theme.css resolve to navy
+   (#002D65), so panel headings, primary buttons, focus rings and legends
+   all rendered navy while the navbar was blue. */
+:root {
+    --bcms-panel-heading-bg:    #0074B8;
+    --bcms-panel-heading-color: #ffffff;
+    --bcms-panel-border-color:  #c0d9eb;
+    --bcms-btn-hover:           #005f96;
+    /* Login pages (_LoginLayout). --login-primary carries white button text and
+       doubles as heading text on the white panel; #0074B8 is 5.01:1 on white,
+       so both directions clear AA. */
+    --login-primary:      #0074B8;
+    --login-primary-dark: #005f96;
+    --login-accent:       #0074B8;
+    --login-border:       #c0d9eb;
+    --login-page:         #eff5f9;
+}
+
+.navbar-inner {
+	background: #0074B8 !important;
+}
+.navbar .nav .active > a, .navbar .nav .active > a:hover {
+	background: #265a88 !important;
+}
+
+.dropdown-menu li > a:hover,
+.dropdown-menu li > a:focus,
+.dropdown-menu .active > a,
+.dropdown-menu .active > a:hover,
+.nav-pills > .active > a, .nav-pills > .active > a:hover,
+span.dynatree-active a {
+	background: #0074b8 !important;
+}
+
+.table thead th {background-color:#eff5f9 !important; text-shadow: none !important;} /* lightened from #ebf2f6 — #0074B8 header text was 4.43:1, now 4.56:1 (WCAG AA) */
+.dataTables_wrapper th.sorting_asc, .dataTables_wrapper th.sorting_desc {
+	background-color: #c0d9eb !important
+}

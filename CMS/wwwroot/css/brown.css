@@ -1,0 +1,32 @@
+/* ---- brown theme ---- */
+
+:root {
+    --bcms-panel-heading-bg:    #7a5529;
+    --bcms-panel-heading-color: #ffffff;
+    --bcms-panel-border-color:  #d4b899;
+    --bcms-btn-hover:           #5e4120;
+    /* Login pages (_LoginLayout) — 6.65:1 on white. */
+    --login-primary:      #7a5529;
+    --login-primary-dark: #5e4120;
+    --login-accent:       #7a5529;
+    --login-border:       #d4b899;
+    --login-page:         #f8f3ee;
+}
+
+    .navbar-inner {
+		background: #7a5529; /* darkened from #9b6e3b — white text contrast 6.65:1 (WCAG AA) */
+    }
+    .navbar .nav .active > a, .navbar .nav .active > a:hover {
+        background: #76542d !important;
+    }
+    .dropdown-menu li > a:hover,
+    .dropdown-menu li > a:focus,
+    .dropdown-menu .active > a,
+	.dropdown-menu .active > a:hover,
+    .nav-pills > .active > a, .nav-pills > .active > a:hover,
+    span.dynatree-active a {
+        background: #7a5529 !important; /* darkened from #b47f44 — white text contrast 6.65:1 (WCAG AA) */
+    }
+
+	.table thead th {background-color:#f8f3ee !important}
+	.dataTables_wrapper th.sorting_asc,.dataTables_wrapper th.sorting_desc {background-color:#eee2d6 !important}

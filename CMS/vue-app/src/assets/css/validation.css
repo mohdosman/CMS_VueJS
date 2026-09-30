@@ -1,0 +1,83 @@
+/* Validation visual hooks used by form directives and views. */
+.f_req {
+    color: #c0392b;
+}
+
+/* style.css gives .f_req its own font and size, which makes a label with an asterisk
+   taller than one without and pushes its input down. Inherit the label's font instead. */
+.form-label .f_req {
+    font: inherit;
+}
+
+.form-text.has-error {
+    color: #a94442;
+}
+
+/* Toggled by date/currency directives on the nearest .mb-3. */
+.cc-date-error input,
+.cc-date-future-error input,
+.cc-standard-date-error input {
+    border-color: #a94442;
+}
+
+/* Sortable column headers rendered as native buttons (keyboard accessible)
+   while keeping the old link look. */
+.table thead .sort-link {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+.table thead .sort-link:hover,
+.table thead .sort-link:focus {
+    text-decoration: underline;
+}
+
+/* Inline radios/checkboxes, <label class="radio-inline"><input> Text</label>.
+   Bootstrap 5 dropped these classes (its .form-check needs different markup),
+   so the whole layout lives here. WCAG 2.2 target size: native controls render
+   around 13px, too small for axe's AA target-size rule, so each gets 24px. */
+.radio-inline,
+.checkbox-inline {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 0;
+    font-weight: 400;
+    vertical-align: middle;
+    cursor: pointer;
+    min-height: 24px;
+    line-height: 24px;
+    padding-left: 30px;
+    /* right (not left-on-siblings) margin so a label that wraps to a new line stays flush left */
+    margin-right: 12px;
+}
+
+.radio-inline input[type="radio"],
+.checkbox-inline input[type="checkbox"] {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    margin-top: 0;
+    margin-left: -30px;
+}
+
+/* Radios are 18px, under the 24px minimum, which WCAG 2.2 (2.5.8) allows when a
+   24px circle centred on each one overlaps no other target. Label rows are 24px
+   tall and labels are 12px apart, so that holds. Centre the 18px control in the row. */
+.radio-inline input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    top: 3px;
+    margin-left: -26px;
+}
+.radio-inline {
+    padding-left: 26px;
+}
+
+/* Vue Toastification's default error red (#ff5252) does not provide AA contrast
+   with white text. Keep the semantic red but darken it enough for 4.5:1+. */
+.Vue-Toastification__toast--error {
+    background-color: #c62828;
+}

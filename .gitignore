@@ -1,0 +1,7 @@
+.vs/
+bin/
+obj/
+*.user
+CMS/Logs/
+CMS/wwwroot/scripts/vue/
+CMS/vue-app/node_modules/
