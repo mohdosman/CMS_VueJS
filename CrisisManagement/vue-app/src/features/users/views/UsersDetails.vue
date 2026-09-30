@@ -5,6 +5,7 @@ import SetPasswordDialog from '../components/SetPasswordDialog.vue';
 import UserAgreementsDialog from '../components/UserAgreementsDialog.vue';
 import UserAgreementUploadDialog from '../components/UserAgreementUploadDialog.vue';
 import MultiSelectDropdown from '../../../common/components/MultiSelectDropdown.vue';
+import PasswordChecklist from '../../../common/components/PasswordChecklist.vue';
 import RoleChips from '../../../common/components/RoleChips.vue';
 import AppDialog from '../../../common/components/AppDialog.vue';
 
@@ -114,9 +115,9 @@ const idCaption = computed(() => (form.isADAccount
                                aria-describedby="confirmPassword-err" />
                         <div id="confirmPassword-err" class="form-text has-error" role="alert">{{ errors.confirmPassword?.join(' ') }}</div>
                     </div>
-                    <div id="password-help" class="col-md-6 mb-3 form-text">
-                        The user must change this temporary password.
-                        <ul class="mb-0 ps-3"><li v-for="rule in policy.passwordRules" :key="rule">{{ rule }}</li></ul>
+                    <div id="password-help" class="col-md-6 mb-3">
+                        <p class="form-text mb-2">The user must change this temporary password.</p>
+                        <PasswordChecklist :password="form.password" :confirm="form.confirmPassword" :policy="policy.password" />
                     </div>
                 </div>
 
@@ -140,7 +141,7 @@ const idCaption = computed(() => (form.isADAccount
         </template>
 
         <template #below>
-            <SetPasswordDialog v-if="dialog === 'password'" :user-key="info.userKey" :rules="policy.passwordRules"
+            <SetPasswordDialog v-if="dialog === 'password'" :user-key="info.userKey" :policy="policy.password"
                                @close="dialog = ''" @saved="passwordSet" />
             <AppDialog v-if="dialog === 'mfa'" title="Reset MFA" @close="dialog = ''">
                 <p>

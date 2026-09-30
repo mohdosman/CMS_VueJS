@@ -26,7 +26,7 @@ export function useUserDetail() {
     const info = ref(null);          // read-only facts about an existing user
     const roles = ref([]);
     const providers = ref([]);
-    const policy = ref({ passwordRules: [], adUserNameRule: '' });
+    const policy = ref({ passwordRules: [], adUserNameRule: '', password: null });
     const errors = ref({});          // { field: [messages] } from a 400 validation response
     const formError = ref('');       // page-level message: form-level validation, or a load failure
     const dialog = ref('');          // '', 'password', 'delete', 'agreements' or 'upload'

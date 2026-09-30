@@ -72,7 +72,8 @@ public sealed class UserService(
         if (p.RequireNonAlphanumeric) rules.Add("At least one special character");
         if (p.RequiredUniqueChars > 1) rules.Add($"At least {p.RequiredUniqueChars} different characters");
         return new(rules.ToArray(),
-            $"{n.MinLength}-{n.MaxLength} characters, starting with {string.Join(" or ", n.AdAccountPrefixes.Select(x => x.ToUpperInvariant()))}, no @");
+            $"{n.MinLength}-{n.MaxLength} characters, starting with {string.Join(" or ", n.AdAccountPrefixes.Select(x => x.ToUpperInvariant()))}, no @",
+            new PasswordRequirements(p.RequiredLength, p.RequireLowercase, p.RequireUppercase, p.RequireDigit, p.RequireNonAlphanumeric, p.RequiredUniqueChars));
     }
 
     // ---------------------------------------------------------------- write

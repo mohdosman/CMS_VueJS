@@ -2,11 +2,12 @@
 import { ref } from 'vue';
 import { usersApi } from '../api/usersApi.js';
 import AppDialog from '../../../common/components/AppDialog.vue';
+import PasswordChecklist from '../../../common/components/PasswordChecklist.vue';
 import { apiErrorMessage } from '../../../utils/apiError.js';
 
 const props = defineProps({
     userKey: { type: String, required: true },
-    rules: { type: Array, default: () => [] }
+    policy: { type: Object, default: null }   // the structured password rules from the server
 });
 const emit = defineEmits(['close', 'saved']);
 
@@ -43,11 +44,7 @@ async function save() {
                 <label class="form-label" for="newPassword">New password <span class="f_req" aria-hidden="true">*</span></label>
                 <input id="newPassword" v-model="password" type="password" autocomplete="new-password" autofocus
                        class="form-control form-control-sm" :aria-invalid="!!errors.password"
-                       aria-describedby="newPassword-help newPassword-err" />
-                <div id="newPassword-help" class="form-text">
-                    The user must change this temporary password at next sign-in.
-                    <ul class="mb-0 ps-3"><li v-for="rule in rules" :key="rule">{{ rule }}</li></ul>
-                </div>
+                       aria-describedby="password-rules newPassword-err" />
                 <div id="newPassword-err" class="form-text has-error" role="alert">{{ errors.password?.join(' ') }}</div>
             </div>
             <div class="mb-3">
@@ -56,6 +53,12 @@ async function save() {
                        class="form-control form-control-sm" :aria-invalid="!!errors.confirmPassword"
                        aria-describedby="newPasswordConfirm-err" />
                 <div id="newPasswordConfirm-err" class="form-text has-error" role="alert">{{ errors.confirmPassword?.join(' ') }}</div>
+            </div>
+
+            <!-- After both fields, as in Blazor; ticks off as the password is typed. -->
+            <div id="password-rules" class="mb-3">
+                <p class="form-text mb-2">The user must change this temporary password at next sign-in.</p>
+                <PasswordChecklist :password="password" :confirm="confirmPassword" :policy="policy" />
             </div>
 
             <AppButton action="save" :disabled="isSaving">Set password</AppButton>
