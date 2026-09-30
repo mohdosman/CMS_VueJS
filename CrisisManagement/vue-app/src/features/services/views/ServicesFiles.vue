@@ -96,13 +96,13 @@ const dateTime = (v) => new Date(v).toLocaleString('en-US');
                           @page-size-changed="onPageSizeChanged" />
         </div>
 
-        <AppDialog v-if="dialog === 'raw'" :title="`Raw file: ${current?.fileName}`" @close="closeDialog">
+        <AppDialog wide v-if="dialog === 'raw'" :title="`Raw file: ${current?.fileName}`" @close="closeDialog">
             <p v-if="isLoadingDialog" role="status">Loading...</p>
             <pre v-else class="border p-2 bg-body-tertiary text-body" style="max-height: 24rem; overflow: auto" tabindex="0">{{ rawText }}</pre>
             <AppButton action="close" @click="closeDialog" />
         </AppDialog>
 
-        <AppDialog v-if="dialog === 'errors'" :title="`Errors for ${current?.fileName}`" @close="closeDialog">
+        <AppDialog wide v-if="dialog === 'errors'" :title="`Errors for ${current?.fileName}`" @close="closeDialog">
             <p v-if="isLoadingDialog" role="status">Loading...</p>
             <p v-else-if="!fileErrors.length" role="status">No errors were found.</p>
             <template v-else>

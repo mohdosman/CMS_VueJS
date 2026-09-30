@@ -88,7 +88,7 @@ const size = (bytes) => (bytes == null ? '' : bytes >= 1048576 ? `${(bytes / 104
                           @page-size-changed="onPageSizeChanged" />
         </div>
 
-        <AppDialog v-if="current" :title="`Records in ${current.fileName}`" @close="closeRecords">
+        <AppDialog wide v-if="current" :title="`Records in ${current.fileName}`" @close="closeRecords">
             <p v-if="isLoadingRecords && !records.length" role="status">Loading...</p>
             <p v-else-if="!records.length" role="status">No records were found.</p>
             <template v-else>
