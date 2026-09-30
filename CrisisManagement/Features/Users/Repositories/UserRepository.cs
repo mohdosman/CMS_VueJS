@@ -4,6 +4,7 @@ using CrisisManagement.Data.Models.Identity;
 using CrisisManagement.Data.Repositories;
 using CrisisManagement.Features.Users.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using CrisisManagement.Shared.Common;
 
 namespace CrisisManagement.Features.Users.Repositories;
 

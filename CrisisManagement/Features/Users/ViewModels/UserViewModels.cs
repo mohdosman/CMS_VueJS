@@ -31,15 +31,7 @@ public sealed class UserListItem
     public bool IsLockedOut { get; set; }
 }
 
-public sealed class PagedResult<T>
-{
-    public IReadOnlyList<T> Items { get; init; } = [];
-    public int TotalCount { get; init; }
-}
-
 public sealed record UserDocumentItem(int DocumentId, string FileName, DateTime CreatedOn, long FileSize);
-
-public sealed record LookupItem(int Id, string Label, string? Short = null);
 
 public sealed class UserDetail
 {

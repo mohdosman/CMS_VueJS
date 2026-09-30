@@ -1,6 +1,7 @@
 using CrisisManagement.Data.Models.Identity;
 using CrisisManagement.Data.Repositories.Interfaces;
 using CrisisManagement.Features.Users.ViewModels;
+using CrisisManagement.Shared.Common;
 
 namespace CrisisManagement.Features.Users.Repositories;
 
