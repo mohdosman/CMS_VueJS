@@ -1,5 +1,6 @@
 using CrisisManagement.Features.Menus;
 using CrisisManagement.Features.PublicFiles.Services;
+using CrisisManagement.Features.Notifications.Services;
 using CrisisManagement.Features.Providers.Services;
 using CrisisManagement.Features.Roles.Services;
 using CrisisManagement.Features.Users.Services;
@@ -28,6 +29,7 @@ public static class AppServiceExtensions
         services.AddScoped<UserService>();
         services.AddScoped<RoleService>();
         services.AddScoped<ProviderService>();
+        services.AddScoped<NotificationService>();
         services.AddScoped<UserDocumentService>();
 
         return services;
