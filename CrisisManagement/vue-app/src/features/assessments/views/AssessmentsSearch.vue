@@ -70,8 +70,8 @@ const fields = [
         <div class="row" role="region" aria-labelledby="results-heading">
             <h2 id="results-heading" class="visually-hidden">Assessment Results Grid</h2>
             <div class="col-md-12">
-                <div v-if="criteria.incompleteOnly" class="alert alert-warning d-flex align-items-center justify-content-between py-2 mb-2" role="status">
-                    <span><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Showing incomplete assessments only (follow-up still needed).</span>
+                <div v-if="criteria.incompleteOnly" class="incomplete-banner d-flex align-items-center justify-content-between py-2 px-3 mb-2" role="status">
+                    <span><i class="fa fa-exclamation-triangle incomplete-icon" aria-hidden="true"></i> Showing incomplete assessments only (follow-up still needed).</span>
                     <AppButton action="cancel" size="xs" @click="showAll">Show all assessments</AppButton>
                 </div>
                 <table class="table table-hover table-striped table-sm table-bordered">
@@ -121,3 +121,9 @@ const fields = [
         </div>
     </div>
 </template>
+
+<style scoped>
+/* Body text on the theme surface (always readable); only the icon and the edge carry the warning colour. */
+.incomplete-banner { background: var(--bs-tertiary-bg, #f8f9fa); color: var(--bs-body-color); border: 1px solid var(--bs-border-color); border-left: 4px solid #f0ad00; border-radius: 4px; }
+.incomplete-icon { color: #f0ad00; margin-right: .35rem; }
+</style>
