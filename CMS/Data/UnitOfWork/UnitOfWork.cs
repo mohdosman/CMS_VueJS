@@ -25,6 +25,8 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     private IPermissionRepository? _permissions;
     private IPermissionGroupRepository? _permissionGroups;
     private IRoleClaimRepository? _roleClaims;
+    private INotificationRepository? _notifications;
+    private ISupportRepository? _supports;
 
     public IUserRepository Users => _users ??= new UserRepository(_context);
     public IRoleRepository Roles => _roles ??= new RoleRepository(_context);
@@ -39,6 +41,8 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     public IPermissionRepository Permissions => _permissions ??= new PermissionRepository(_context);
     public IPermissionGroupRepository PermissionGroups => _permissionGroups ??= new PermissionGroupRepository(_context);
     public IRoleClaimRepository RoleClaims => _roleClaims ??= new RoleClaimRepository(_context);
+    public INotificationRepository Notifications => _notifications ??= new NotificationRepository(_context);
+    public ISupportRepository Supports => _supports ??= new SupportRepository(_context);
 
     public void SetCommandTimeout(int seconds) => _context.Database.SetCommandTimeout(seconds);
 

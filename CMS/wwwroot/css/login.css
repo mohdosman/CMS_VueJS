@@ -641,3 +641,104 @@ div.basicText a:focus,
         padding-right: 18px;
     }
 }
+
+/* ── Sign-in page: acknowledgement on top, then sign-in | attention | support, then the schema note ── */
+.login-shell.login-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+    grid-template-columns: none;
+}
+
+.login-stack .acknowledgement {
+    max-height: none;
+    overflow: visible;
+    padding: 16px 24px;
+}
+
+.login-stack .acknowledgement h2 {
+    margin-bottom: 8px;
+}
+
+.login-stack .acknowledgement p:first-of-type {
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.acknowledgement-scroll {
+    max-height: 170px;
+    overflow-y: auto;
+    font-size: 13px;
+}
+
+.acknowledgement-scroll ul {
+    margin: 0;
+    padding-left: 22px;
+}
+
+.acknowledgement-scroll li + li {
+    margin-top: 6px;
+}
+
+.login-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    align-items: stretch;
+}
+
+.login-cards .login_box {
+    height: 100%;
+}
+
+.login-cards .support-panel {
+    padding: 20px 24px;
+}
+
+.login-notice {
+    margin: 0 0 10px;
+    color: var(--login-ink);
+    overflow-wrap: anywhere;
+}
+
+/* Password field with a show/hide button inside its right edge */
+.password-field {
+    position: relative;
+}
+
+.password-field .form-control {
+    padding-right: 44px;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 42px;
+    border: 0;
+    background: transparent;
+    color: var(--login-muted);
+    cursor: pointer;
+}
+
+.password-toggle:hover {
+    color: var(--login-ink);
+}
+
+.schema-note {
+    margin: 0;
+    font-size: 13px;
+    color: var(--login-ink);
+}
+
+.schema-note a {
+    color: var(--login-primary-dark);
+}
+
+@media (max-width: 980px) {
+    .login-cards {
+        grid-template-columns: 1fr;
+    }
+}

@@ -21,6 +21,8 @@ public interface IUnitOfWork
     IPermissionRepository Permissions { get; }
     IPermissionGroupRepository PermissionGroups { get; }
     IRoleClaimRepository RoleClaims { get; }
+    INotificationRepository Notifications { get; }
+    ISupportRepository Supports { get; }
 
     void SetCommandTimeout(int seconds);
     int SaveChanges();

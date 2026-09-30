@@ -20,11 +20,33 @@ public class AccountController(
     private const string InvalidLogin = "Invalid user ID or password.";
 
     [HttpGet, AllowAnonymous]
-    public IActionResult Login(string? returnUrl = null)
+    public async Task<IActionResult> Login(string? returnUrl = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
         ViewData["ApplicationName"] = config["ApplicationName"];
-        return View(new LoginViewModel());
+        return View(await WithInfoAsync(new LoginViewModel()));
+    }
+
+    // The notices, support contacts and schema links beside the form. They are cosmetic, so a failure to
+    // load them is logged and the page still lets people sign in.
+    private async Task<LoginViewModel> WithInfoAsync(LoginViewModel model)
+    {
+        try
+        {
+            model.Info.Notices = (await uow.Notifications.GetLatestAsync(1))
+                .Select(n => new NoticeItem(n.CreatedOn, n.Notification)).ToList();
+            model.Info.Support = (await uow.Supports.GetWithContactsAsync(10))
+                .Select(s => new SupportContact($"{s.Contact.FirstName} - {s.Contact.LastName}", s.Contact.Phone, s.Contact.EmailAddress)).ToList();
+
+            var schema = config.GetSection("AssessmentSchema");
+            if (!string.IsNullOrWhiteSpace(schema["SchemaUrl"]))
+                model.Info.Schema = new SchemaLinks(schema["SchemaUrl"]!, schema["SampleXmlUrl"] ?? "", schema["LastUpdated"] ?? "");
+        }
+        catch (Exception ex)
+        {
+            log.LogError(ex, "Could not load the sign-in page notices and support contacts");
+        }
+        return model;
     }
 
     [HttpPost, AllowAnonymous, ValidateAntiForgeryToken]
@@ -32,7 +54,7 @@ public class AccountController(
     {
         ViewData["ReturnUrl"] = returnUrl;
         ViewData["ApplicationName"] = config["ApplicationName"];
-        if (!ModelState.IsValid) return View(model);
+        if (!ModelState.IsValid) return View(await WithInfoAsync(model));
 
         // One message for every failure so the page never reveals which usernames exist.
         var user = await users.FindByNameAsync(model.UserName);
@@ -40,7 +62,7 @@ public class AccountController(
         {
             log.LogWarning("Login rejected for {UserName}: unknown, AD or inactive account", model.UserName);
             ModelState.AddModelError("", InvalidLogin);
-            return View(model);
+            return View(await WithInfoAsync(model));
         }
 
         var result = await signIn.PasswordSignInAsync(user, model.Password, isPersistent: false, lockoutOnFailure: true);
@@ -48,7 +70,7 @@ public class AccountController(
         {
             log.LogWarning("Login failed for {UserName} (lockedOut={LockedOut})", model.UserName, result.IsLockedOut);
             ModelState.AddModelError("", InvalidLogin);
-            return View(model);
+            return View(await WithInfoAsync(model));
         }
 
         user.LastLoginDate = DateTime.Now;
