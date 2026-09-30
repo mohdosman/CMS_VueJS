@@ -14,6 +14,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IHttpCo
         IdentityUserClaim<int>, ApplicationUserRole, IdentityUserLogin<int>,
         IdentityRoleClaim<int>, IdentityUserToken<int>>(options)
 {
+    // Set by HttpUnitOfWork (SafetyNet pattern) and stamped into the audit columns.
+    public int CurrentUserId { get; set; }
+
     // Entity set list ported from the Blazor CMS AppDbContext. The database is pre-existing,
     // so there are no EF migrations here.
     public DbSet<Permission> Permissions => Set<Permission>();
@@ -125,7 +128,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IHttpCo
     private void Audit()
     {
         var now = DateTime.Now;
-        var uid = int.TryParse(http.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
+        // ponytail: the HTTP fallback covers code that saves without going through IUnitOfWork (Users,
+        // Account); drop it, and the IHttpContextAccessor parameter, once those use the unit of work.
+        var uid = CurrentUserId != 0 ? CurrentUserId
+            : int.TryParse(http.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 
         foreach (var e in ChangeTracker.Entries<IAuditableEntity>())
         {

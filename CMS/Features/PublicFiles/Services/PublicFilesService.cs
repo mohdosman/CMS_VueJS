@@ -1,4 +1,4 @@
-using CMS.Data.UnitOfWork;
+using CMS.Data;
 using CMS.Features.PublicFiles.Mapping;
 using CMS.Features.PublicFiles.ViewModels;
 

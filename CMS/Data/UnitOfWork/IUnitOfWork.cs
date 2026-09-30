@@ -1,12 +1,14 @@
 using CMS.Features.PublicFiles.Repositories;
 
-namespace CMS.Data.UnitOfWork;
+namespace CMS.Data;
 
-// Services reach data only through this (SafetyNet pattern): one property per feature repository.
-// Add a repository here as each feature is moved onto the pattern.
+// Ported from SafetyNet (Data/UnitOfWork/IUnitOfWork.cs). Services reach data only through this:
+// one property per repository. Add a repository here as each feature is moved onto the pattern.
 public interface IUnitOfWork
 {
     IPublicFilesRepository PublicFiles { get; }
 
-    Task<int> SaveChangesAsync(CancellationToken ct = default);
+    void SetCommandTimeout(int seconds);
+    int SaveChanges();
+    Task<int> SaveChangesAsync();
 }

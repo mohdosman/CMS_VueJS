@@ -1,5 +1,5 @@
 using CMS.Data.Models.Domain;
-using CMS.Data.Repositories;
+using CMS.Data.Repositories.Interfaces;
 using CMS.Features.PublicFiles.ViewModels;
 
 namespace CMS.Features.PublicFiles.Repositories;
