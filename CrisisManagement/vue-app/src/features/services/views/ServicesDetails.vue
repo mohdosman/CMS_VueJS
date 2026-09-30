@@ -59,7 +59,7 @@ const opts = (list) => list ?? [];
         </template>
 
         <template #below>
-            <div v-if="isNew" class="row mt-2" role="region" aria-labelledby="session-heading">
+            <div v-if="isNew && sessionServices.length" class="row mt-2" role="region" aria-labelledby="session-heading">
                 <div class="col-md-12">
                     <h2 id="session-heading" class="h6">Services entered in this session ({{ sessionTotal }})</h2>
                     <table class="table table-sm table-striped table-bordered">
@@ -70,7 +70,6 @@ const opts = (list) => list ?? [];
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-if="!sessionServices.length"><td colspan="6" class="text-center text-muted">Nothing entered yet.</td></tr>
                             <tr v-for="s in sessionServices" :key="s.serviceId">
                                 <td><router-link :to="`/services/${s.serviceId}`">{{ s.serviceId }}</router-link></td>
                                 <td>{{ s.providerPatientNo }}</td><td>{{ s.providerAbbrev }}</td><td>{{ s.ssn }}</td>
