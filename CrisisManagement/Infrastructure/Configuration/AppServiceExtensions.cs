@@ -5,6 +5,7 @@ using CrisisManagement.Features.Notifications.Services;
 using CrisisManagement.Features.Providers.Services;
 using CrisisManagement.Features.Roles.Services;
 using CrisisManagement.Features.Services.Services;
+using CrisisManagement.Features.Suicides.Services;
 using CrisisManagement.Features.Users.Services;
 using CrisisManagement.Infrastructure.Identity;
 using CrisisManagement.Infrastructure.Messaging.Email;
@@ -43,6 +44,7 @@ public static class AppServiceExtensions
         services.AddScoped<ServiceSearchService>();
         services.AddScoped<ServiceEditorService>();
         services.AddScoped<ServiceFileService>();
+        services.AddScoped<SuicideFileService>();
 
         return services;
     }

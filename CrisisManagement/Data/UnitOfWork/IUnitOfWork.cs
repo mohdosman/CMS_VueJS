@@ -28,6 +28,7 @@ public interface IUnitOfWork
     IAssessmentRepository Assessments { get; }
     IServiceRepository Services { get; }
     IServiceFileRepository ServiceFiles { get; }
+    ISuicideFileRepository SuicideFiles { get; }
 
     void SetCommandTimeout(int seconds);
     int SaveChanges();
