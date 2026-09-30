@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { announce } from '../../../services/liveAnnouncer.js';
 
-// The permission catalog as collapsible groups. "View: x" / "Manage: x" permissions are shown as one
-// row with two boxes, because manage implies view, so a row holds at most one of them.
+// The permission catalog as collapsible group cards with a switch per permission (SafetyNet role screen).
+// "View: x" / "Manage: x" permissions are shown as one row with two switches, because manage implies view,
+// so a row holds at most one of them.
 const props = defineProps({
     groups: { type: Array, required: true },      // [{ groupName, items: [{ name, value, description }] }]
     modelValue: { type: Array, required: true },  // selected permission values
@@ -13,7 +14,7 @@ const emit = defineEmits(['update:modelValue']);
 
 const search = ref('');
 const selectedOnly = ref(false);
-const expanded = ref(new Set());
+const openGroups = reactive({});
 
 const selected = computed(() => new Set(props.modelValue));
 const has = (v) => selected.value.has(v);
@@ -24,7 +25,7 @@ function set(values, on) {
     emit('update:modelValue', [...next]);
 }
 
-// Checking one of a View/Manage pair unchecks the other.
+// Turning one of a View/Manage pair on turns the other off.
 function setPair(item, other, on) {
     const next = new Set(props.modelValue);
     if (on) { next.add(item.value); if (other) next.delete(other.value); } else next.delete(item.value);
@@ -54,27 +55,24 @@ const visibleGroups = computed(() =>
     props.groups
         .map((g) => ({ g, items: visibleItems(g) }))
         .filter((x) => x.items.length)
-        .map((x) => ({ ...x, ...rows(x.items), selected: x.g.items.filter((i) => has(i.value)).length })));
+        .map((x, i) => ({ ...x, ...rows(x.items), key: i, selected: x.g.items.filter((it) => has(it.value)).length })));
 
-// A group is open when expanded, or while searching / filtering (so matches are visible).
+// A group is open when toggled open, or while searching / filtering (so matches are visible).
 const filtering = computed(() => !!search.value.trim() || selectedOnly.value);
-const isOpen = (name) => filtering.value || expanded.value.has(name);
-function onToggle(name, e) {
-    if (filtering.value) return;
-    const next = new Set(expanded.value);
-    if (e.target.open) next.add(name); else next.delete(name);
-    expanded.value = next;
-}
-const expandAll = () => { expanded.value = new Set(props.groups.map((g) => g.groupName)); announce('All groups expanded'); };
-const collapseAll = () => { expanded.value = new Set(); announce('All groups collapsed'); };
+const isOpen = (name) => filtering.value || !!openGroups[name];
+const toggleGroup = (name) => { if (!filtering.value) openGroups[name] = !openGroups[name]; };
+const expandAll = () => { props.groups.forEach((g) => { openGroups[g.groupName] = true; }); announce('All groups expanded'); };
+const collapseAll = () => { props.groups.forEach((g) => { openGroups[g.groupName] = false; }); announce('All groups collapsed'); };
 
 // Select all prefers View on a pair, keeping the pair mutually exclusive.
 function selectGroup(vg) {
-    const values = [...vg.unpaired.map((i) => i.value), ...vg.pairs.map((p) => (p.view ?? p.manage).value)];
-    const others = vg.pairs.filter((p) => p.view && p.manage).map((p) => p.manage.value);
     const next = new Set(props.modelValue);
-    values.forEach((v) => next.add(v));
-    others.forEach((v) => next.delete(v));
+    vg.unpaired.forEach((i) => next.add(i.value));
+    vg.pairs.forEach((p) => {
+        const keep = p.view ?? p.manage;
+        next.add(keep.value);
+        if (p.view && p.manage) next.delete(p.manage.value);
+    });
     emit('update:modelValue', [...next]);
 }
 const clearGroup = (vg) => set(vg.items.map((i) => i.value), false);
@@ -90,56 +88,70 @@ const clearGroup = (vg) => set(vg.items.map((i) => i.value), false);
                 <div id="permSearchHelp" class="form-text">Searches name, value and description.</div>
             </div>
             <label class="checkbox-inline"><input v-model="selectedOnly" type="checkbox" /> Show selected only</label>
-            <div>
-                <AppButton action="cancel" @click="expandAll">Expand all</AppButton>
-                <AppButton action="cancel" @click="collapseAll">Collapse all</AppButton>
+            <div class="capability-tree-toolbar mb-0">
+                <button type="button" class="btn btn-outline-secondary btn-xs" @click="expandAll">
+                    <i class="fa fa-plus" aria-hidden="true"></i> Expand All
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-xs" @click="collapseAll">
+                    <i class="fa fa-minus" aria-hidden="true"></i> Collapse All
+                </button>
             </div>
         </div>
 
         <p v-if="!visibleGroups.length" class="text-muted">No permission groups match the current filters.</p>
 
-        <details v-for="vg in visibleGroups" :key="vg.g.groupName" class="perm-group mb-2"
-                 :open="isOpen(vg.g.groupName)" @toggle="onToggle(vg.g.groupName, $event)">
-            <summary>
-                <strong>{{ vg.g.groupName }}</strong>
-                <span class="text-muted small"> {{ vg.selected }}/{{ vg.g.items.length }} selected</span>
-            </summary>
+        <div class="role-capability-tree">
+            <div v-for="vg in visibleGroups" :key="vg.g.groupName" class="card capability-section">
+                <button type="button" class="card-header capability-section-header" :title="vg.g.groupName"
+                        :aria-expanded="isOpen(vg.g.groupName)" :aria-controls="`perm-group-${vg.key}`"
+                        @click="toggleGroup(vg.g.groupName)">
+                    <span class="capability-section-title">
+                        <i :class="isOpen(vg.g.groupName) ? 'fa fa-chevron-down' : 'fa fa-chevron-right'" aria-hidden="true"></i>
+                        {{ vg.g.groupName }}
+                    </span>
+                    <span class="badge capability-section-count">{{ vg.selected }}/{{ vg.g.items.length }} selected</span>
+                </button>
 
-            <div class="ps-3 pt-2">
-                <div v-if="!disabled" class="mb-2">
-                    <AppButton action="cancel" @click="selectGroup(vg)">Select all<span class="visually-hidden"> in {{ vg.g.groupName }}</span></AppButton>
-                    <AppButton action="cancel" @click="clearGroup(vg)">Clear<span class="visually-hidden"> {{ vg.g.groupName }}</span></AppButton>
+                <div v-show="isOpen(vg.g.groupName)" :id="`perm-group-${vg.key}`" class="card-body capability-section-body">
+                    <div v-if="!disabled" class="mb-2">
+                        <AppButton action="cancel" size="xs" @click="selectGroup(vg)">Select all<span class="visually-hidden"> in {{ vg.g.groupName }}</span></AppButton>
+                        <AppButton action="cancel" size="xs" @click="clearGroup(vg)">Clear<span class="visually-hidden"> {{ vg.g.groupName }}</span></AppButton>
+                    </div>
+
+                    <div v-if="vg.unpaired.length" class="capability-grid">
+                        <label v-for="i in vg.unpaired" :key="i.value" class="permission-cell" :title="i.description">
+                            <input type="checkbox" class="permission-switch-input" role="switch" :checked="has(i.value)"
+                                   :disabled="disabled" @change="set([i.value], $event.target.checked)" />
+                            <span class="permission-switch" aria-hidden="true"></span>
+                            <span class="permission-name">{{ i.name }}</span>
+                        </label>
+                    </div>
+
+                    <!-- Per-report permissions collapsed into one row with View/Manage switches -->
+                    <div v-if="vg.pairs.length" class="permission-pair-table">
+                        <div class="pair-row pair-head">
+                            <span>Permission</span>
+                            <span class="pair-col">View</span>
+                            <span class="pair-col">Manage</span>
+                        </div>
+                        <div v-for="p in vg.pairs" :key="p.label" class="pair-row">
+                            <span class="pair-label">{{ p.label }}</span>
+                            <span v-for="action in ['view', 'manage']" :key="action" class="pair-cell">
+                                <label v-if="p[action]" class="pair-toggle" :title="p[action].description">
+                                    <input type="checkbox" class="permission-switch-input" role="switch"
+                                           :checked="has(p[action].value)" :disabled="disabled"
+                                           @change="setPair(p[action], p[action === 'view' ? 'manage' : 'view'], $event.target.checked)" />
+                                    <span class="permission-switch" aria-hidden="true"></span>
+                                    <span class="visually-hidden">{{ action }} {{ p.label }}</span>
+                                </label>
+                                <span v-else class="pair-none" aria-hidden="true">&mdash;</span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
-
-                <div v-for="i in vg.unpaired" :key="i.value" class="mb-1">
-                    <label class="checkbox-inline" :title="i.description">
-                        <input type="checkbox" :checked="has(i.value)" :disabled="disabled" @change="set([i.value], $event.target.checked)" />
-                        {{ i.name }}
-                    </label>
-                    <div v-if="i.description" class="form-text ms-4 mt-0">{{ i.description }}</div>
-                </div>
-
-                <table v-if="vg.pairs.length" class="table table-sm table-borderless w-auto mb-1">
-                    <thead>
-                        <tr><th scope="col">Permission</th><th scope="col" class="text-center">View</th><th scope="col" class="text-center">Manage</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="p in vg.pairs" :key="p.label">
-                            <th scope="row" class="fw-normal">{{ p.label }}</th>
-                            <td class="text-center">
-                                <input v-if="p.view" type="checkbox" :checked="has(p.view.value)" :disabled="disabled"
-                                       :aria-label="`View ${p.label}`" @change="setPair(p.view, p.manage, $event.target.checked)" />
-                                <span v-else aria-hidden="true">&mdash;</span>
-                            </td>
-                            <td class="text-center">
-                                <input v-if="p.manage" type="checkbox" :checked="has(p.manage.value)" :disabled="disabled"
-                                       :aria-label="`Manage ${p.label}`" @change="setPair(p.manage, p.view, $event.target.checked)" />
-                                <span v-else aria-hidden="true">&mdash;</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
-        </details>
+        </div>
     </div>
 </template>
+
+<style scoped src="../assets/role-details.css"></style>
