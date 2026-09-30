@@ -1,7 +1,9 @@
 using CMS.Data.Context;
 using CMS.Data.Models.Domain;
 using CMS.Data.Models.Identity;
+using CMS.Data.UnitOfWork;
 using CMS.Features.Menus;
+using CMS.Features.PublicFiles.Services;
 using CMS.Features.Users.Services;
 using CMS.Features.Users.ViewModels;
 using CMS.Shared.Common;
@@ -64,6 +66,8 @@ services.AddScoped<PermissionCatalog>();
 services.AddScoped<MenuService>();
 services.AddHttpContextAccessor();
 services.AddScoped<PasswordHistory>();
+services.AddScoped<IUnitOfWork, UnitOfWork>();
+services.AddScoped<IPublicFilesService, PublicFilesService>();
 services.AddScoped<UserService>();
 
 var app = builder.Build();
