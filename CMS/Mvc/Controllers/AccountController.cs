@@ -1,4 +1,5 @@
-using CMS.Data.Models;
+using CMS.Data.Models.Domain;
+using CMS.Data.Models.Identity;
 using CMS.Mvc.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;

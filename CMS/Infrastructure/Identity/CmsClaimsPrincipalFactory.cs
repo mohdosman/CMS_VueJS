@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CMS.Data.Context;
-using CMS.Data.Models;
+using CMS.Data.Models.Domain;
+using CMS.Data.Models.Identity;
 using CMS.Shared.Constants;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

@@ -1,5 +1,6 @@
 using CMS.Data.Context;
-using CMS.Data.Models;
+using CMS.Data.Models.Domain;
+using CMS.Data.Models.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,8 +16,10 @@ public sealed record HelpFile(int Id, string FileName, DateTime CreatedOn, int F
 [Authorize]
 public sealed class PublicFilesController(AppDbContext db) : ControllerBase
 {
+    private const int HelpTypeId = 2;   // CMS_DocumentType: Help (3 = user agreement)
+
     private IQueryable<Document> HelpDocuments =>
-        db.Documents.AsNoTracking().Where(d => d.DocumentTypeId == Document.HelpTypeId && d.UserId == null && d.IsActive);
+        db.Documents.AsNoTracking().Where(d => d.DocumentTypeId == HelpTypeId && d.UserId == null && d.IsActive);
 
     [HttpGet("help")]
     public async Task<List<HelpFile>> Help(CancellationToken ct) =>

@@ -1,5 +1,6 @@
 using CMS.Data.Context;
-using CMS.Data.Models;
+using CMS.Data.Models.Domain;
+using CMS.Data.Models.Identity;
 using CMS.Features.Menus;
 using CMS.Features.Users.Services;
 using CMS.Features.Users.ViewModels;

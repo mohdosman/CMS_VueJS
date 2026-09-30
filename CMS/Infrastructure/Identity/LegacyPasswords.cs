@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
-using CMS.Data.Models;
+using CMS.Data.Models.Domain;
+using CMS.Data.Models.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
