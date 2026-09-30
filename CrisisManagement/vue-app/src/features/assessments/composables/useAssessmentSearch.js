@@ -64,6 +64,11 @@ export function useAssessmentSearch() {
         if (providers.value.length === 1 && !criteria.providerId) criteria.providerId = providers.value[0].id;
     }
 
+    function showAll() {
+        criteria.incompleteOnly = false;
+        return search();
+    }
+
     function clear() {
         Object.assign(criteria, DEFAULT_CRITERIA());
         defaultProvider();
@@ -92,6 +97,6 @@ export function useAssessmentSearch() {
 
     return {
         criteria, paging, assessments, totalRecords, providers, isSearching, errors,
-        search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, keyOf, gotoAssessment, canAdd, add
+        search, showAll, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, keyOf, gotoAssessment, canAdd, add
     };
 }

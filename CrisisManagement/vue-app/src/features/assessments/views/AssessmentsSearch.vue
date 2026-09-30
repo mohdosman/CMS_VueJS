@@ -3,7 +3,7 @@ import { useAssessmentSearch } from '../composables/useAssessmentSearch.js';
 
 const {
     criteria, paging, assessments, totalRecords, providers, isSearching, errors,
-    search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, keyOf, gotoAssessment, canAdd, add
+    search, showAll, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, keyOf, gotoAssessment, canAdd, add
 } = useAssessmentSearch();
 
 const msg = (f) => errors.value[f]?.join(' ');
@@ -70,7 +70,10 @@ const fields = [
         <div class="row" role="region" aria-labelledby="results-heading">
             <h2 id="results-heading" class="visually-hidden">Assessment Results Grid</h2>
             <div class="col-md-12">
-                <p v-if="criteria.incompleteOnly" class="fw-bold text-danger mb-1">INCOMPLETE ASSESSMENTS</p>
+                <div v-if="criteria.incompleteOnly" class="alert alert-warning d-flex align-items-center justify-content-between py-2 mb-2" role="status">
+                    <span><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Showing incomplete assessments only (follow-up still needed).</span>
+                    <AppButton action="cancel" size="xs" @click="showAll">Show all assessments</AppButton>
+                </div>
                 <table class="table table-hover table-striped table-sm table-bordered">
                     <thead>
                         <tr>
