@@ -1,53 +1,87 @@
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive } from 'vue';
 import { publicFilesAdminApi } from '../api/publicFilesAdminApi.js';
-import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
-import { announce } from '../../../services/liveAnnouncer.js';
+import { useActivate } from '../../../common/composables/useActivate.js';
+import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { apiErrorMessage } from '../../../utils/apiError.js';
+import { announce } from '../../../services/liveAnnouncer.js';
 
-const MAX_BYTES = 5 * 1024 * 1024;   // the server enforces the same limit
-
-// Newest first, as in the Blazor CMS.
-const criteria = reactive({ orderBy: 'createdOn', reverse: true });
-const paging = reactive({ currentPage: 1, maxPagesToShow: 10, pageSize: 20 });
-const files = ref([]);
-const totalRecords = ref(0);
-const isSearching = ref(false);
-
+// Port of ManagePublicFiles.aspx: upload a public (help) PDF and list, download and delete the uploaded ones.
 export function usePublicFiles() {
-    const { can } = useCapabilities();
     const { logApiError, logSuccess } = useLogger();
 
-    const canEdit = can('publicfiles.edit');
+    // ================================================================
+    // State
+    // ================================================================
+    const files = ref([]);
+    const totalRecords = ref(0);
+    const paging = reactive({ currentPage: 1, maxPagesToShow: 10, pageSize: 20 });
+
+    // Newest first, as in the Blazor CMS.
+    const criteria = reactive({ orderBy: 'createdOn', reverse: true });
+
+    const isSearching = ref(false);
     const uploadError = ref('');
     const isUploading = ref(false);
     const confirming = ref(null);   // the file awaiting delete confirmation
 
-    async function getFiles() {
-        isSearching.value = true;
-        try {
-            const result = await publicFilesAdminApi.search(paging.currentPage, paging.pageSize, criteria);
-            files.value = result.items;
-            totalRecords.value = result.totalCount;
-            announce(`${result.totalCount} public files found`);
-        } catch (e) {
-            logApiError(e);
-        } finally {
-            isSearching.value = false;
-        }
-    }
+    const MAX_BYTES = 5 * 1024 * 1024;   // the server enforces the same limit
 
+    // Each async load bumps its counter, so a slow earlier response can't overwrite a newer one.
+    let requestSequence = 0;
+
+    // ================================================================
+    // User permissions
+    // ================================================================
+    const { can } = useCapabilities();
+    const canEdit = can('publicfiles.edit');
+
+    // ================================================================
+    // Sorting, paging and loading
+    // ================================================================
     const setOrder = createSetOrder(criteria, paging, getFiles);
     const sortIcon = (col) => getSortIcon(col, criteria);
     const { onPageChanged, onPageSizeChanged } = createPagingHandlers(paging, getFiles);
 
+    async function getFiles() {
+        const requestId = ++requestSequence;
+        isSearching.value = true;
+        try {
+            const result = await publicFilesAdminApi.search(paging.currentPage, paging.pageSize, criteria);
+            if (requestId !== requestSequence) {
+                return;
+            }
+            files.value = result.items;
+            totalRecords.value = result.totalCount;
+            announce(`${result.totalCount} public files found`);
+        } catch (e) {
+            if (requestId === requestSequence) {
+                logApiError(e);
+            }
+        } finally {
+            if (requestId === requestSequence) {
+                isSearching.value = false;
+            }
+        }
+    }
+
+    // Runs each time the screen is shown.
+    useActivate(async () => {
+        await getFiles();
+    });
+
+    // ================================================================
+    // Upload and delete
+    // ================================================================
     // The file uploads as soon as it is chosen, like the Blazor CMS screen.
     async function onPick(e) {
         const file = e.target.files[0];
         e.target.value = '';
         uploadError.value = '';
-        if (!file) return;
+        if (!file) {
+            return;
+        }
         if (file.size > MAX_BYTES) {
             uploadError.value = `The file exceeds the ${MAX_BYTES / (1024 * 1024)} MB limit.`;
             return;
@@ -67,10 +101,10 @@ export function usePublicFiles() {
     }
 
     async function remove() {
-        const f = confirming.value;
+        const file = confirming.value;
         try {
-            await publicFilesAdminApi.remove(f.id);
-            logSuccess(`${f.fileName} deleted.`);
+            await publicFilesAdminApi.remove(file.id);
+            logSuccess(`${file.fileName} deleted.`);
             confirming.value = null;
             await getFiles();
         } catch (e) {
@@ -79,10 +113,17 @@ export function usePublicFiles() {
         }
     }
 
-    onMounted(getFiles);
-
     return {
-        paging, files, totalRecords, isSearching, canEdit, uploadError, isUploading, confirming,
+        // Results
+        files, totalRecords, paging,
+
+        // Busy and validation state
+        isSearching, isUploading, uploadError, confirming,
+
+        // User and permissions
+        canEdit,
+
+        // Actions
         setOrder, sortIcon, onPageChanged, onPageSizeChanged, onPick, remove
     };
 }
