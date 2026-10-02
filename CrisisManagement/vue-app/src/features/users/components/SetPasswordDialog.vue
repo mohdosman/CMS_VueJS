@@ -1,8 +1,6 @@
 <script setup>
-import { ref } from 'vue';
-import { usersApi } from '../api/usersApi.js';
+import { useSetPassword } from '../composables/useSetPassword.js';
 import PasswordChecklist from '../../../common/components/PasswordChecklist.vue';
-import { apiErrorMessage } from '../../../utils/apiError.js';
 
 const props = defineProps({
     userKey: { type: String, required: true },
@@ -10,28 +8,7 @@ const props = defineProps({
 });
 const emit = defineEmits(['close', 'saved']);
 
-const password = ref('');
-const confirmPassword = ref('');
-const errors = ref({});
-const formError = ref('');
-const isSaving = ref(false);
-
-async function save() {
-    errors.value = {};
-    formError.value = '';
-    isSaving.value = true;
-    try {
-        await usersApi.setPassword(props.userKey, { password: password.value, confirmPassword: confirmPassword.value });
-        emit('saved');
-    } catch (e) {
-        // Field problems (400) sit next to their inputs; anything else is shown in the dialog.
-        const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
-        errors.value = fieldErrors ?? {};
-        formError.value = fieldErrors ? '' : apiErrorMessage(e);
-    } finally {
-        isSaving.value = false;
-    }
-}
+const { password, confirmPassword, isSaving, errors, formError, save } = useSetPassword(props, emit);
 </script>
 
 <template>

@@ -1,47 +1,14 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { usersApi } from '../api/usersApi.js';
-import { useLogger } from '../../../common/composables/useLogger.js';
-import { apiErrorMessage } from '../../../utils/apiError.js';
-import { formatDate, formatFileSize } from '../../../utils/formatters.js';
+import { useUserAgreements } from '../composables/useUserAgreements.js';
 
-// Lists a user's agreements with download and (for users.edit) delete. Closes with the count it ended on.
+// Closes with the count it ended on.
 const props = defineProps({
     userKey: { type: String, required: true },
     canEdit: { type: Boolean, default: false }
 });
 const emit = defineEmits(['close']);
-const { logSuccess, logApiError } = useLogger();
 
-const docs = ref([]);
-const error = ref('');
-const isLoading = ref(true);
-const confirming = ref(0);   // id of the document awaiting delete confirmation
-
-
-async function load() {
-    try {
-        docs.value = await usersApi.documents(props.userKey);
-    } catch (e) {
-        error.value = apiErrorMessage(e);
-    } finally {
-        isLoading.value = false;
-    }
-}
-
-async function remove(d) {
-    try {
-        await usersApi.removeDocument(props.userKey, d.documentId);
-        logSuccess('User agreement deleted.');
-        confirming.value = 0;
-        await load();
-    } catch (e) {
-        confirming.value = 0;
-        logApiError(e);
-    }
-}
-
-onMounted(load);
+const { docs, isLoading, error, confirming, remove, formatDate, formatFileSize, documentUrl } = useUserAgreements(props);
 </script>
 
 <template>
@@ -62,7 +29,7 @@ onMounted(load);
                     <td>{{ formatDate(d.createdOn) }}</td>
                     <td>{{ formatFileSize(d.fileSize) }}</td>
                     <td class="text-nowrap">
-                        <a class="btn btn-outline-secondary btn-sm" :href="usersApi.documentUrl(userKey, d.documentId)" download>
+                        <a class="btn btn-outline-secondary btn-sm" :href="documentUrl(userKey, d.documentId)" download>
                             Download<span class="visually-hidden"> {{ d.fileName }}</span>
                         </a>
                         <template v-if="canEdit">
