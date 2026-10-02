@@ -1,7 +1,10 @@
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { reportsApi } from '../api/reportsApi.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
+import { useActivate } from '../../../common/composables/useActivate.js';
+import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
+import { fieldMessages } from '../../../utils/formErrors.js';
 import { apiErrorMessage } from '../../../utils/apiError.js';
 
 // One form for a new report (/reports/0) and for an existing one (/reports/:key, the report id).
@@ -10,7 +13,12 @@ export function useReportDetail() {
     const router = useRouter();
     const { logSuccess, logApiError } = useLogger();
 
+    // ================================================================
+    // State
+    // ================================================================
     const isNew = route.params.key === '0';
+    const title = isNew ? 'Add Report' : 'Edit Report';
+
     const form = reactive({ id: null, rowVersion: null, reportName: '', fileName: '', description: '', exportOption: 'PDF' });
     const available = ref([]);       // report files not defined yet (new report)
     const errors = ref({});          // { field: [messages] } from a 400 response
@@ -19,15 +27,47 @@ export function useReportDetail() {
     const isLoading = ref(true);
     const isSaving = ref(false);
 
-    const title = isNew ? 'Add Report' : 'Edit Report';
-    const msg = (f) => errors.value[f]?.join(' ') ?? '';
+    const msg = fieldMessages(errors);
     const fileName = computed(() => (isNew ? (form.reportName ? `${form.reportName}.rpt` : '') : form.fileName));
 
+    // ================================================================
+    // Loading
+    // ================================================================
+    async function getPageData() {
+        try {
+            if (isNew) {
+                available.value = await reportsApi.available();
+            } else {
+                Object.assign(form, await reportsApi.get(route.params.key));
+            }
+        } catch (e) {
+            formError.value = e.response?.status === 404 ? 'Report not found.' : apiErrorMessage(e);
+        }
+    }
+
+    // ================================================================
+    // Navigation
+    // ================================================================
+    function backToList() {
+        restoreSearchOnReturn();
+        router.push('/reports');
+    }
+
+    function cancel() {
+        backToList();
+    }
+
+    // ================================================================
+    // Save and delete
+    // ================================================================
     // Field problems (400) show next to their inputs; anything else (403, 409 conflict, ...) is a toast.
     function fail(e) {
         const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
-        if (fieldErrors) errors.value = fieldErrors;
-        else logApiError(e);
+        if (fieldErrors) {
+            errors.value = fieldErrors;
+        } else {
+            logApiError(e);
+        }
     }
 
     async function save() {
@@ -37,7 +77,7 @@ export function useReportDetail() {
             if (isNew) {
                 await reportsApi.create({ ...form, fileName: fileName.value });
                 logSuccess('Report created.');
-                router.push('/reports');
+                backToList();
             } else {
                 Object.assign(form, await reportsApi.update(form.id, form));
                 logSuccess('Report updated.');
@@ -53,25 +93,31 @@ export function useReportDetail() {
         try {
             await reportsApi.remove(form.id);
             logSuccess('Report deleted.');
-            router.push('/reports');
+            backToList();
         } catch (e) {
             dialog.value = '';
             logApiError(e);
         }
     }
 
-    const cancel = () => router.push('/reports');
-
-    onMounted(async () => {
-        try {
-            if (isNew) available.value = await reportsApi.available();
-            else Object.assign(form, await reportsApi.get(route.params.key));
-        } catch (e) {
-            formError.value = e.response?.status === 404 ? 'Report not found.' : apiErrorMessage(e);
-        } finally {
-            isLoading.value = false;
-        }
+    // ================================================================
+    // Page load
+    // ================================================================
+    useActivate(async () => {
+        isLoading.value = true;
+        formError.value = '';
+        await getPageData();
+        isLoading.value = false;
     });
 
-    return { isNew, title, form, fileName, available, errors, formError, dialog, isLoading, isSaving, msg, save, remove, cancel };
+    return {
+        // Form
+        form, fileName, available, dialog, title, isNew,
+
+        // Busy and validation state
+        isLoading, isSaving, errors, formError, msg,
+
+        // Actions
+        save, remove, cancel
+    };
 }

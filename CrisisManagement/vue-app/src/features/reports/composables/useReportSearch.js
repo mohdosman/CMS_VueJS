@@ -1,64 +1,103 @@
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { reportsApi } from '../api/reportsApi.js';
-import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
+import { useSearchState } from '../../../common/composables/useSearchState.js';
+import { useActivate } from '../../../common/composables/useActivate.js';
+import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { apiErrorMessage } from '../../../utils/apiError.js';
 import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
-const DEFAULT_CRITERIA = () => ({ reportName: '', description: '', orderBy: 'reportName', reverse: false });
-const REPORT_WINDOW = 'resizable=yes,height=600,width=1000,location=0,toolbar=0,menubar=0,scrollbars=1';
-
-// Module scope on purpose: filters and results survive list -> detail -> back within the SPA.
-const criteria = reactive(DEFAULT_CRITERIA());
-const paging = reactive({ currentPage: 1, maxPagesToShow: 10, pageSize: 10 });
-const reports = ref([]);
-const totalRecords = ref(0);
-const isSearching = ref(false);
-const errors = ref({});
-
-// Empty text boxes are sent as absent, not as "".
-const clean = () => Object.fromEntries(Object.entries(criteria).map(([k, v]) => [k, v === '' ? null : v]));
-
+// Report listing: the list of reports, filtered by name and description, with a Run button on each.
 export function useReportSearch() {
     const router = useRouter();
-    const { can } = useCapabilities();
     const { logSuccess, logError, logApiError } = useLogger();
+
+    // ================================================================
+    // State
+    // ================================================================
+    const reports = ref([]);
+    const totalRecords = ref(0);
+    const paging = reactive({ currentPage: 1, maxPagesToShow: 10, pageSize: 10 });
+
+    const DEFAULT_CRITERIA = { reportName: '', description: '', orderBy: 'reportName', reverse: false };
+    const criteria = reactive({ ...DEFAULT_CRITERIA });
+
+    const { load, save, clear: clearState } = useSearchState('reportSearchJSON', criteria, DEFAULT_CRITERIA, paging);
+
+    const isSearching = ref(false);
+    const errors = ref({});
     const runningKey = ref('');   // the report being run (its Run button shows a spinner)
 
-    async function getReports() {
-        errors.value = {};
-        isSearching.value = true;
-        try {
-            const result = await reportsApi.search(paging.currentPage, paging.pageSize, clean());
-            reports.value = result.items;
-            totalRecords.value = result.totalCount;
-            announce(`${result.totalCount} reports found`);
-        } catch (e) {
-            const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
-            if (fieldErrors) errors.value = fieldErrors;
-            else logApiError(e);
-        } finally {
-            isSearching.value = false;
-        }
-    }
+    const REPORT_WINDOW = 'resizable=yes,height=600,width=1000,location=0,toolbar=0,menubar=0,scrollbars=1';
 
+    // Each async load bumps its counter, so a slow earlier response can't overwrite a newer one.
+    let requestSequence = 0;
+
+    const msg = fieldMessages(errors);
+    const exportLabel = (option) => (option === 'MSExcel' ? 'Excel' : option);
+
+    // Empty text boxes are sent as absent, not as "".
+    const cleanCriteria = () => Object.fromEntries(Object.entries(criteria).map(([k, v]) => [k, v === '' ? null : v]));
+
+    // ================================================================
+    // User permissions
+    // ================================================================
+    const { can } = useCapabilities();
+    const canAdd = can('reports.edit');
+
+    // ================================================================
+    // Sorting, paging and search
+    // ================================================================
     const setOrder = createSetOrder(criteria, paging, getReports);
     const sortIcon = (col) => getSortIcon(col, criteria);
     const { onPageChanged, onPageSizeChanged } = createPagingHandlers(paging, getReports);
 
-    function search() {
+    async function getReports() {
+        const requestId = ++requestSequence;
+        errors.value = {};
+        isSearching.value = true;
+        try {
+            const result = await reportsApi.search(paging.currentPage, paging.pageSize, cleanCriteria());
+            if (requestId !== requestSequence) {
+                return;
+            }
+            reports.value = result.items;
+            totalRecords.value = result.totalCount;
+            announce(`${result.totalCount} reports found`);
+        } catch (e) {
+            if (requestId === requestSequence) {
+                const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
+                if (fieldErrors) {
+                    errors.value = fieldErrors;
+                } else {
+                    logApiError(e);
+                }
+            }
+        } finally {
+            if (requestId === requestSequence) {
+                isSearching.value = false;
+            }
+        }
+    }
+
+    async function search() {
         paging.currentPage = 1;
-        return getReports();
+        save();
+        await getReports();
     }
 
-    function clear() {
-        Object.assign(criteria, DEFAULT_CRITERIA());
-        return search();
-    }
+    // Runs each time the screen is shown: restore the saved criteria and list again.
+    useActivate(async () => {
+        load();
+        await getReports();
+    });
 
+    // ================================================================
+    // Run, navigation and clear
+    // ================================================================
     // The window opens straight from the click (a window opened after the request would be blocked as a pop-up), then goes to
     // the link the server made for this run.
     async function run(report) {
@@ -75,23 +114,40 @@ export function useReportSearch() {
             logSuccess(`Report '${report.reportName}' opened successfully`);
         } catch (e) {
             win.close();
-            if ([401, 403].includes(e.response?.status)) logError(apiErrorMessage(e, 'You do not have permission to run this report'));
-            else logError(`Failed to run report '${report.reportName}'`);
+            if ([401, 403].includes(e.response?.status)) {
+                logError(apiErrorMessage(e, 'You do not have permission to run this report'));
+            } else {
+                logError(`Failed to run report '${report.reportName}'`);
+            }
         } finally {
             runningKey.value = '';
         }
     }
 
-    const exportLabel = (option) => (option === 'MSExcel' ? 'Excel' : option);
-    const canAdd = can('reports.edit');
-    const add = () => router.push('/reports/0');
+    function add() {
+        router.push('/reports/0');
+    }
 
-    onMounted(getReports);
-
-    const msg = fieldMessages(errors);
+    async function clear() {
+        clearState();
+        await getReports();
+    }
 
     return {
-        exportLabel, msg, criteria, paging, reports, totalRecords, isSearching, errors, runningKey,
-        search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, run, canAdd, add
+        // Results
+        reports, totalRecords, paging, criteria,
+
+        // Busy and validation state
+        isSearching, errors, msg, runningKey,
+
+        // User and permissions
+        canAdd,
+
+        // Actions
+        search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged,
+        run, add,
+
+        // Helpers for the template
+        exportLabel
     };
 }
