@@ -1,12 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue';
 import AppSpinner from './common/components/AppSpinner.vue';
 import HelpDialog from './common/components/HelpDialog.vue';
+import { useAppHelp } from './common/composables/useAppHelp.js';
 
-// The navbar is server-rendered (outside #vue-app), so its Help button reaches the SPA through
-// window.cms.openHelp, the same bridge SafetyNet uses.
-const helpOpen = ref(false);
-onMounted(() => { window.cms = { openHelp: () => { helpOpen.value = true; } }; });
+const { helpOpen } = useAppHelp();
 </script>
 
 <template>
