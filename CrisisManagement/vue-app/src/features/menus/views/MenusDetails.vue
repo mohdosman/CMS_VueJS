@@ -1,19 +1,11 @@
 <script setup>
 import { useMenuDetail } from '../composables/useMenuDetail.js';
-import { iconOptions } from '../icons.js';
 import MenuPermissions from '../components/MenuPermissions.vue';
 
-const { isNew, canEdit, title, form, menuId, parents, errors, formError, tab, isLoading, isSaving, save, cancel } = useMenuDetail();
-
-const err = (f) => errors.value[f]?.length ?? 0;
-const msg = (f) => errors.value[f]?.join(' ');
-const urlFields = [
-    { f: 'url', label: 'Url' },
-    { f: 'detailUrl', label: 'Detail url' },
-    { f: 'templateUrl', label: 'Template url' },
-    { f: 'detailTemplateUrl', label: 'Detail template url' },
-    { f: 'apiUrl', label: 'Api url' }
-];
+const {
+    isNew, canEdit, title, form, menuId, parents, tab, urlFields, errors, formError, isLoading, isSaving, msg, err,
+    save, cancel, iconOptions
+} = useMenuDetail();
 </script>
 
 <template>

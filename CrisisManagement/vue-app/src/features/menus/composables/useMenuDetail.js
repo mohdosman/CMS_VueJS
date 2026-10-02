@@ -5,7 +5,9 @@ import { useCapabilities } from '../../../common/composables/useCapabilities.js'
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
+import { fieldMessages } from '../../../utils/formErrors.js';
 import { apiErrorMessage } from '../../../utils/apiError.js';
+import { iconOptions } from '../icons.js';
 
 // One form for a new menu item (/admin/menus/0, optional ?parentId=) and an existing one (/admin/menus/:key, the menu item id).
 export function useMenuDetail() {
@@ -33,6 +35,18 @@ export function useMenuDetail() {
     const isSaving = ref(false);
 
     const title = computed(() => (isNew ? 'New Menu Item' : `Edit Menu Item #${menuId.value}`));
+
+    const msg = fieldMessages(errors);
+    const err = (field) => errors.value[field]?.length ?? 0;
+
+    // The address text boxes under the name and icon.
+    const urlFields = [
+        { f: 'url', label: 'Url' },
+        { f: 'detailUrl', label: 'Detail url' },
+        { f: 'templateUrl', label: 'Template url' },
+        { f: 'detailTemplateUrl', label: 'Detail template url' },
+        { f: 'apiUrl', label: 'Api url' }
+    ];
 
     // ================================================================
     // User permissions
@@ -116,15 +130,18 @@ export function useMenuDetail() {
 
     return {
         // Form
-        form, menuId, parents, tab, title, isNew,
+        form, menuId, parents, tab, title, isNew, urlFields,
 
         // Busy and validation state
-        isLoading, isSaving, errors, formError,
+        isLoading, isSaving, errors, formError, msg, err,
 
         // User and permissions
         canEdit,
 
         // Actions
-        save, cancel
+        save, cancel,
+
+        // Helpers for the template
+        iconOptions
     };
 }
