@@ -87,7 +87,9 @@ public sealed class SetPasswordRequest
 // Password rules as data, so the screen can tick them off while the user types; PasswordRules is the same text as a list.
 public sealed record PasswordRequirements(int MinLength, bool RequireLowercase, bool RequireUppercase, bool RequireDigit, bool RequireSpecial, int UniqueChars);
 
-public sealed record UserPolicy(string[] PasswordRules, string AdUserNameRule, PasswordRequirements Password);
+public sealed record UserNameRequirements(int MinLength, int MaxLength, string[] Prefixes);
+
+public sealed record UserPolicy(string[] PasswordRules, string AdUserNameRule, PasswordRequirements Password, UserNameRequirements UserName);
 
 public sealed class UserNamePolicyOptions
 {

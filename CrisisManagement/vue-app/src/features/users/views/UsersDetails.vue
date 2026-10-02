@@ -9,7 +9,7 @@ import RoleChips from '../../../common/components/RoleChips.vue';
 
 const {
     isNew, canEdit, form, info, roles, providers, policy, userIdShown, idCaption, msg, err, touch, formError, dialog,
-    isLoading, isSaving, hasAdminRole, documentCount, resetMfa, onSubmit, remove, passwordSet, agreementsClosed, uploadClosed, cancel
+    isLoading, isSaving, hasAdminRole, documentCount, resetMfa, onSubmit, passwordSet, agreementsClosed, uploadClosed, cancel
 } = useUserDetail();
 </script>
 
@@ -128,9 +128,7 @@ const {
         <template #actions>
             <template v-if="!isNew && canEdit">
                 <AppButton v-if="!form.isADAccount" action="preview" @click="dialog = 'password'">Set password</AppButton>
-                <AppButton v-if="!form.isADAccount && info?.twoFactorEnabled" action="preview" @click="dialog = 'mfa'">Reset MFA</AppButton>
-                <AppButton action="delete" @click="dialog = 'delete'">Delete</AppButton>
-            </template>
+                <AppButton v-if="!form.isADAccount && info?.twoFactorEnabled" action="preview" @click="dialog = 'mfa'">Reset MFA</AppButton>            </template>
         </template>
 
         <template v-if="!canEdit" #button-row>
@@ -152,14 +150,6 @@ const {
             <UserAgreementsDialog v-if="dialog === 'agreements'" :user-key="info.userKey" :can-edit="canEdit"
                                   @close="agreementsClosed" />
             <UserAgreementUploadDialog v-if="dialog === 'upload'" :user-key="info.userKey" @close="uploadClosed" />
-            <AppDialog v-if="dialog === 'delete'" title="Delete user" @close="dialog = ''">
-                <p>
-                    Delete <strong>{{ info?.userName }}</strong>? This removes the account, its role and provider
-                    assignments and its sign-in history. It cannot be undone.
-                </p>
-                <AppButton action="delete" @click="remove">Delete user</AppButton>
-                <AppButton action="cancel" @click="dialog = ''" />
-            </AppDialog>
         </template>
     </DetailPanel>
 </template>

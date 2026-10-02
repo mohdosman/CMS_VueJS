@@ -29,10 +29,10 @@ export function useUserDetail() {
     const info = ref(null);          // read-only facts about an existing user
     const roles = ref([]);
     const providers = ref([]);
-    const policy = ref({ passwordRules: [], adUserNameRule: '', password: null });
+    const policy = ref({ passwordRules: [], adUserNameRule: '', password: null, userName: null });
     const serverErrors = ref({});    // { field: [messages] } from a 400 validation response
     const formError = ref('');       // page-level message: form-level validation
-    const dialog = ref('');          // '', 'password', 'delete', 'agreements' or 'upload'
+    const dialog = ref('');          // '', 'password', 'mfa', 'agreements' or 'upload'
     const documentCount = ref(0);
     const isLoading = ref(true);
     const isSaving = ref(false);
@@ -63,6 +63,9 @@ export function useUserDetail() {
 
     const blank = (value) => !String(value ?? '').trim();
 
+    // Column limits; the same numbers as UserService on the server.
+    const MAX_NAME = 256, MAX_AD_EMAIL = 100, MAX_LOCAL_EMAIL = 50, MAX_PHONE = 32;
+
     // Whether a password meets the server's structured rules (the ones the checklist shows).
     function passwordMeetsPolicy(password) {
         const rules = policy.value.password;
@@ -77,26 +80,60 @@ export function useUserDetail() {
             && (!(rules.uniqueChars > 1) || new Set(password).size >= rules.uniqueChars);
     }
 
-    // The error message for each field; a field that is fine has no entry. The server also checks the user ID rules and the account type.
+    // The AD user ID rules come from the server policy, so they follow its configuration.
+    function userNameError(value) {
+        const rule = policy.value.userName;
+        const v = value.trim();
+        if (!v) {
+            return 'User ID is required.';
+        }
+        if (!rule) {
+            return '';
+        }
+        if (v.length < rule.minLength) {
+            return `User ID must be at least ${rule.minLength} characters in length.`;
+        }
+        if (v.length > rule.maxLength) {
+            return `User ID cannot exceed ${rule.maxLength} characters in length.`;
+        }
+        if (v.includes('@')) {
+            return 'User ID cannot contain \'@\'.';
+        }
+        if (!rule.prefixes.some((p) => v.toLowerCase().startsWith(p.toLowerCase()))) {
+            return `User ID must start with ${rule.prefixes.map((p) => p.toUpperCase()).join(' or ')}.`;
+        }
+        return '';
+    }
+
+    // The error message for each field; a field that is fine has no entry. The server repeats these checks and also checks the account type.
     const clientErrors = computed(() => {
         const e = {};
-        if (isNew && form.isADAccount && blank(form.userName)) {
-            e.userName = 'User ID is required.';
+        if (isNew && form.isADAccount && userNameError(form.userName)) {
+            e.userName = userNameError(form.userName);
         }
         if (blank(form.firstName)) {
             e.firstName = 'First name is required.';
+        } else if (form.firstName.trim().length > MAX_NAME) {
+            e.firstName = `First name cannot exceed ${MAX_NAME} characters in length.`;
         }
         if (blank(form.lastName)) {
             e.lastName = 'Last name is required.';
+        } else if (form.lastName.trim().length > MAX_NAME) {
+            e.lastName = `Last name cannot exceed ${MAX_NAME} characters in length.`;
         }
         const email = form.email.trim();
+        const maxEmail = form.isADAccount ? MAX_AD_EMAIL : MAX_LOCAL_EMAIL;
         if (!email) {
             e.email = 'Email is required.';
         } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
             e.email = 'Enter a valid email address.';
+        } else if (email.length > maxEmail) {
+            e.email = `Email cannot exceed ${maxEmail} characters in length.`;
         }
         const phone = form.phoneNumber.trim();
-        if (phone) {
+        if (phone.length > MAX_PHONE) {
+            e.phoneNumber = `Phone number cannot exceed ${MAX_PHONE} characters in length.`;
+        } else if (phone) {
             const body = phone.startsWith('+') ? phone.slice(1) : phone;
             const digits = body.replace(/\D/g, '').length;
             if (!/^[\d ().-]+$/.test(body) || digits < 10 || digits > 15) {
@@ -114,7 +151,9 @@ export function useUserDetail() {
                 e.password = 'Password does not meet the requirements listed.';
             }
         }
-        if (isNew && form.password && form.password !== form.confirmPassword) {
+        if (isNew && !form.isADAccount && form.password && !form.confirmPassword) {
+            e.confirmPassword = 'Confirm password is required.';
+        } else if (isNew && form.password && form.password !== form.confirmPassword) {
             e.confirmPassword = 'Passwords must match.';
         }
         if (!form.roleIds.length) {
@@ -176,7 +215,7 @@ export function useUserDetail() {
     }
 
     // ================================================================
-    // Save and delete
+    // Save
     // ================================================================
     // Field problems (400) show next to their inputs; anything else (403, 409 conflict, ...) is a toast.
     function fail(e) {
@@ -203,13 +242,9 @@ export function useUserDetail() {
         isSaving.value = true;
         try {
             const body = { ...form, providerIds: hasAdminRole.value ? [] : form.providerIds };
-            const detail = isNew ? await usersApi.create(body) : await usersApi.update(route.params.key, body);
+            await (isNew ? usersApi.create(body) : usersApi.update(route.params.key, body));
             logSuccess('User saved.');
-            if (isNew) {
-                router.replace(`/admin/users/${detail.userKey}`);
-                return;
-            }
-            fill(detail);
+            backToList();
         } catch (e) {
             fail(e);
         } finally {
@@ -226,18 +261,6 @@ export function useUserDetail() {
             return;
         }
         save();
-    }
-
-    async function remove() {
-        try {
-            await usersApi.remove(route.params.key);
-            logSuccess('User deleted.');
-            backToList();
-        } catch (e) {
-            // 403 / 409 explain themselves ("has documents", "your own account").
-            dialog.value = '';
-            logApiError(e);
-        }
     }
 
     // ================================================================
@@ -296,6 +319,6 @@ export function useUserDetail() {
         canEdit,
 
         // Actions
-        save, onSubmit, remove, cancel, passwordSet, agreementsClosed, uploadClosed, resetMfa
+        save, onSubmit, cancel, passwordSet, agreementsClosed, uploadClosed, resetMfa
     };
 }

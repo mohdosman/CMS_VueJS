@@ -166,26 +166,6 @@ public sealed class UsersController(
         }
     }
 
-    [HttpDelete("{key:guid}")]
-    [Authorize(Policy = "users.edit")]
-    public async Task<IActionResult> Delete(Guid key, CancellationToken ct)
-    {
-        try
-        {
-            var found = await users.DeleteAsync(key, ct);
-
-            if (!found)
-                return NotFound();
-
-            _logger.LogInformation("User {UserKey} deleted by {Actor}", key, User.Identity?.Name);
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return Failure(ex, $"Deleting user {key}");
-        }
-    }
-
     // ---------------------------------------------------------------- end user agreements
     // Reading follows users.view, changing follows users.edit.
 

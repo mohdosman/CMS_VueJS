@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { usersApi } from '../api/usersApi.js';
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
@@ -50,7 +50,10 @@ export function useUserSearch() {
     // User permissions
     // ================================================================
     const { can } = useCapabilities();
-    const canAdd = can('users.edit');
+    const canEdit = can('users.edit');
+    const searched = ref(false);
+    // Add is offered only after a search that found nobody, as in the Blazor app.
+    const canAdd = computed(() => canEdit && searched.value && !isSearching.value && totalRecords.value === 0);
 
     // ================================================================
     // Sorting, paging and search
@@ -69,6 +72,7 @@ export function useUserSearch() {
             }
             users.value = result.items;
             totalRecords.value = result.totalCount;
+            searched.value = true;
             announce(`${result.totalCount} users found`);
         } catch (e) {
             if (requestId === requestSequence) {

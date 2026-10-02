@@ -73,7 +73,8 @@ public sealed class UserService(
         if (p.RequiredUniqueChars > 1) rules.Add($"At least {p.RequiredUniqueChars} different characters");
         return new(rules.ToArray(),
             $"{n.MinLength}-{n.MaxLength} characters, starting with {string.Join(" or ", n.AdAccountPrefixes.Select(x => x.ToUpperInvariant()))}, no @",
-            new PasswordRequirements(p.RequiredLength, p.RequireLowercase, p.RequireUppercase, p.RequireDigit, p.RequireNonAlphanumeric, p.RequiredUniqueChars));
+            new PasswordRequirements(p.RequiredLength, p.RequireLowercase, p.RequireUppercase, p.RequireDigit, p.RequireNonAlphanumeric, p.RequiredUniqueChars),
+            new UserNameRequirements(n.MinLength, n.MaxLength, n.AdAccountPrefixes));
     }
 
     // ---------------------------------------------------------------- write
@@ -146,6 +147,9 @@ public sealed class UserService(
         if (r.IsADAccount != u.IsADAccount) Add(errors, "isADAccount", "Account type cannot be changed after the account is created.");
         if (!u.IsADAccount && !string.Equals(r.Email?.Trim(), u.Email, StringComparison.OrdinalIgnoreCase))
             Add(errors, "email", "Email cannot be changed for a local account, it is the user ID.");
+        // A local account's user ID is its email, checked above; only an AD account has a separate one.
+        if (u.IsADAccount && !string.IsNullOrWhiteSpace(r.UserName) && !string.Equals(r.UserName.Trim(), u.UserName, StringComparison.OrdinalIgnoreCase))
+            Add(errors, "userName", "User ID cannot be changed after the account is created.");
         if (errors.Count > 0) throw new ValidationFailedException(errors.ToDictionary(e => e.Key, e => e.Value.ToArray()));
 
         var currentRoles = await uow.UserRoles.GetRolesForUserAsync(u.Id);
@@ -240,35 +244,6 @@ public sealed class UserService(
         await EnsureTargetInScopeAsync(u);
 
         await mfa.ResetAsync(u);
-        return true;
-    }
-
-    // False = user not found.
-    public async Task<bool> DeleteAsync(Guid userKey, CancellationToken ct)
-    {
-        var u = await uow.Users.GetByKeyAsync(userKey);
-        if (u is null) return false;
-
-        if (u.Id.ToString() == Principal.FindFirstValue(ClaimTypes.NameIdentifier))
-            throw new ForbiddenAccessException("You cannot delete your own account.");
-        await EnsureTargetInScopeAsync(u);
-
-        // Documents and facility links have no screen here yet, so refuse rather than orphan or destroy them.
-        if (await uow.Documents.AnyForUserAsync(u.Id) || await uow.FacilityUsers.AnyForUserAsync(u.Id))
-            throw new ConflictException("This user has documents or facility assignments. Remove them (agreements: View User Agreement) before deleting the user.");
-
-        await using var tx = await uow.BeginTransactionAsync(ct);
-
-        // The account own housekeeping rows; their FKs are NO ACTION, so they go first.
-        uow.UserRoles.RemoveRange(await uow.UserRoles.GetForUserAsync(u.Id));
-        uow.ProviderUsers.RemoveRange(await uow.ProviderUsers.GetForUserAsync(u.Id));
-        uow.PasswordChangeLogs.RemoveRange(await uow.PasswordChangeLogs.GetForUserAsync(u.Id));
-        await uow.SaveChangesAsync();
-        await uow.Logons.DeleteForUserAsync(u.Id);
-
-        var deleted = await users.DeleteAsync(u);
-        if (!deleted.Succeeded) throw ToValidation(deleted, "form");
-        await tx.CommitAsync(ct);
         return true;
     }
 
