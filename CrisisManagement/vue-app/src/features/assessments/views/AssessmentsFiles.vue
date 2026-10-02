@@ -116,10 +116,10 @@ const xmlRoot = computed(() => {
             <p v-if="isLoadingDialog" role="status">Loading...</p>
             <p v-else-if="!fileErrors.length" role="status">No file upload errors were found.</p>
             <table v-else class="table table-sm table-striped table-bordered">
-                <thead><tr><th scope="col">Error Table</th><th scope="col">Record ID</th><th scope="col">Error Code</th><th scope="col">Created On</th></tr></thead>
+                <thead><tr><th scope="col">Error</th><th scope="col">Prov Assess Id</th><th scope="col">Prov Pt#</th><th scope="col">Assessment Date</th><th scope="col">Description</th></tr></thead>
                 <tbody>
                     <tr v-for="e in fileErrors" :key="e.id">
-                        <td>{{ e.errorTable }}</td><td>{{ e.recordId }}</td><td>{{ e.errorCode }}</td><td>{{ formatDateTime(e.createdOn) }}</td>
+                        <td>{{ e.errorTable }}</td><td>{{ e.providerAssessmentId }}</td><td>{{ e.providerPatientNo }}</td><td>{{ formatDateTime(e.assessmentDate) }}</td><td>{{ e.description }}</td>
                     </tr>
                 </tbody>
             </table>

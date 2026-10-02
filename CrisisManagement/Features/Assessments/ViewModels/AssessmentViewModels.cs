@@ -48,6 +48,7 @@ public sealed record AssessmentFileListItem(
 
 public sealed record FileUploadRaw(int Id, string FileName, string? Npi, string Xml);
 
-public sealed record AssessmentFileErrorItem(long Id, string ErrorTable, int RecordId, string ErrorCode, DateTime CreatedOn);
+// The assessment columns come from the staged phone (table 2) or face to face (table 3) record the error points at; blank for other tables.
+public sealed record AssessmentFileErrorItem(long Id, string ErrorTable, string? ProviderAssessmentId, string? ProviderPatientNo, DateTime? AssessmentDate, string Description);
 
 public sealed record AssessmentUploadResult(int Id, string FileName, string? ProviderName);
