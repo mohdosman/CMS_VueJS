@@ -5,13 +5,12 @@ import { useCapabilities } from '../../../common/composables/useCapabilities.js'
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
-import { announce } from '../../../services/liveAnnouncer.js';
 
 // Port of ManageAssessment.aspx: one form for a new assessment (/assessments/0) and an existing one (/assessments/f2f-<id> or /assessments/pa-<id>).
 export function useAssessmentDetail() {
     const route = useRoute();
     const router = useRouter();
-    const { logSuccess, logApiError } = useLogger();
+    const { logSuccess, logError, logApiError } = useLogger();
 
     // ================================================================
     // Constants and blank shapes
@@ -70,7 +69,6 @@ export function useAssessmentDetail() {
     const referralAccepted = computed(() => form.hospitalizations.some((h) => h.hospitalizationDispositionId === REFERRAL_ACCEPTED));
 
     const msg = (field) => errors.value[field]?.join(' ') ?? '';
-    const allErrors = computed(() => Object.values(errors.value).flat());
 
     // A panel heading: the title, the record id when there is one, and the provider's own id for it.
     const panelTitle = (label, id, providerNumber) => `${label}${id ? ` #${id}` : ''}${providerNumber ? ` (Provider ID: ${providerNumber})` : ''}`;
@@ -216,7 +214,7 @@ export function useAssessmentDetail() {
         const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
         if (fieldErrors) {
             errors.value = fieldErrors;
-            announce(`${Object.values(fieldErrors).flat().length} problems were found`);
+            logError('Please correct the highlighted fields and try again.');
         } else {
             logApiError(e);
         }
@@ -227,7 +225,7 @@ export function useAssessmentDetail() {
         const { payload, problems } = toPayload();
         if (Object.keys(problems).length) {
             errors.value = problems;
-            announce('Please correct the date and time fields');
+            logError('Please correct the highlighted date and time fields and try again.');
             return;
         }
         isSaving.value = true;
@@ -277,7 +275,7 @@ export function useAssessmentDetail() {
         isDispatched, isOther, referralAccepted, panelTitle,
 
         // Busy and validation state
-        isLoading, isSaving, errors, msg, allErrors,
+        isLoading, isSaving, errors, msg,
 
         // User and permissions
         canEdit, canDelete,
