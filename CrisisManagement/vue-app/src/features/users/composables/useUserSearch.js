@@ -35,6 +35,14 @@ export function useUserSearch() {
 
     const isSearching = ref(false);
 
+    // The choices of the Active, AD and Locked filters, and the filters themselves.
+    const yesNo = [{ v: 0, t: 'All' }, { v: 1, t: 'Yes' }, { v: 2, t: 'No' }];
+    const flags = [
+        { key: 'isEnabled', label: 'Active' },
+        { key: 'isADAccount', label: 'AD' },
+        { key: 'isLockedOut', label: 'Locked' }
+    ];
+
     // Each async load bumps its counter, so a slow earlier response can't overwrite a newer one.
     let requestSequence = 0;
 
@@ -113,7 +121,7 @@ export function useUserSearch() {
 
     return {
         // Results
-        users, totalRecords, paging, criteria, roles, providers,
+        users, totalRecords, paging, criteria, roles, providers, yesNo, flags,
 
         // Busy state
         isSearching,

@@ -4,16 +4,9 @@ import MultiSelectDropdown from '../../../common/components/MultiSelectDropdown.
 import RoleChips from '../../../common/components/RoleChips.vue';
 
 const {
-    criteria, paging, users, totalRecords, roles, providers, isSearching,
+    criteria, paging, users, totalRecords, roles, providers, yesNo, flags, isSearching,
     search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, gotoUser, canAdd, add
 } = useUserSearch();
-
-const yesNo = [{ v: 0, t: 'All' }, { v: 1, t: 'Yes' }, { v: 2, t: 'No' }];
-const flags = [
-    { key: 'isEnabled', label: 'Active' },
-    { key: 'isADAccount', label: 'AD' },
-    { key: 'isLockedOut', label: 'Locked' }
-];
 </script>
 
 <template>

@@ -1,5 +1,4 @@
 <script setup>
-import { computed } from 'vue';
 import { useUserDetail } from '../composables/useUserDetail.js';
 import SetPasswordDialog from '../components/SetPasswordDialog.vue';
 import UserAgreementsDialog from '../components/UserAgreementsDialog.vue';
@@ -9,16 +8,9 @@ import PasswordChecklist from '../../../common/components/PasswordChecklist.vue'
 import RoleChips from '../../../common/components/RoleChips.vue';
 
 const {
-    isNew, canEdit, form, info, roles, providers, policy, errors, formError, dialog,
+    isNew, canEdit, form, info, roles, providers, policy, userIdShown, idCaption, errors, err, formError, dialog,
     isLoading, isSaving, hasAdminRole, documentCount, resetMfa, save, remove, passwordSet, agreementsClosed, uploadClosed, cancel
 } = useUserDetail();
-
-const err = (f) => errors.value[f]?.length ?? 0;
-// A local account signs in with its email, so its user ID is the email (fixed once created).
-const userIdShown = computed(() => (form.isADAccount || !isNew ? form.userName : form.email));
-const idCaption = computed(() => (form.isADAccount
-    ? 'The user ID cannot be changed after the account is created.'
-    : 'The email and user ID cannot be changed after the account is created.'));
 </script>
 
 <template>

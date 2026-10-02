@@ -37,6 +37,14 @@ export function useUserDetail() {
     const isLoading = ref(true);
     const isSaving = ref(false);
 
+    const err = (field) => errors.value[field]?.length ?? 0;
+
+    // A local account signs in with its email, so its user ID is the email (fixed once created).
+    const userIdShown = computed(() => (form.isADAccount || !isNew ? form.userName : form.email));
+    const idCaption = computed(() => (form.isADAccount
+        ? 'The user ID cannot be changed after the account is created.'
+        : 'The email and user ID cannot be changed after the account is created.'));
+
     // Providers do not apply to administrators, whose access is unrestricted.
     const hasAdminRole = computed(() =>
         roles.value.some((r) => form.roleIds.includes(r.id) && r.label.toLowerCase() === 'administrator'));
@@ -178,10 +186,10 @@ export function useUserDetail() {
 
     return {
         // Form
-        form, info, roles, providers, policy, dialog, documentCount, isNew,
+        form, info, roles, providers, policy, dialog, documentCount, isNew, userIdShown, idCaption,
 
         // Busy and validation state
-        isLoading, isSaving, errors, formError, hasAdminRole,
+        isLoading, isSaving, errors, formError, err, hasAdminRole,
 
         // User and permissions
         canEdit,
