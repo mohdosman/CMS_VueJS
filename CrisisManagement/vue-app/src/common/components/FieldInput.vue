@@ -16,7 +16,7 @@ const props = defineProps({
     hint: { type: String, default: '' },
     col: { type: String, default: 'col-md-4' }
 });
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'touch']);
 const id = useId();
 const onInput = (e) => {
     const v = e.target.value;
@@ -25,7 +25,7 @@ const onInput = (e) => {
 </script>
 
 <template>
-    <div class="mb-3" :class="[col, { 'has-error': !!error }]">
+    <div class="mb-3" :class="[col, { 'has-error': !!error }]" @focusout="!$event.currentTarget.contains($event.relatedTarget) && emit('touch')">
         <label class="form-label" :for="id">{{ label }} <span v-if="required" class="f_req" aria-hidden="true">*</span></label>
         <DateInput v-if="type === 'date'" :id="id" class="form-control form-control-sm" :model-value="modelValue ?? ''" :disabled="disabled"
                    :aria-required="required || undefined" :aria-invalid="!!error" :aria-describedby="`${hint ? `${id}-hint ` : ''}${id}-err`"

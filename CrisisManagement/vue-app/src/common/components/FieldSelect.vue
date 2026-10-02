@@ -12,12 +12,12 @@ defineProps({
     placeholder: { type: String, default: '- - SELECT - -' },
     col: { type: String, default: 'col-md-4' }
 });
-defineEmits(['update:modelValue']);
+defineEmits(['update:modelValue', 'touch']);
 const id = useId();
 </script>
 
 <template>
-    <div class="mb-3" :class="[col, { 'has-error': !!error }]">
+    <div class="mb-3" :class="[col, { 'has-error': !!error }]" @focusout="!$event.currentTarget.contains($event.relatedTarget) && $emit('touch')">
         <label class="form-label" :for="id">{{ label }} <span v-if="required" class="f_req" aria-hidden="true">*</span></label>
         <select :id="id" class="form-select form-select-sm" :value="modelValue" :disabled="disabled" :aria-required="required || undefined"
                 :aria-invalid="!!error" :aria-describedby="`${id}-err`"

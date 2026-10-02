@@ -5,6 +5,7 @@ import { useCapabilities } from '../../../common/composables/useCapabilities.js'
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
+import { createShowError, createTouch, requireSelect } from '../../../utils/validationUtils.js';
 
 // Port of ManageAssessment.aspx: one form for a new assessment (/assessments/0) and an existing one (/assessments/f2f-<id> or /assessments/pa-<id>).
 export function useAssessmentDetail() {
@@ -56,7 +57,7 @@ export function useAssessmentDetail() {
     const dt = reactive(Object.fromEntries(DATE_TIMES.map((field) => [field, blankDateTime()])));
     const lookups = ref({});
     const providers = ref([]);
-    const errors = ref({});           // { field: [messages] } from a 400 response or the date/time checks
+    const serverErrors = ref({});     // { field: [messages] } from a 400 response
     const dialog = ref('');           // '' or 'delete'
     const isLoading = ref(true);
     const isSaving = ref(false);
@@ -67,8 +68,6 @@ export function useAssessmentDetail() {
     const isDispatched = computed(() => form.dispositionId === MOBILE_CRISIS);
     const isOther = computed(() => form.dispositionId === OTHER);
     const referralAccepted = computed(() => form.hospitalizations.some((h) => h.hospitalizationDispositionId === REFERRAL_ACCEPTED));
-
-    const msg = (field) => errors.value[field]?.join(' ') ?? '';
 
     // A panel heading: the title, the record id when there is one, and the provider's own id for it.
     const panelTitle = (label, id, providerNumber) => `${label}${id ? ` #${id}` : ''}${providerNumber ? ` (Provider ID: ${providerNumber})` : ''}`;
@@ -119,6 +118,161 @@ export function useAssessmentDetail() {
         .map((d) => ({ id: d.dispositionListId, label: d.label }));
 
     // ================================================================
+    // Validation
+    // ================================================================
+    // The checks that need only the form itself (required fields, and the date and time halves). The server repeats them and also
+    // checks the rest (date order, duplicates, SSN, DOB), and its messages show the same way.
+    const submitted = ref(false);
+    // Which fields the user has visited. A field only shows its message once it was left, or after a submit.
+    const touched = reactive({});
+    const touch = createTouch(touched);
+
+    const YES = 1;
+    const blank = (value) => !String(value ?? '').trim();
+    const hasDateTime = (field) => !!dt[field].date && !!dt[field].time;
+
+    // The error message for each field; a field that is fine has no entry.
+    const clientErrors = computed(() => {
+        const e = {};
+        const add = (field, message) => {
+            if (!e[field]) {
+                e[field] = message;
+            }
+        };
+        const required = (field, label) => blank(form[field]) && add(field, `${label} is required.`);
+        const select = (field, message) => !requireSelect(form[field]) && add(field, message);
+        const yesNo = (field, message) => form[field] === null && add(field, message);
+        const dateTime = (field, message) => {
+            const { date, time } = dt[field];
+            if (date && !time) {
+                add(field, `Please enter the ${DATE_TIME_LABELS[field]} time.`);
+            } else if (!date && time) {
+                add(field, `Please enter the ${DATE_TIME_LABELS[field]} date.`);
+            } else if (message && !date) {
+                add(field, message);
+            }
+        };
+        const entered = (rows) => rows.filter((row) => !isEmptyRow(row));
+
+        // A date without a time (or the reverse) is a problem in any panel.
+        for (const field of DATE_TIMES) {
+            dateTime(field, '');
+        }
+
+        // The face to face panel counts when it has an assessment date; the phone panel when it has anything, or when there is no face to face.
+        const isF2F = hasDateTime('f2FAssessmentDateTime');
+        const wantsPhone = !isF2F || hasDateTime('callEnded') || requireSelect(form.dispositionId) || hasDateTime('dispatchDateTime');
+
+        // Consumer
+        required('firstName', 'First Name');
+        required('lastName', 'Last Name');
+
+        // Crisis telephone
+        if (wantsPhone) {
+            dateTime('callEnded', 'Call End Date is Required!');
+            select('dispositionId', 'Disposition is required');
+            if (form.dispositionId === OTHER && blank(form.dispositionOther)) {
+                add('dispositionOther', "Detail must be provided when Disposition is 'Other'");
+            }
+            if (form.dispositionId === MOBILE_CRISIS && !hasDateTime('dispatchDateTime')) {
+                add('dispatchDateTime', 'Dispatch Date and Time are required for Mobile Crisis Staff.');
+            }
+        }
+
+        if (isF2F) {
+            select('genderId', 'Please select the Gender!');
+            select('raceId', 'Please select the Race!');
+            select('ethnicityId', 'Please select the Ethnicity!');
+            select('assessmentTypeId', 'Please select the Assessment Type!');
+            yesNo('transportedByLE', 'Transported by Law Enforcement is required.');
+            select('payorSourceId', 'Primary Insurer is required');
+            dateTime('timeDispositionCompleted', 'Date Disposition Completed is Required!');
+            required('completedByFirstName', 'Assessment Completed By First Name');
+            required('completedByLastName', 'Assessment Completed By Last Name');
+
+            select('assessmentLocationId', 'Please select the Consumer Location at Assessment!');
+            yesNo('televideoAssessment', 'Assessment via Televideo is required.');
+            select('currentServicesId', 'Please select the Current Services Being Received!');
+            select('mhTreatmentDeclarationId', 'Please select the Declaration of MH Treatment!');
+            select('motStatusId', 'Please select the MOT Status!');
+            select('durablePOAId', 'Please select the Durable POA!');
+            select('residentialStatusId', 'Please select the Residential Status!');
+            select('countyId', 'Please select the County of Residence!');
+            select('employmentStatusId', 'Please select the Employment Status!');
+            select('maritalStatusId', 'Please select the Marital Status!');
+            select('militaryStatusId', 'Please select the Military Status!');
+            select('school3MonthsId', 'Please select the Attended school in last 3 months!');
+            select('educationLevelId', 'Please select the Current or highest grade completed!');
+            select('primaryProblemId', 'Please select the Primary Problem that lead to Recommended Treatment!');
+            select('intellectualDisabilityId', 'Please select the Intellectual / Development Disability!');
+            select('medicalInstabilityId', 'Please select the Medical / Physical Instability!');
+            select('medicationIssuesId', 'Please select the Medication Compliance Issues!');
+            select('pastTraumaId', 'Please select the Declaration of Past Trauma!');
+            select('substanceAbuseId', 'Please select the Substance Abuse!');
+
+            // Drugs count only when Substance Abuse is Yes.
+            if (form.substanceAbuseId === YES) {
+                const drugs = entered(form.drugs);
+                if (!drugs.length) {
+                    add('drugs', 'At least one drug entry is required when Substance Abuse is selected.');
+                } else if (drugs.some((d) => !requireSelect(d.drugRouteId))) {
+                    add('drugs', 'Drug Route is required.');
+                } else if (drugs.some((d) => !requireSelect(d.drugFrequencyId))) {
+                    add('drugs', 'Drug Frequency is required.');
+                }
+            }
+
+            const alternatives = entered(form.hospAlternatives);
+            if (!alternatives.length) {
+                add('hospAlternatives', 'Alternative to Hospitalization is required.');
+            } else if (alternatives.some((a) => !requireSelect(a.hospAltDispositionListId))) {
+                add('hospAlternatives', 'Alt Disposition is required.');
+            }
+
+            if (entered(form.hospitalizations).some((h) => !requireSelect(h.hospitalizationDispositionId))) {
+                add('hospitalizations', 'Referred To Disposition is required.');
+            }
+
+            // A referral that was accepted means the person was sent on: transport and admission details are then required.
+            if (referralAccepted.value) {
+                dateTime('timeTransported', 'Date transported to receiving facility is Required!');
+                select('recommendedTransportModeId', 'Please select the Recommended mode of Transport!');
+                select('firstHospitalizationId', 'Please select the 1st Hospitalization!');
+                yesNo('voluntaryAdmissionRecommended', 'Voluntary Admission Recommended is required!');
+                if (form.followupContact === true) {
+                    yesNo('isAdmitted', 'Was the patient admitted is required!');
+                }
+                yesNo('telehealthAdmissionAssessment', 'Admission assessment via telehealth is required!');
+            }
+
+            if (form.followupContact === true && !referralAccepted.value) {
+                yesNo('followupReportedServiceHelpful', 'Report Service Helpful is required!');
+            }
+            if (form.followupContact === false) {
+                if (form.contactAttempts === null || form.contactAttempts === '') {
+                    add('contactAttempts', 'No. of Attempts to contact is required!');
+                } else if (form.contactAttempts <= 0) {
+                    add('contactAttempts', 'Please provide the valid No. of Attempts to contact!');
+                }
+            }
+        }
+        return e;
+    });
+
+    const isValid = computed(() => Object.keys(clientErrors.value).length === 0);
+    // A field shows its message only after it was touched, or after a submit was attempted.
+    const showError = createShowError(touched, submitted, clientErrors);
+
+    // What the screen shows for a field: the server's message when it sent one, else the form's own once it is due.
+    const msg = (field) => serverErrors.value[field]?.join(' ') || (showError(field) ? clientErrors.value[field] : '');
+
+    function resetValidation() {
+        submitted.value = false;
+        serverErrors.value = {};
+        Object.keys(touched).forEach((field) => delete touched[field]);
+    }
+
+    // ================================================================
     // Loading
     // ================================================================
     function fill(detail) {
@@ -134,6 +288,7 @@ export function useAssessmentDetail() {
         try {
             const detail = await assessmentsApi.get(assessmentKey);
             fill(detail);
+            resetValidation();
             loadedKey = assessmentKey;
             // A phone call that already has a face to face assessment opens as that assessment.
             if (detail.key && detail.key !== assessmentKey) {
@@ -185,20 +340,14 @@ export function useAssessmentDetail() {
     // ================================================================
     // Save and delete
     // ================================================================
-    // The API wants one value per date-time; a date without a time (or the reverse) is caught here.
+    // The API wants one value per date-time ("yyyy-MM-ddTHH:mm"); blank rows are dropped.
     function toPayload() {
-        const problems = {};
         const payload = { ...form };
         for (const grid of ['drugs', 'hospAlternatives', 'hospitalizations']) {
             payload[grid] = form[grid].filter((row) => !isEmptyRow(row));
         }
         for (const field of DATE_TIMES) {
             const { date, time } = dt[field];
-            if (date && !time) {
-                problems[field] = [`Please enter the ${DATE_TIME_LABELS[field]} time.`];
-            } else if (!date && time) {
-                problems[field] = [`Please enter the ${DATE_TIME_LABELS[field]} date.`];
-            }
             payload[field] = date && time ? `${date}T${time}` : null;
         }
         for (const [name, value] of Object.entries(payload)) {
@@ -206,28 +355,30 @@ export function useAssessmentDetail() {
                 payload[name] = null;
             }
         }
-        return { payload, problems };
+        return payload;
     }
 
-    // Field problems (400) show next to their inputs and in the summary; anything else (403, 409 conflict, ...) is a toast.
+    // Field problems (400) show next to their inputs; anything else (403, 409 conflict, ...) is a toast.
     function fail(e) {
         const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
         if (fieldErrors) {
-            errors.value = fieldErrors;
-            logError('Please correct the highlighted fields and try again.');
+            serverErrors.value = fieldErrors;
+            logError('Please correct the validation errors first.');
         } else {
             logApiError(e);
         }
     }
 
+    // Checks permission, then saves. A new or changed record reloads, so its messages start clean.
     async function save() {
-        errors.value = {};
-        const { payload, problems } = toPayload();
-        if (Object.keys(problems).length) {
-            errors.value = problems;
-            logError('Please correct the highlighted date and time fields and try again.');
+        if (isSaving.value) {
             return;
         }
+        if (!canEdit) {
+            logError('You do not have permission to manage assessments.');
+            return;
+        }
+        const payload = toPayload();
         isSaving.value = true;
         try {
             const saved = isNew.value ? await assessmentsApi.create(payload) : await assessmentsApi.update(key.value, payload);
@@ -243,6 +394,17 @@ export function useAssessmentDetail() {
         } finally {
             isSaving.value = false;
         }
+    }
+
+    // The form's submit: validates first, and only saves when everything is valid.
+    function onSubmit() {
+        submitted.value = true;
+        serverErrors.value = {};
+        if (!isValid.value) {
+            logError('Please correct the validation errors first.');
+            return;
+        }
+        save();
     }
 
     async function remove() {
@@ -275,12 +437,12 @@ export function useAssessmentDetail() {
         isDispatched, isOther, referralAccepted, panelTitle,
 
         // Busy and validation state
-        isLoading, isSaving, errors, msg,
+        isLoading, isSaving, submitted, touched, touch, isValid, showError, msg,
 
         // User and permissions
         canEdit, canDelete,
 
         // Actions
-        save, remove, cancel, isEmptyRow, removeRow, dispositionsFor
+        save, onSubmit, remove, cancel, isEmptyRow, removeRow, dispositionsFor
     };
 }

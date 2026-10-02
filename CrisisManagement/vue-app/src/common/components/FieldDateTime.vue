@@ -10,13 +10,13 @@ const props = defineProps({
     disabled: Boolean,
     col: { type: String, default: 'col-md-6' }
 });
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'touch']);
 const id = useId();
 const set = (part, e) => emit('update:modelValue', { ...props.modelValue, [part]: e.target.value });
 </script>
 
 <template>
-    <div class="mb-3" :class="[col, { 'has-error': !!error }]">
+    <div class="mb-3" :class="[col, { 'has-error': !!error }]" @focusout="!$event.currentTarget.contains($event.relatedTarget) && emit('touch')">
         <div class="row g-1">
             <div class="col-7">
                 <label class="form-label" :for="`${id}-date`">{{ label }} date <span v-if="required" class="f_req" aria-hidden="true">*</span></label>
