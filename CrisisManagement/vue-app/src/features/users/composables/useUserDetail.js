@@ -43,6 +43,9 @@ export function useUserDetail() {
         ? 'The user ID cannot be changed after the account is created.'
         : 'The email and user ID cannot be changed after the account is created.'));
 
+    // The numeric id Blazor shows is not exposed here, so the user ID stands in for it.
+    const title = computed(() => (isNew ? 'Add User' : `Edit user ${info.value?.userName ?? ''}`.trim()));
+
     // Providers do not apply to administrators, whose access is unrestricted.
     const hasAdminRole = computed(() =>
         roles.value.some((r) => form.roleIds.includes(r.id) && r.label.toLowerCase() === 'administrator'));
@@ -198,7 +201,7 @@ export function useUserDetail() {
                 documentCount.value = (await usersApi.documents(route.params.key)).length;
             }
         } catch (e) {
-            logApiError(e, { fallback: 'User not found.' });
+            logApiError(e, { fallback: 'Load failed.' });
         }
     }
 
@@ -310,7 +313,7 @@ export function useUserDetail() {
 
     return {
         // Form
-        form, info, roles, providers, policy, dialog, documentCount, isNew, userIdShown, idCaption,
+        form, info, roles, providers, policy, dialog, documentCount, isNew, title, userIdShown, idCaption,
 
         // Busy and validation state
         isLoading, isSaving, formError, submitted, touched, touch, isValid, showError, msg, err, hasAdminRole,

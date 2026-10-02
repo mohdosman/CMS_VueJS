@@ -8,13 +8,13 @@ import PasswordChecklist from '../../../common/components/PasswordChecklist.vue'
 import RoleChips from '../../../common/components/RoleChips.vue';
 
 const {
-    isNew, canEdit, form, info, roles, providers, policy, userIdShown, idCaption, msg, err, touch, formError, dialog,
+    isNew, title, canEdit, form, info, roles, providers, policy, userIdShown, idCaption, msg, err, touch, formError, dialog,
     isLoading, isSaving, hasAdminRole, documentCount, resetMfa, onSubmit, passwordSet, agreementsClosed, uploadClosed, cancel
 } = useUserDetail();
 </script>
 
 <template>
-    <DetailPanel :title="isNew ? 'Add User' : 'User Details'" icon="fa fa-user" form-name="userForm"
+    <DetailPanel :title="title" icon="fa fa-user" form-name="userForm"
                  main-labelledby="main-title" :can-save="canEdit && !isSaving && !isLoading"
                  :show-buttons="canEdit" @save="onSubmit" @cancel="cancel">
         <!-- Agreements sit with the title, not the save bar: they are not part of the edit. -->
@@ -30,7 +30,7 @@ const {
         </template>
 
         <template #fields>
-            <h1 id="main-title" class="visually-hidden">{{ isNew ? 'Add User' : 'User Details' }}</h1>
+            <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
 
             <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
 
