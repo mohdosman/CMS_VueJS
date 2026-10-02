@@ -35,6 +35,11 @@
     <VueSource Include="$(SpaRoot)src\**\*;$(SpaRoot)vite.config.js;$(SpaRoot)package.json;$(SpaRoot)package-lock.json;$(SpaRoot)eslint.config.mjs" />
   </ItemGroup>
 
+  <!-- Without this, VS's fast up-to-date check skips the build on F5 when only Vue files changed. -->
+  <ItemGroup>
+    <UpToDateCheckInput Include="@(VueSource)" />
+  </ItemGroup>
+
   <Target Name="NpmInstall" BeforeTargets="ViteBuild" Condition="!Exists('$(SpaRoot)node_modules')">
     <Exec Command="npm ci" WorkingDirectory="$(SpaRoot)" />
   </Target>

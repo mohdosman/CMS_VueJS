@@ -57,24 +57,24 @@ const {
                         <FieldSelect v-model="form.assessmentTypeId" label="Assessment Type" :options="lookups.assessmentTypes" :error="msg('assessmentTypeId')" col="col-md-6 col-lg-4" />
                         <FieldDateTime v-model="dt.f2FAssessmentDateTime" label="Assessment" :error="msg('f2FAssessmentDateTime')" col="col-md-6 col-lg-4" />
                         <FieldYesNo v-model="form.transportedByLE" label="Transported by Law Enforcement" :error="msg('transportedByLE')" col="col-md-6 col-lg-4" />
-                        <FieldSelect v-model="form.payorSourceId" label="Primary Insurer" :options="lookups.payorSources" :error="msg('payorSourceId')" />
-                        <FieldSelect v-model="form.secondaryPayorSourceId" label="Payor Billed for Service" :options="lookups.payorSources" :error="msg('secondaryPayorSourceId')" />
-                        <FieldInput v-model="form.annualHouseholdIncome" label="Annual Gross Household Income" type="number" :min="0" step="0.01" :error="msg('annualHouseholdIncome')" col="col-md-4 col-lg-2" />
-                        <FieldInput v-model="form.numberInHousehold" label="Number of People in Household" type="number" :min="0" :max="255" :error="msg('numberInHousehold')" col="col-md-4 col-lg-2" />
-                        <FieldSelect v-model="form.assessmentLocationId" label="Consumer Location at Assessment" :options="lookups.assessmentLocations" :error="msg('assessmentLocationId')" />
-                        <FieldYesNo v-model="form.televideoAssessment" label="Crisis Assessment via Televideo" :error="msg('televideoAssessment')" />
-                        <FieldSelect v-model="form.currentServicesId" label="Current Services Being Received" :options="lookups.currentServices" :error="msg('currentServicesId')" />
-                        <FieldSelect v-model="form.mhTreatmentDeclarationId" label="Declaration of MH Treatment" :options="lookups.yesNoUnknown" :error="msg('mhTreatmentDeclarationId')" />
-                        <FieldSelect v-model="form.motStatusId" label="MOT Status" :options="lookups.yesNoUnknown" :error="msg('motStatusId')" />
-                        <FieldSelect v-model="form.durablePOAId" label="Durable POA / Conservator / Guardian" :options="lookups.yesNoUnknown" :error="msg('durablePOAId')" />
-                        <FieldSelect v-model="form.residentialStatusId" label="Residential Status" :options="lookups.residentialStatuses" :error="msg('residentialStatusId')" />
-                        <FieldSelect v-model="form.countyId" label="County of Residence" :options="lookups.counties" :error="msg('countyId')" />
-                        <FieldSelect v-model="form.employmentStatusId" label="Employment Status" :options="lookups.employmentStatuses" :error="msg('employmentStatusId')" />
-                        <FieldInput v-model="form.arrests30Days" label="Number of arrests in last 30 days" type="number" :min="0" :max="255" :error="msg('arrests30Days')" />
-                        <FieldSelect v-model="form.maritalStatusId" label="Marital Status" :options="lookups.maritalStatuses" :error="msg('maritalStatusId')" />
-                        <FieldSelect v-model="form.militaryStatusId" label="Military Status" :options="lookups.militaryStatuses" :error="msg('militaryStatusId')" />
-                        <FieldSelect v-model="form.school3MonthsId" label="Attended School in Last 3 Months" :options="lookups.yesNoUnknown" :error="msg('school3MonthsId')" />
-                        <FieldSelect v-model="form.educationLevelId" label="Current or Highest Grade Completed" :options="lookups.educationLevels" :error="msg('educationLevelId')" />
+                        <FieldSelect v-model="form.payorSourceId" label="Primary Insurer" :options="lookups.payorSources" :error="msg('payorSourceId')" col="col-md-3" />
+                        <FieldSelect v-model="form.secondaryPayorSourceId" label="Payor Billed for Service" :options="lookups.payorSources" :error="msg('secondaryPayorSourceId')" col="col-md-3" />
+                        <FieldInput v-model="form.annualHouseholdIncome" label="Annual Gross Household Income" type="number" :min="0" step="0.01" :error="msg('annualHouseholdIncome')" col="col-md-3" />
+                        <FieldInput v-model="form.numberInHousehold" label="Number of People in Household" type="number" :min="0" :max="255" :error="msg('numberInHousehold')" col="col-md-3" />
+                        <FieldSelect v-model="form.assessmentLocationId" label="Consumer Location at Assessment" :options="lookups.assessmentLocations" :error="msg('assessmentLocationId')" col="col-md-3" />
+                        <FieldYesNo v-model="form.televideoAssessment" label="Crisis Assessment via Televideo" :error="msg('televideoAssessment')" col="col-md-3" />
+                        <FieldSelect v-model="form.currentServicesId" label="Current Services Being Received" :options="lookups.currentServices" :error="msg('currentServicesId')" col="col-md-3" />
+                        <FieldSelect v-model="form.mhTreatmentDeclarationId" label="Declaration of MH Treatment" :options="lookups.yesNoUnknown" :error="msg('mhTreatmentDeclarationId')" col="col-md-3" />
+                        <FieldSelect v-model="form.motStatusId" label="MOT Status" :options="lookups.yesNoUnknown" :error="msg('motStatusId')" col="col-md-3" />
+                        <FieldSelect v-model="form.durablePOAId" label="Durable POA / Conservator / Guardian" :options="lookups.yesNoUnknown" :error="msg('durablePOAId')" col="col-md-3" />
+                        <FieldSelect v-model="form.residentialStatusId" label="Residential Status" :options="lookups.residentialStatuses" :error="msg('residentialStatusId')" col="col-md-3" />
+                        <FieldSelect v-model="form.countyId" label="County of Residence" :options="lookups.counties" :error="msg('countyId')" col="col-md-3" />
+                        <FieldSelect v-model="form.employmentStatusId" label="Employment Status" :options="lookups.employmentStatuses" :error="msg('employmentStatusId')" col="col-md-3" />
+                        <FieldInput v-model="form.arrests30Days" label="Number of arrests in last 30 days" type="number" :min="0" :max="255" :error="msg('arrests30Days')" col="col-md-3" />
+                        <FieldSelect v-model="form.maritalStatusId" label="Marital Status" :options="lookups.maritalStatuses" :error="msg('maritalStatusId')" col="col-md-3" />
+                        <FieldSelect v-model="form.militaryStatusId" label="Military Status" :options="lookups.militaryStatuses" :error="msg('militaryStatusId')" col="col-md-3" />
+                        <FieldSelect v-model="form.school3MonthsId" label="Attended School in Last 3 Months" :options="lookups.yesNoUnknown" :error="msg('school3MonthsId')" col="col-md-3" />
+                        <FieldSelect v-model="form.educationLevelId" label="Current or Highest Grade Completed" :options="lookups.educationLevels" :error="msg('educationLevelId')" col="col-md-3" />
                     </div>
 
                     <ExpandPanel title="PRIMARY PROBLEM" :level="3">
