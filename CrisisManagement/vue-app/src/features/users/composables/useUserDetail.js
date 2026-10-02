@@ -115,23 +115,23 @@ export function useUserDetail() {
             e.userName = userNameError(form.userName);
         }
         if (blank(form.firstName)) {
-            e.firstName = 'First name is required.';
+            e.firstName = 'First name is required';
         } else if (form.firstName.trim().length > MAX_NAME) {
-            e.firstName = `First name cannot exceed ${MAX_NAME} characters in length.`;
+            e.firstName = `First name cannot exceed ${MAX_NAME} characters`;
         }
         if (blank(form.lastName)) {
-            e.lastName = 'Last name is required.';
+            e.lastName = 'Last name is required';
         } else if (form.lastName.trim().length > MAX_NAME) {
-            e.lastName = `Last name cannot exceed ${MAX_NAME} characters in length.`;
+            e.lastName = `Last name cannot exceed ${MAX_NAME} characters`;
         }
         const email = form.email.trim();
         const maxEmail = form.isADAccount ? MAX_AD_EMAIL : MAX_LOCAL_EMAIL;
         if (!email) {
-            e.email = 'Email is required.';
+            e.email = 'Email is required';
         } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-            e.email = 'Enter a valid email address.';
+            e.email = 'Invalid email format';
         } else if (email.length > maxEmail) {
-            e.email = `Email cannot exceed ${maxEmail} characters in length.`;
+            e.email = `Email cannot exceed ${maxEmail} characters`;
         }
         const phone = form.phoneNumber.trim();
         if (phone.length > MAX_PHONE) {
@@ -149,18 +149,18 @@ export function useUserDetail() {
             }
         } else if (isNew) {
             if (!form.password) {
-                e.password = 'Password is required.';
+                e.password = 'Password is required';
             } else if (!passwordMeetsPolicy(form.password)) {
                 e.password = 'Password does not meet the requirements listed.';
             }
         }
         if (isNew && !form.isADAccount && form.password && !form.confirmPassword) {
-            e.confirmPassword = 'Confirm password is required.';
+            e.confirmPassword = 'Confirm password is required';
         } else if (isNew && form.password && form.password !== form.confirmPassword) {
-            e.confirmPassword = 'Passwords must match.';
+            e.confirmPassword = 'Passwords must match';
         }
         if (!form.roleIds.length) {
-            e.roleIds = 'At least one role must be selected.';
+            e.roleIds = 'At least one role must be selected';
         }
         return e;
     });

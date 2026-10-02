@@ -34,14 +34,14 @@ export function useSetPassword(props, emit) {
     function validate() {
         const e = {};
         if (!password.value) {
-            e.password = ['Password is required.'];
+            e.password = ['Password is required'];
         } else if (rules.value.some((i) => !i.met)) {
             e.password = ['Password does not meet the requirements listed.'];
         }
         if (!confirmPassword.value) {
-            e.confirmPassword = ['Confirm password is required.'];
+            e.confirmPassword = ['Confirm password is required'];
         } else if (confirmPassword.value !== password.value) {
-            e.confirmPassword = ['Passwords must match.'];
+            e.confirmPassword = ['Passwords must match'];
         }
         errors.value = e;
         return Object.keys(e).length === 0;
