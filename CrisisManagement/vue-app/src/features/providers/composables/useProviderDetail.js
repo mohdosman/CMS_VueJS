@@ -5,13 +5,13 @@ import { useCapabilities } from '../../../common/composables/useCapabilities.js'
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
-import { fieldMessages } from '../../../utils/formErrors.js';
+import { createShowError, createTouch } from '../../../utils/validationUtils.js';
 
 // Port of ManageProvider.aspx: one form for a new provider (/admin/providers/0) and an existing one (/admin/providers/:key).
 export function useProviderDetail() {
     const route = useRoute();
     const router = useRouter();
-    const { logSuccess, logApiError } = useLogger();
+    const { logSuccess, logError, logApiError } = useLogger();
 
     // ================================================================
     // Blank shapes
@@ -44,14 +44,11 @@ export function useProviderDetail() {
     const info = ref(null);
     const states = ref([]);
     const counties = ref([]);
-    const errors = ref({});          // { 'physicalAddress.city': [messages] } from a 400 validation response
+    const serverErrors = ref({});    // { 'physicalAddress.city': [messages] } from a 400 validation response
     const dialog = ref('');          // '' or 'delete'
     const tab = ref('demographics'); // 'demographics', 'physicalAddress' or 'remitAddress'
     const isLoading = ref(true);
     const isSaving = ref(false);
-
-    const msg = fieldMessages(errors);
-    const err = (field) => errors.value[field]?.length ?? 0;
 
     // The tabs after Demographics, and the fields in each address and its contact.
     const sections = [
@@ -79,6 +76,75 @@ export function useProviderDetail() {
     const canEdit = can('providers.edit');
 
     // ================================================================
+    // Validation
+    // ================================================================
+    const submitted = ref(false);
+    // Which fields the user has visited. A field only shows its message once it was left, or after a submit.
+    const touched = reactive({});
+    const touch = createTouch(touched);
+
+    const digits = (value, count) => new RegExp(`^\\d{${count}}$`).test(String(value ?? '').trim());
+    const filled = (value) => !!String(value ?? '').trim();
+
+    // The error message for each field; a field that is fine has no entry. The server also checks the NPI and Edison number are unique.
+    const clientErrors = computed(() => {
+        const e = {};
+        const name = form.name.trim();
+        if (!name) {
+            e.name = 'Provider name is required.';
+        } else if (name.length <= 10) {
+            e.name = 'Provider name must be more than 10 characters.';
+        }
+        if (!form.abbreviation.trim()) {
+            e.abbreviation = 'Provider abbreviation is required.';
+        }
+        if (!form.edisonNumber.trim()) {
+            e.edisonNumber = 'Edison number is required.';
+        } else if (!digits(form.edisonNumber, 10)) {
+            e.edisonNumber = 'Edison number must be exactly 10 digits.';
+        }
+        if (filled(form.npi) && !digits(form.npi, 10)) {
+            e.npi = 'NPI must be exactly 10 digits.';
+        }
+
+        // An address, with its contact, counts once any of it is filled in.
+        for (const { key, title } of sections) {
+            const address = form[key];
+            if (filled(address.zipcode) && !digits(address.zipcode, 5)) {
+                e[`${key}.zipcode`] = 'ZIP must be a 5 digit number.';
+            }
+            if (filled(address.zipExtension) && !digits(address.zipExtension, 4)) {
+                e[`${key}.zipExtension`] = 'ZIP+4 must be a 4 digit number.';
+            }
+            if (filled(address.contact.emailAddress) && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address.contact.emailAddress.trim())) {
+                e[`${key}.contact.emailAddress`] = `${title} contact email is not valid.`;
+            }
+        }
+        return e;
+    });
+
+    const isValid = computed(() => Object.keys(clientErrors.value).length === 0);
+    // A field shows its message only after it was touched, or after a submit was attempted.
+    const showError = createShowError(touched, submitted, clientErrors);
+
+    // What the screen shows for a field: the server's message when it sent one, else the form's own once it is due.
+    const msg = (field) => serverErrors.value[field]?.join(' ') || (showError(field) ? clientErrors.value[field] : '');
+    const err = (field) => (msg(field) ? 1 : 0);
+
+    function resetValidation() {
+        submitted.value = false;
+        serverErrors.value = {};
+        Object.keys(touched).forEach((field) => delete touched[field]);
+    }
+
+    // Shows the first tab that has a problem.
+    function showTabWithError(fields) {
+        const inAddress = (field) => field.startsWith('physicalAddress') || field.startsWith('remitAddress');
+        const firstAddressField = fields.find(inAddress);
+        tab.value = fields.some((field) => !inAddress(field)) ? 'demographics' : firstAddressField.split('.')[0];
+    }
+
+    // ================================================================
     // Loading
     // ================================================================
     function fill(detail) {
@@ -89,6 +155,7 @@ export function useProviderDetail() {
             edisonNumber: detail.edisonNumber ?? '', npi: detail.npi ?? '',
             physicalAddress: address(detail.physicalAddress), remitAddress: address(detail.remitAddress)
         });
+        resetValidation();
     }
 
     async function getPageData() {
@@ -126,17 +193,20 @@ export function useProviderDetail() {
             logApiError(e);
             return;
         }
-        errors.value = fieldErrors;
-
-        // Show the first tab that has a problem.
-        const keys = Object.keys(fieldErrors);
-        const inAddress = (key) => key.startsWith('physicalAddress') || key.startsWith('remitAddress');
-        const firstAddressKey = keys.find(inAddress);
-        tab.value = keys.some((key) => !inAddress(key)) ? 'demographics' : firstAddressKey.split('.')[0];
+        serverErrors.value = fieldErrors;
+        logError('Please correct the validation errors first.');
+        showTabWithError(Object.keys(fieldErrors));
     }
 
+    // Checks permission, then saves. On success it returns to the list.
     async function save() {
-        errors.value = {};
+        if (isSaving.value) {
+            return;
+        }
+        if (!canEdit) {
+            logError('You do not have permission to manage providers.');
+            return;
+        }
         isSaving.value = true;
         try {
             if (isNew.value) {
@@ -151,6 +221,18 @@ export function useProviderDetail() {
         } finally {
             isSaving.value = false;
         }
+    }
+
+    // The form's submit: validates first, and only saves when everything is valid.
+    function onSubmit() {
+        submitted.value = true;
+        serverErrors.value = {};
+        if (!isValid.value) {
+            logError('Please correct the validation errors first.');
+            showTabWithError(Object.keys(clientErrors.value));
+            return;
+        }
+        save();
     }
 
     async function remove() {
@@ -179,12 +261,12 @@ export function useProviderDetail() {
         form, info, states, counties, tab, dialog, title, isNew, sections, addressFields, contactFields,
 
         // Busy and validation state
-        isLoading, isSaving, errors, msg, err,
+        isLoading, isSaving, submitted, touched, touch, isValid, showError, msg, err,
 
         // User and permissions
         canEdit,
 
         // Actions
-        save, remove, cancel
+        save, onSubmit, remove, cancel
     };
 }

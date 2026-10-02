@@ -2,15 +2,15 @@
 import { useProviderDetail } from '../composables/useProviderDetail.js';
 
 const {
-    msg, err, isNew, canEdit, title, form, info, states, counties, sections, addressFields, contactFields, errors, dialog, tab,
-    isLoading, isSaving, save, remove, cancel
+    msg, err, isNew, canEdit, title, form, info, states, counties, sections, addressFields, contactFields, dialog, tab,
+    isLoading, isSaving, touch, onSubmit, remove, cancel
 } = useProviderDetail();
 </script>
 
 <template>
     <DetailPanel :title="title" icon="fa fa-hospital-o" form-name="providerForm"
                  main-labelledby="main-title" :can-save="canEdit && !isSaving && !isLoading"
-                 :show-buttons="canEdit" @save="save" @cancel="cancel">
+                 :show-buttons="canEdit" @save="onSubmit" @cancel="cancel">
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
 
@@ -31,27 +31,27 @@ const {
                     <div class="col-md-6 mb-3" :class="{ 'has-error': !!(msg('name')) }">
                         <label class="form-label" for="name">Provider Name <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="name" v-model="form.name" type="text" maxlength="150" class="form-control form-control-sm"
-                               :aria-invalid="err('name') > 0" aria-describedby="name-err" />
+                               :aria-invalid="err('name') > 0" aria-describedby="name-err" @blur="touch('name')" />
                         <div id="name-err" class="form-text has-error" role="alert">{{ msg('name') }}</div>
                     </div>
                     <div class="col-md-6 mb-3" :class="{ 'has-error': !!(msg('abbreviation')) }">
                         <label class="form-label" for="abbreviation">Provider Abbreviation <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="abbreviation" v-model="form.abbreviation" type="text" maxlength="50" class="form-control form-control-sm"
-                               :aria-invalid="err('abbreviation') > 0" aria-describedby="abbreviation-err" />
+                               :aria-invalid="err('abbreviation') > 0" aria-describedby="abbreviation-err" @blur="touch('abbreviation')" />
                         <div id="abbreviation-err" class="form-text has-error" role="alert">{{ msg('abbreviation') }}</div>
                     </div>
                     <div class="col-md-6 mb-3" :class="{ 'has-error': !!(msg('edisonNumber')) }">
                         <label class="form-label" for="edisonNumber">Edison Number <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="edisonNumber" v-model="form.edisonNumber" type="text" maxlength="10" inputmode="numeric"
                                class="form-control form-control-sm" :aria-invalid="err('edisonNumber') > 0"
-                               aria-describedby="edisonNumber-help edisonNumber-err" />
+                               aria-describedby="edisonNumber-help edisonNumber-err" @blur="touch('edisonNumber')" />
                         <div id="edisonNumber-help" class="form-text">Exactly 10 digits.</div>
                         <div id="edisonNumber-err" class="form-text has-error" role="alert">{{ msg('edisonNumber') }}</div>
                     </div>
                     <div class="col-md-6 mb-3" :class="{ 'has-error': !!(msg('npi')) }">
                         <label class="form-label" for="npi">NPI</label>
                         <input id="npi" v-model="form.npi" type="text" maxlength="10" inputmode="numeric" class="form-control form-control-sm"
-                               :aria-invalid="err('npi') > 0" aria-describedby="npi-help npi-err" />
+                               :aria-invalid="err('npi') > 0" aria-describedby="npi-help npi-err" @blur="touch('npi')" />
                         <div id="npi-help" class="form-text">Exactly 10 digits when entered.</div>
                         <div id="npi-err" class="form-text has-error" role="alert">{{ msg('npi') }}</div>
                     </div>
@@ -65,7 +65,7 @@ const {
                                 <div v-for="a in addressFields" :key="a.f" class="mb-3" :class="[a.col, { 'has-error': !!(msg(`${s.key}.${a.f}`)) }]">
                                     <label class="form-label" :for="`${s.key}-${a.f}`">{{ a.label }}</label>
                                     <input :id="`${s.key}-${a.f}`" v-model="form[s.key][a.f]" type="text" class="form-control form-control-sm"
-                                           :aria-invalid="err(`${s.key}.${a.f}`) > 0" :aria-describedby="`${s.key}-${a.f}-err`" />
+                                           :aria-invalid="err(`${s.key}.${a.f}`) > 0" :aria-describedby="`${s.key}-${a.f}-err`" @blur="touch(`${s.key}.${a.f}`)" />
                                     <div :id="`${s.key}-${a.f}-err`" class="form-text has-error" role="alert">{{ msg(`${s.key}.${a.f}`) }}</div>
                                 </div>
                                 <div class="col-md-6 mb-3">
@@ -85,13 +85,13 @@ const {
                                 <div class="col-8 col-md-6 mb-3" :class="{ 'has-error': !!(msg(`${s.key}.zipcode`)) }">
                                     <label class="form-label" :for="`${s.key}-zipcode`">ZIP</label>
                                     <input :id="`${s.key}-zipcode`" v-model="form[s.key].zipcode" type="text" maxlength="5" class="form-control form-control-sm"
-                                           :aria-invalid="err(`${s.key}.zipcode`) > 0" :aria-describedby="`${s.key}-zipcode-err`" />
+                                           :aria-invalid="err(`${s.key}.zipcode`) > 0" :aria-describedby="`${s.key}-zipcode-err`" @blur="touch(`${s.key}.zipcode`)" />
                                     <div :id="`${s.key}-zipcode-err`" class="form-text has-error" role="alert">{{ msg(`${s.key}.zipcode`) }}</div>
                                 </div>
                                 <div class="col-4 col-md-6 mb-3" :class="{ 'has-error': !!(msg(`${s.key}.zipExtension`)) }">
                                     <label class="form-label" :for="`${s.key}-zipExtension`">ZIP+4</label>
                                     <input :id="`${s.key}-zipExtension`" v-model="form[s.key].zipExtension" type="text" maxlength="4" class="form-control form-control-sm"
-                                           :aria-invalid="err(`${s.key}.zipExtension`) > 0" :aria-describedby="`${s.key}-zipExtension-err`" />
+                                           :aria-invalid="err(`${s.key}.zipExtension`) > 0" :aria-describedby="`${s.key}-zipExtension-err`" @blur="touch(`${s.key}.zipExtension`)" />
                                     <div :id="`${s.key}-zipExtension-err`" class="form-text has-error" role="alert">{{ msg(`${s.key}.zipExtension`) }}</div>
                                 </div>
                             </div>
@@ -102,7 +102,7 @@ const {
                                 <div v-for="c in contactFields" :key="c.f" class="mb-3" :class="[c.col, { 'has-error': !!(msg(`${s.key}.contact.${c.f}`)) }]">
                                     <label class="form-label" :for="`${s.key}-contact-${c.f}`">{{ c.label }}</label>
                                     <input :id="`${s.key}-contact-${c.f}`" v-model="form[s.key].contact[c.f]" :type="c.type || 'text'" class="form-control form-control-sm"
-                                           :aria-invalid="err(`${s.key}.contact.${c.f}`) > 0" :aria-describedby="`${s.key}-contact-${c.f}-err`" />
+                                           :aria-invalid="err(`${s.key}.contact.${c.f}`) > 0" :aria-describedby="`${s.key}-contact-${c.f}-err`" @blur="touch(`${s.key}.contact.${c.f}`)" />
                                     <div :id="`${s.key}-contact-${c.f}-err`" class="form-text has-error" role="alert">{{ msg(`${s.key}.contact.${c.f}`) }}</div>
                                 </div>
                             </div>
