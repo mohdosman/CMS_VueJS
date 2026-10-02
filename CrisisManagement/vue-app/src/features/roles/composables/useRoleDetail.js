@@ -143,13 +143,9 @@ export function useRoleDetail() {
         isSaving.value = true;
         try {
             const body = { ...form, name: form.name.trim() };
-            const detail = isNew ? await rolesApi.create(body) : await rolesApi.update(roleId.value, body);
+            await (isNew ? rolesApi.create(body) : rolesApi.update(roleId.value, body));
             logSuccess('Role saved.');
-            if (isNew) {
-                router.replace(`/admin/roles/${detail.id}`);
-                return;
-            }
-            fill(detail);
+            backToList();
         } catch (e) {
             fail(e);
         } finally {
