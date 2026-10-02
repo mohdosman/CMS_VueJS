@@ -1,24 +1,11 @@
 <script setup>
 import { useAssessmentSearch } from '../composables/useAssessmentSearch.js';
-import { formatDate } from '../../../utils/formatters.js';
 
 const {
-    msg, criteria, paging, assessments, totalRecords, providers, isSearching, errors,
-    search, showAll, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, keyOf, gotoAssessment, canAdd, add
+    msg, criteria, paging, assessments, totalRecords, providers, fields, isSearching, errors,
+    search, showAll, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, keyOf, gotoAssessment, canAdd, add,
+    formatDate
 } = useAssessmentSearch();
-
-const fields = [
-    { f: 'lastName', label: 'Last Name', col: 'col-md-3' },
-    { f: 'firstName', label: 'First Name', col: 'col-md-3' },
-    { f: 'providerPatientNo', label: 'Provider Patient ID', col: 'col-md-3' },
-    { f: 'ssn', label: 'SSN', col: 'col-md-3' },
-    { f: 'completedByLastName', label: 'Assessment Completed By Last Name', col: 'col-md-3' },
-    { f: 'completedByFirstName', label: 'Assessment Completed By First Name', col: 'col-md-3' },
-    { f: 'f2FAssessmentId', label: 'Face to Face Assessment ID', col: 'col-md-3', type: 'number' },
-    { f: 'phoneAssessmentId', label: 'Phone Assessment ID', col: 'col-md-3', type: 'number' },
-    { f: 'providerF2FAssessmentId', label: 'Provider Face to Face Assessment ID', col: 'col-md-3' },
-    { f: 'providerPhoneAssessmentId', label: 'Provider Phone Assessment ID', col: 'col-md-3' }
-];
 </script>
 
 <template>

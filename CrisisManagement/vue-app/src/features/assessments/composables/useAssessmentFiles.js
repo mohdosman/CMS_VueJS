@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { assessmentsApi } from '../api/assessmentsApi.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useSearchState } from '../../../common/composables/useSearchState.js';
@@ -6,6 +6,7 @@ import { useActivate } from '../../../common/composables/useActivate.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
+import { formatDateTimeFull, prettyXml } from '../../../utils/formatters.js';
 
 // Port of DisplayDataFiles.aspx: the uploaded assessment files, their import counts, raw XML and import errors.
 export function useAssessmentFiles() {
@@ -35,6 +36,15 @@ export function useAssessmentFiles() {
     const rawXml = ref('');
     const fileErrors = ref([]);
     const isLoadingDialog = ref(false);
+
+    // null when the file isn't well-formed XML; the dialog then falls back to indented plain text.
+    const xmlRoot = computed(() => {
+        if (!rawXml.value) {
+            return null;
+        }
+        const doc = new DOMParser().parseFromString(rawXml.value, 'application/xml');
+        return doc.querySelector('parsererror') ? null : doc.documentElement;
+    });
 
     // Each async load bumps its counter, so a slow earlier response can't overwrite a newer one.
     let requestSequence = 0;
@@ -157,13 +167,16 @@ export function useAssessmentFiles() {
         files, totalRecords, paging, criteria, providers, hasSearched,
 
         // Dialogs
-        dialog, current, rawXml, fileErrors, isLoadingDialog,
+        dialog, current, rawXml, xmlRoot, fileErrors, isLoadingDialog,
 
         // Busy and validation state
         isSearching, errors, msg,
 
         // Actions
         search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged,
-        open, closeDialog
+        open, closeDialog,
+
+        // Helpers for the template
+        formatDateTimeFull, prettyXml
     };
 }

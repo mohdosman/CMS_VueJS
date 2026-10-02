@@ -8,6 +8,7 @@ import { useActivate } from '../../../common/composables/useActivate.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
+import { formatDate } from '../../../utils/formatters.js';
 
 // Port of SearchAssessment.aspx.
 export function useAssessmentSearch() {
@@ -40,6 +41,20 @@ export function useAssessmentSearch() {
     let requestSequence = 0;
 
     const msg = fieldMessages(errors);
+
+    // The text boxes under the provider and date filters.
+    const fields = [
+        { f: 'lastName', label: 'Last Name', col: 'col-md-3' },
+        { f: 'firstName', label: 'First Name', col: 'col-md-3' },
+        { f: 'providerPatientNo', label: 'Provider Patient ID', col: 'col-md-3' },
+        { f: 'ssn', label: 'SSN', col: 'col-md-3' },
+        { f: 'completedByLastName', label: 'Assessment Completed By Last Name', col: 'col-md-3' },
+        { f: 'completedByFirstName', label: 'Assessment Completed By First Name', col: 'col-md-3' },
+        { f: 'f2FAssessmentId', label: 'Face to Face Assessment ID', col: 'col-md-3', type: 'number' },
+        { f: 'phoneAssessmentId', label: 'Phone Assessment ID', col: 'col-md-3', type: 'number' },
+        { f: 'providerF2FAssessmentId', label: 'Provider Face to Face Assessment ID', col: 'col-md-3' },
+        { f: 'providerPhoneAssessmentId', label: 'Provider Phone Assessment ID', col: 'col-md-3' }
+    ];
 
     // Empty text boxes are sent as absent, not as "".
     const cleanCriteria = () => Object.fromEntries(Object.entries(criteria).map(([k, v]) => [k, v === '' ? null : v]));
@@ -151,7 +166,7 @@ export function useAssessmentSearch() {
 
     return {
         // Results
-        assessments, totalRecords, paging, criteria, providers,
+        assessments, totalRecords, paging, criteria, providers, fields,
 
         // Busy and validation state
         isSearching, errors, msg,
@@ -161,6 +176,9 @@ export function useAssessmentSearch() {
 
         // Actions
         search, showAll, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged,
-        keyOf, gotoAssessment, add
+        keyOf, gotoAssessment, add,
+
+        // Helpers for the template
+        formatDate
     };
 }

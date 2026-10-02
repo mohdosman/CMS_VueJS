@@ -1,21 +1,12 @@
 <script setup>
 import { useAssessmentFiles } from '../composables/useAssessmentFiles.js';
-import { computed } from 'vue';
-import { formatDateTimeFull, prettyXml } from '../../../utils/formatters.js';
 import XmlNode from '../components/XmlNode.vue';
 
 const {
-    msg, criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawXml, fileErrors, isLoadingDialog,
-    search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, open, closeDialog
+    msg, criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawXml, xmlRoot, fileErrors, isLoadingDialog,
+    search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, open, closeDialog,
+    formatDateTimeFull, prettyXml
 } = useAssessmentFiles();
-
-// null when the file isn't well-formed XML; the dialog then falls back to indented plain text.
-const xmlRoot = computed(() => {
-    if (!rawXml.value) return null;
-    const doc = new DOMParser().parseFromString(rawXml.value, 'application/xml');
-    return doc.querySelector('parsererror') ? null : doc.documentElement;
-});
-
 </script>
 
 <template>
