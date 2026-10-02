@@ -49,7 +49,7 @@ export function useUserAgreementUpload(props) {
 
     return {
         // Results
-        results, stored,
+        results, stored, MAX_FILES,
 
         // Busy state
         isBusy,

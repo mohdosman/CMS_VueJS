@@ -5,7 +5,7 @@ import XmlNode from '../components/XmlNode.vue';
 const {
     msg, criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawXml, xmlRoot, fileErrors, isLoadingDialog,
     search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, open, closeDialog,
-    formatDateTimeFull, prettyXml
+    formatDateTime, formatDateTimeFull, prettyXml
 } = useAssessmentFiles();
 </script>
 

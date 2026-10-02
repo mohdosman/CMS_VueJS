@@ -1,26 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { publicFilesApi } from '../api/publicFilesApi.js';
-import { apiErrorMessage } from '../../utils/apiError.js';
+import { useHelpDialog } from '../composables/useHelpDialog.js';
 
 const emit = defineEmits(['close']);
 
-const files = ref([]);
-const error = ref('');
-const isLoading = ref(true);
-
-const size = (b) => (b >= 1048576 ? `${(b / 1048576).toFixed(2)} MB` : b >= 1024 ? `${Math.round(b / 1024)} KB` : `${b} Bytes`);
-const date = (v) => new Date(v).toLocaleDateString();
-
-onMounted(async () => {
-    try {
-        files.value = await publicFilesApi.helpFiles();
-    } catch (e) {
-        error.value = apiErrorMessage(e);
-    } finally {
-        isLoading.value = false;
-    }
-});
+const { files, isLoading, error, size, date, downloadUrl } = useHelpDialog();
 </script>
 
 <template>
@@ -34,7 +17,7 @@ onMounted(async () => {
             </thead>
             <tbody>
                 <tr v-for="f in files" :key="f.id">
-                    <td><a :href="publicFilesApi.downloadUrl(f.id)" download>{{ f.fileName }}</a></td>
+                    <td><a :href="downloadUrl(f.id)" download>{{ f.fileName }}</a></td>
                     <td>{{ date(f.createdOn) }}</td>
                     <td>{{ size(f.fileSize) }}</td>
                 </tr>

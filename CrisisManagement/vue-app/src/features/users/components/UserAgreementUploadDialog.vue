@@ -5,7 +5,7 @@ import { useUserAgreementUpload } from '../composables/useUserAgreementUpload.js
 const props = defineProps({ userKey: { type: String, required: true } });
 const emit = defineEmits(['close']);
 
-const { results, stored, isBusy, onPick } = useUserAgreementUpload(props);
+const { results, stored, MAX_FILES, isBusy, onPick } = useUserAgreementUpload(props);
 </script>
 
 <template>

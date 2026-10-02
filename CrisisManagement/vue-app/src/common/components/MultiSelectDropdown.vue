@@ -1,8 +1,6 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { useMultiSelectDropdown } from '../composables/useMultiSelectDropdown.js';
 
-// A closed dropdown with a checkbox per option; the field shows the short names of what is selected
-// (the Blazor MudSelect multi-selection). Built on <details> so it opens and closes natively.
 const props = defineProps({
     id: { type: String, required: true },
     label: { type: String, required: true },
@@ -12,24 +10,7 @@ const props = defineProps({
 });
 const emit = defineEmits(['update:modelValue']);
 
-const root = ref(null);
-const isOn = (id) => props.modelValue.includes(id);
-const text = computed(() =>
-    props.options.filter((o) => isOn(o.id)).map((o) => o.short || o.label).join(', ') || '- - NONE - -');
-
-function toggle(id, on) {
-    emit('update:modelValue', on ? [...props.modelValue, id] : props.modelValue.filter((x) => x !== id));
-}
-const clear = () => emit('update:modelValue', []);
-
-// Close on an outside click or Escape (native <details> does neither).
-const close = () => { if (root.value) root.value.open = false; };
-const onDocClick = (e) => { if (root.value && !root.value.contains(e.target)) close(); };
-function onKey(e) {
-    if (e.key === 'Escape' && root.value?.open) { close(); root.value.querySelector('summary').focus(); }
-}
-onMounted(() => document.addEventListener('click', onDocClick));
-onBeforeUnmount(() => document.removeEventListener('click', onDocClick));
+const { root, text, isOn, toggle, clear, close, onKey } = useMultiSelectDropdown(props, emit);
 </script>
 
 <template>

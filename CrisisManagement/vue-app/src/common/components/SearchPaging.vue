@@ -1,7 +1,6 @@
 <script setup>
-import { computed } from 'vue';
+import { useSearchPaging } from '../composables/useSearchPaging.js';
 
-// Ported from BudgetContracts.Core SearchPaging.vue (slider page-size + a11y).
 const props = defineProps({
     totalItems: { type: Number, default: 0 },
     pageSize: { type: Number, default: 20 },
@@ -20,43 +19,9 @@ const props = defineProps({
     pageSizeMode: { type: String, default: 'slider' },
     pageSizeOptions: { type: Array, default: () => [20, 30, 40, 50] }
 });
-
 const emit = defineEmits(['page-changed', 'page-size-changed']);
 
-const totalPages = computed(() => Math.ceil(props.totalItems / props.pageSize) || 1);
-
-const pageNumbers = computed(() => {
-    const half = Math.floor(props.maxPages / 2);
-    let start = Math.max(1, props.currentPage - half);
-    let end = Math.min(totalPages.value, start + props.maxPages - 1);
-    if (end - start + 1 < props.maxPages) start = Math.max(1, end - props.maxPages + 1);
-    const pages = [];
-    for (let i = start; i <= end; i++) pages.push(i);
-    return pages;
-});
-
-const sliderIndex = computed(() => {
-    const idx = props.pageSizeOptions.indexOf(props.pageSize);
-    return idx >= 0 ? idx : 0;
-});
-
-function emitPageChanged(page) {
-    const clamped = Math.min(Math.max(page, 1), totalPages.value);
-    if (clamped === props.currentPage) return;
-    emit('page-changed', clamped);
-}
-
-function emitPageSizeChanged(value) {
-    const numeric = Number(value);
-    if (numeric === props.pageSize) return;
-    emit('page-size-changed', numeric);
-}
-
-function onSliderInput(event) {
-    const index = Number(event.target.value);
-    const nextSize = props.pageSizeOptions[index];
-    if (nextSize != null) emitPageSizeChanged(nextSize);
-}
+const { totalPages, pageNumbers, sliderIndex, emitPageChanged, emitPageSizeChanged, onSliderInput } = useSearchPaging(props, emit);
 </script>
 
 <template>

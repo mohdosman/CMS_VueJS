@@ -2,7 +2,7 @@
 import { useReportDetail } from '../composables/useReportDetail.js';
 
 const {
-    isNew, title, form, fileName, nameOptions, exportOptions, formError, dialog, isLoading, isSaving, msg,
+    isNew, title, form, fileName, available, nameOptions, exportOptions, formError, dialog, isLoading, isSaving, msg,
     save, remove, cancel
 } = useReportDetail();
 </script>

@@ -6,7 +6,7 @@ import { useActivate } from '../../../common/composables/useActivate.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
-import { formatDateTimeFull, prettyXml } from '../../../utils/formatters.js';
+import { formatDateTime, formatDateTimeFull, prettyXml } from '../../../utils/formatters.js';
 
 // Port of DisplayDataFiles.aspx: the uploaded assessment files, their import counts, raw XML and import errors.
 export function useAssessmentFiles() {
@@ -177,6 +177,6 @@ export function useAssessmentFiles() {
         open, closeDialog,
 
         // Helpers for the template
-        formatDateTimeFull, prettyXml
+        formatDateTime, formatDateTimeFull, prettyXml
     };
 }
