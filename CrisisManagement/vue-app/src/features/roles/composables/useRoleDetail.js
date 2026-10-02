@@ -17,6 +17,7 @@ export function useRoleDetail() {
     // State
     // ================================================================
     const isNew = route.params.key === '0';
+    const title = isNew ? 'Add Role' : 'Role Details';
 
     const form = reactive({ rowVersion: null, name: '', permissions: [] });
     const saved = ref({ name: '', permissions: [] });   // what the server holds, for the unsaved-changes flag
@@ -129,7 +130,7 @@ export function useRoleDetail() {
 
     return {
         // Form
-        form, groups, dialog, isNew,
+        form, groups, dialog, title, isNew,
 
         // Busy and validation state
         isLoading, isSaving, errors, formError, isAdminRole, hasChanges,

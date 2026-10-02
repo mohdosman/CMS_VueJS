@@ -3,19 +3,17 @@ import { useRoleDetail } from '../composables/useRoleDetail.js';
 import PermissionPicker from '../components/PermissionPicker.vue';
 
 const {
-    isNew, canEdit, form, groups, errors, formError, dialog, isLoading, isSaving,
+    isNew, canEdit, title, form, groups, errors, formError, dialog, isLoading, isSaving,
     isAdminRole, hasChanges, save, remove, cancel
 } = useRoleDetail();
-
-const title = () => (isNew ? 'Add Role' : 'Role Details');
 </script>
 
 <template>
-    <DetailPanel :title="title()" icon="fa fa-shield" form-name="roleForm"
+    <DetailPanel :title="title" icon="fa fa-shield" form-name="roleForm"
                  main-labelledby="main-title" :can-save="canEdit && !isSaving && !isLoading && !isAdminRole"
                  :show-buttons="canEdit" @save="save" @cancel="cancel">
         <template #fields>
-            <h1 id="main-title" class="visually-hidden">{{ title() }}</h1>
+            <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
 
             <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
             <div v-if="isAdminRole" class="alert alert-info" role="status">
