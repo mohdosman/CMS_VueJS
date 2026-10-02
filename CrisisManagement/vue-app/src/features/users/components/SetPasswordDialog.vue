@@ -8,7 +8,7 @@ const props = defineProps({
 });
 const emit = defineEmits(['close', 'saved']);
 
-const { password, confirmPassword, isSaving, errors, save } = useSetPassword(props, emit);
+const { password, confirmPassword, showPasswords, strength, isSaving, errors, save } = useSetPassword(props, emit);
 </script>
 
 <template>
@@ -17,22 +17,30 @@ const { password, confirmPassword, isSaving, errors, save } = useSetPassword(pro
 
             <div class="mb-3" :class="{ 'has-error': !!(errors.password?.join(' ')) }">
                 <label class="form-label" for="newPassword">New password <span class="f_req" aria-hidden="true">*</span></label>
-                <input id="newPassword" v-model="password" type="password" autocomplete="new-password" autofocus
+                <input id="newPassword" v-model="password" :type="showPasswords ? 'text' : 'password'" autocomplete="new-password" autofocus
                        class="form-control form-control-sm" :aria-invalid="!!errors.password"
                        aria-describedby="password-rules newPassword-err" />
                 <div id="newPassword-err" class="form-text has-error" role="alert">{{ errors.password?.join(' ') }}</div>
             </div>
             <div class="mb-3" :class="{ 'has-error': !!(errors.confirmPassword?.join(' ')) }">
                 <label class="form-label" for="newPasswordConfirm">Confirm password <span class="f_req" aria-hidden="true">*</span></label>
-                <input id="newPasswordConfirm" v-model="confirmPassword" type="password" autocomplete="new-password"
+                <input id="newPasswordConfirm" v-model="confirmPassword" :type="showPasswords ? 'text' : 'password'" autocomplete="new-password"
                        class="form-control form-control-sm" :aria-invalid="!!errors.confirmPassword"
                        aria-describedby="newPasswordConfirm-err" />
                 <div id="newPasswordConfirm-err" class="form-text has-error" role="alert">{{ errors.confirmPassword?.join(' ') }}</div>
             </div>
 
+            <div class="mb-3">
+                <label class="checkbox-inline"><input v-model="showPasswords" type="checkbox" /> Show passwords</label>
+            </div>
+
             <!-- After both fields, as in Blazor; ticks off as the password is typed. -->
             <div id="password-rules" class="mb-3">
                 <p class="form-text mb-2">The user must change this temporary password at next sign-in.</p>
+                <div v-if="password" class="mb-2" aria-live="polite">
+                    <progress class="w-100" max="3" :value="strength.level" :aria-label="`Password strength: ${strength.label}`"></progress>
+                    <div class="form-text mt-0">Strength: {{ strength.label }}</div>
+                </div>
                 <PasswordChecklist :password="password" :confirm="confirmPassword" :policy="policy" />
             </div>
 
