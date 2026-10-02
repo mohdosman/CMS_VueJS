@@ -16,7 +16,7 @@ const {
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="name">Role name</label>
-                        <input id="name" v-model="criteria.name" type="text" class="form-control form-control-sm" />
+                        <input id="name" v-model="criteria.name" type="text" maxlength="256" class="form-control form-control-sm" />
                     </div>
                 </div>
             </template>

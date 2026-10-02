@@ -48,11 +48,16 @@ export function useRoleDetail() {
     const touched = reactive({});
     const touch = createTouch(touched);
 
+    // Same limit as RoleFieldLimits.MaxNameLength on the server.
+    const MAX_NAME = 256;
+
     // The error message for each field; a field that is fine has no entry. The server also checks the name is unique.
     const clientErrors = computed(() => {
         const e = {};
         if (!form.name.trim()) {
             e.name = 'Role name is required.';
+        } else if (form.name.trim().length > MAX_NAME) {
+            e.name = `Role name cannot exceed ${MAX_NAME} characters.`;
         }
         return e;
     });
