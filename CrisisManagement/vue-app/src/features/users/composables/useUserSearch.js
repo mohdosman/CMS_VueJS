@@ -100,10 +100,18 @@ export function useUserSearch() {
         }
     }
 
+    // With a single provider to choose from, preselect it rather than make the user open the dropdown.
+    function applyDefaultProvider() {
+        if (providers.value.length === 1 && !criteria.providerIds.length) {
+            criteria.providerIds = [providers.value[0].id];
+        }
+    }
+
     // Runs each time the screen is shown: restore the saved criteria and list again.
     useActivate(async () => {
         load();
         await getLookups();
+        applyDefaultProvider();
         await getUsers();
     });
 
@@ -120,6 +128,7 @@ export function useUserSearch() {
 
     async function clear() {
         clearState();
+        applyDefaultProvider();
         await getUsers();
     }
 
