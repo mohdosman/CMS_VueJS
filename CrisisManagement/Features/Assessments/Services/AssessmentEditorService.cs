@@ -335,7 +335,8 @@ public sealed partial class AssessmentEditorService(IUnitOfWork uow, ProviderSco
 
     private static void AddChildren(F2FAssessment f, AssessmentEditModel m, Dictionary<(int Alternative, int List), int> altMap)
     {
-        foreach (var d in m.Drugs)
+        // Like WebForms, drug rows only count when Substance Abuse is Yes.
+        foreach (var d in m.SubstanceAbuseId == Yes ? m.Drugs : [])
             f.F2FDrugs.Add(new F2FDrug { DrugId = d.DrugId!.Value, DrugRouteId = d.DrugRouteId, DrugFrequencyId = d.DrugFrequencyId });
         foreach (var a in m.HospAlternatives)
             f.F2FHospAlternatives.Add(new F2FHospAlternative { HospAltDispositionId = altMap[(a.HospitalizationAlternativeId!.Value, a.HospAltDispositionListId!.Value)] });
@@ -366,7 +367,7 @@ public sealed partial class AssessmentEditorService(IUnitOfWork uow, ProviderSco
             else
             {
                 if (m.CallEnded > now) e.Add("callEnded", "Call End Date cannot be future date!");
-                if (m.DispatchDateTime is { } d && m.CallEnded > d) e.Add("callEnded", "Call End Time must be before Dispatch Time");
+                if (m.DispatchDateTime is { } d && m.CallEnded >= d) e.Add("callEnded", "Call End Time must be before Dispatch Time");
             }
             if (m.DispatchDateTime > now) e.Add("dispatchDateTime", "Dispatch Date cannot be future date!");
             Need("dispositionId", m.DispositionId, "Disposition is required");
@@ -395,7 +396,7 @@ public sealed partial class AssessmentEditorService(IUnitOfWork uow, ProviderSco
 
             if (m.TransportedByLE is null) e.Add("transportedByLE", "Transported by Law Enforcement is required.");
             Need("payorSourceId", m.PayorSourceId, "Primary Insurer is required");
-            if (m.AnnualHouseholdIncome < 0) e.Add("annualHouseholdIncome", "Please provide the valid Annual Gross Household Income");
+            if (m.AnnualHouseholdIncome is < 0 or > AssessmentFieldLimits.MaxAnnualHouseholdIncome) e.Add("annualHouseholdIncome", "Please provide the valid Annual Gross Household Income");
             // These persist to byte columns; without a bound the cast silently wraps.
             if (m.NumberInHousehold is < 0 or > AssessmentFieldLimits.MaxByteColumnValue) e.Add("numberInHousehold", $"Number of People in Household must be between 0 and {AssessmentFieldLimits.MaxByteColumnValue}.");
             if (m.Arrests30Days is < 0 or > AssessmentFieldLimits.MaxByteColumnValue) e.Add("arrests30Days", $"Number of arrests in last 30 days must be between 0 and {AssessmentFieldLimits.MaxByteColumnValue}.");
@@ -420,11 +421,12 @@ public sealed partial class AssessmentEditorService(IUnitOfWork uow, ProviderSco
             Need("pastTraumaId", m.PastTraumaId, "Please select the Declaration of Past Trauma!");
             Need("substanceAbuseId", m.SubstanceAbuseId, "Please select the Substance Abuse!");
 
-            if (m.SubstanceAbuseId == Yes && m.Drugs.Count == 0) e.Add("drugs", "At least one drug entry is required when Substance Abuse is selected.");
-            if (m.Drugs.Any(d => Missing(d.DrugId))) e.Add("drugs", "Drug is required.");
-            if (m.Drugs.Any(d => Missing(d.DrugRouteId))) e.Add("drugs", "Drug Route is required.");
-            if (m.Drugs.Any(d => Missing(d.DrugFrequencyId))) e.Add("drugs", "Drug Frequency is required.");
-            if (m.Drugs.Select(d => d.DrugId).Distinct().Count() != m.Drugs.Count) e.Add("drugs", "Drug value must be unique.");
+            var drugs = m.SubstanceAbuseId == Yes ? m.Drugs : [];
+            if (m.SubstanceAbuseId == Yes && drugs.Count == 0) e.Add("drugs", "At least one drug entry is required when Substance Abuse is selected.");
+            if (drugs.Any(d => Missing(d.DrugId))) e.Add("drugs", "Drug is required.");
+            if (drugs.Any(d => Missing(d.DrugRouteId))) e.Add("drugs", "Drug Route is required.");
+            if (drugs.Any(d => Missing(d.DrugFrequencyId))) e.Add("drugs", "Drug Frequency is required.");
+            if (drugs.Select(d => d.DrugId).Distinct().Count() != drugs.Count) e.Add("drugs", "Drug value must be unique.");
 
             if (m.HospAlternatives.Count == 0) e.Add("hospAlternatives", "Alternative to Hospitalization is required.");
             if (m.HospAlternatives.Any(a => Missing(a.HospitalizationAlternativeId))) e.Add("hospAlternatives", "Hospitalization Alternative is required.");
@@ -439,7 +441,7 @@ public sealed partial class AssessmentEditorService(IUnitOfWork uow, ProviderSco
             else
             {
                 if (done > now) e.Add("timeDispositionCompleted", "Date Disposition Completed cannot be future date!");
-                if (m.F2FAssessmentDateTime is { } arrived && done < arrived) e.Add("timeDispositionCompleted", "Time Disposition Completed must be after arrival time");
+                if (m.F2FAssessmentDateTime is { } arrived && done <= arrived) e.Add("timeDispositionCompleted", "Time Disposition Completed must be after arrival time");
             }
             e.Required("completedByFirstName", "Assessment Completed By First Name", m.CompletedByFirstName, AssessmentFieldLimits.MaxCompletedByNameLength);
             e.Required("completedByLastName", "Assessment Completed By Last Name", m.CompletedByLastName, AssessmentFieldLimits.MaxCompletedByNameLength);

@@ -4,7 +4,7 @@ import { useAssessmentDetail } from '../composables/useAssessmentDetail.js';
 const {
     isNew, canEdit, canDelete, title, form, dt, lookups, providers, formError, dialog, isLoading, isSaving,
     panelTitle, isDispatched, isOther, referralAccepted, msg, allErrors,
-    save, remove, cancel, addDrug, addAlternative, addHospitalization, removeRow, dispositionsFor
+    save, remove, cancel, isEmptyRow, removeRow, dispositionsFor
 } = useAssessmentDetail();
 
 </script>
@@ -59,7 +59,7 @@ const {
                         <FieldYesNo v-model="form.transportedByLE" label="Transported by Law Enforcement" :error="msg('transportedByLE')" col="col-md-6 col-lg-4" />
                         <FieldSelect v-model="form.payorSourceId" label="Primary Insurer" :options="lookups.payorSources" :error="msg('payorSourceId')" col="col-md-3" />
                         <FieldSelect v-model="form.secondaryPayorSourceId" label="Payor Billed for Service" :options="lookups.payorSources" :error="msg('secondaryPayorSourceId')" col="col-md-3" />
-                        <FieldInput v-model="form.annualHouseholdIncome" label="Annual Gross Household Income" type="number" :min="0" step="0.01" :error="msg('annualHouseholdIncome')" col="col-md-3" />
+                        <FieldInput v-model="form.annualHouseholdIncome" label="Annual Gross Household Income" type="number" :min="0" max="9999999.99" step="0.01" :error="msg('annualHouseholdIncome')" col="col-md-3" />
                         <FieldInput v-model="form.numberInHousehold" label="Number of People in Household" type="number" :min="0" :max="255" :error="msg('numberInHousehold')" col="col-md-3" />
                         <FieldSelect v-model="form.assessmentLocationId" label="Consumer Location at Assessment" :options="lookups.assessmentLocations" :error="msg('assessmentLocationId')" col="col-md-3" />
                         <FieldYesNo v-model="form.televideoAssessment" label="Crisis Assessment via Televideo" :error="msg('televideoAssessment')" col="col-md-3" />
@@ -105,45 +105,42 @@ const {
                         <table class="table table-sm table-bordered">
                             <thead><tr><th scope="col">Drug</th><th scope="col">Route</th><th scope="col">Frequency</th><th scope="col"><span class="visually-hidden">Remove</span></th></tr></thead>
                             <tbody>
-                                <tr v-if="!form.drugs.length"><td colspan="4" class="text-center text-muted">No drugs added.</td></tr>
                                 <tr v-for="(d, i) in form.drugs" :key="i">
                                     <td>
                                         <select v-model="d.drugId" class="form-select form-select-sm" :aria-label="`Drug ${i + 1}`">
                                             <option :value="null">- - SELECT - -</option>
-                                            <option v-for="o in opts(lookups.drugs)" :key="o.id" :value="o.id">{{ o.label }}</option>
+                                            <option v-for="o in lookups.drugs" :key="o.id" :value="o.id">{{ o.label }}</option>
                                         </select>
                                     </td>
                                     <td>
                                         <select v-model="d.drugRouteId" class="form-select form-select-sm" :aria-label="`Route ${i + 1}`">
                                             <option :value="null">- - SELECT - -</option>
-                                            <option v-for="o in opts(lookups.drugRoutes)" :key="o.id" :value="o.id">{{ o.label }}</option>
+                                            <option v-for="o in lookups.drugRoutes" :key="o.id" :value="o.id">{{ o.label }}</option>
                                         </select>
                                     </td>
                                     <td>
                                         <select v-model="d.drugFrequencyId" class="form-select form-select-sm" :aria-label="`Frequency ${i + 1}`">
                                             <option :value="null">- - SELECT - -</option>
-                                            <option v-for="o in opts(lookups.drugFrequencies)" :key="o.id" :value="o.id">{{ o.label }}</option>
+                                            <option v-for="o in lookups.drugFrequencies" :key="o.id" :value="o.id">{{ o.label }}</option>
                                         </select>
                                     </td>
-                                    <td><AppButton action="cancel" size="xs" @click="removeRow(form.drugs, i)">Remove<span class="visually-hidden"> drug {{ i + 1 }}</span></AppButton></td>
+                                    <td><AppButton v-if="!isEmptyRow(d)" action="cancel" size="xs" @click="removeRow(form.drugs, i)">Remove<span class="visually-hidden"> drug {{ i + 1 }}</span></AppButton></td>
                                 </tr>
                             </tbody>
                         </table>
                         <div class="form-text has-error" role="alert">{{ msg('drugs') }}</div>
-                        <AppButton action="add" size="xs" @click="addDrug">Add drug</AppButton>
                     </ExpandPanel>
 
                     <ExpandPanel title="ALTERNATIVES TO HOSPITALIZATION" :level="3">
                         <table class="table table-sm table-bordered">
                             <thead><tr><th scope="col">Alternative</th><th scope="col">Disposition</th><th scope="col"><span class="visually-hidden">Remove</span></th></tr></thead>
                             <tbody>
-                                <tr v-if="!form.hospAlternatives.length"><td colspan="3" class="text-center text-muted">No alternatives added.</td></tr>
                                 <tr v-for="(a, i) in form.hospAlternatives" :key="i">
                                     <td>
                                         <select v-model="a.hospitalizationAlternativeId" class="form-select form-select-sm" :aria-label="`Alternative ${i + 1}`"
                                                 @change="a.hospAltDispositionListId = null">
                                             <option :value="null">- - SELECT - -</option>
-                                            <option v-for="o in opts(lookups.hospitalizationAlternatives)" :key="o.id" :value="o.id">{{ o.label }}</option>
+                                            <option v-for="o in lookups.hospitalizationAlternatives" :key="o.id" :value="o.id">{{ o.label }}</option>
                                         </select>
                                     </td>
                                     <td>
@@ -153,12 +150,11 @@ const {
                                             <option v-for="o in dispositionsFor(a.hospitalizationAlternativeId)" :key="o.id" :value="o.id">{{ o.label }}</option>
                                         </select>
                                     </td>
-                                    <td><AppButton action="cancel" size="xs" @click="removeRow(form.hospAlternatives, i)">Remove<span class="visually-hidden"> alternative {{ i + 1 }}</span></AppButton></td>
+                                    <td><AppButton v-if="!isEmptyRow(a)" action="cancel" size="xs" @click="removeRow(form.hospAlternatives, i)">Remove<span class="visually-hidden"> alternative {{ i + 1 }}</span></AppButton></td>
                                 </tr>
                             </tbody>
                         </table>
                         <div class="form-text has-error" role="alert">{{ msg('hospAlternatives') }}</div>
-                        <AppButton action="add" size="xs" @click="addAlternative">Add alternative</AppButton>
                     </ExpandPanel>
 
                     <ExpandPanel title="HOSPITALIZATION" :level="3">
@@ -170,26 +166,24 @@ const {
                         <table class="table table-sm table-bordered">
                             <thead><tr><th scope="col">Referred To</th><th scope="col">Disposition</th><th scope="col"><span class="visually-hidden">Remove</span></th></tr></thead>
                             <tbody>
-                                <tr v-if="!form.hospitalizations.length"><td colspan="3" class="text-center text-muted">No referrals added.</td></tr>
                                 <tr v-for="(h, i) in form.hospitalizations" :key="i">
                                     <td>
                                         <select v-model="h.hospitalizationId" class="form-select form-select-sm" :aria-label="`Referred to ${i + 1}`">
                                             <option :value="null">- - SELECT - -</option>
-                                            <option v-for="o in opts(lookups.hospitalizations)" :key="o.id" :value="o.id">{{ o.label }}</option>
+                                            <option v-for="o in lookups.hospitalizations" :key="o.id" :value="o.id">{{ o.label }}</option>
                                         </select>
                                     </td>
                                     <td>
                                         <select v-model="h.hospitalizationDispositionId" class="form-select form-select-sm" :aria-label="`Disposition of referral ${i + 1}`">
                                             <option :value="null">- - SELECT - -</option>
-                                            <option v-for="o in opts(lookups.hospitalizationDispositions)" :key="o.id" :value="o.id">{{ o.label }}</option>
+                                            <option v-for="o in lookups.hospitalizationDispositions" :key="o.id" :value="o.id">{{ o.label }}</option>
                                         </select>
                                     </td>
-                                    <td><AppButton action="cancel" size="xs" @click="removeRow(form.hospitalizations, i)">Remove<span class="visually-hidden"> referral {{ i + 1 }}</span></AppButton></td>
+                                    <td><AppButton v-if="!isEmptyRow(h)" action="cancel" size="xs" @click="removeRow(form.hospitalizations, i)">Remove<span class="visually-hidden"> referral {{ i + 1 }}</span></AppButton></td>
                                 </tr>
                             </tbody>
                         </table>
                         <div class="form-text has-error" role="alert">{{ msg('hospitalizations') }}</div>
-                        <AppButton action="add" size="xs" @click="addHospitalization">Add referral</AppButton>
                     </ExpandPanel>
 
                     <ExpandPanel title="ASSESSMENT COMPLETION / FOLLOW-UP" :level="3">

@@ -69,6 +69,17 @@ export function useAssessmentDetail() {
         if (id !== OTHER) form.dispositionOther = '';
     });
 
+    // Each grid always ends with one blank row (WebForms footer row); choosing its first select adds the next blank row. Blank rows are dropped on save.
+    const GRIDS = [
+        [() => form.drugs, () => ({ drugId: null, drugRouteId: null, drugFrequencyId: null })],
+        [() => form.hospAlternatives, () => ({ hospitalizationAlternativeId: null, hospAltDispositionListId: null })],
+        [() => form.hospitalizations, () => ({ hospitalizationId: null, hospitalizationDispositionId: null })]
+    ];
+    const isEmptyRow = (row) => Object.values(row)[0] == null; // like the WebForms footer row: the first select decides
+    watch(() => GRIDS.map(([rows]) => rows()), () => {
+        for (const [rows, blank] of GRIDS) if (!rows().length || !isEmptyRow(rows().at(-1))) rows().push(blank());
+    }, { deep: true, immediate: true });
+
     const msg = (f) => errors.value[f]?.join(' ') ?? '';
     const allErrors = computed(() => Object.values(errors.value).flat());
 
@@ -100,6 +111,7 @@ export function useAssessmentDetail() {
     function toPayload() {
         const problems = {};
         const payload = { ...form };
+        for (const k of ['drugs', 'hospAlternatives', 'hospitalizations']) payload[k] = form[k].filter((r) => !isEmptyRow(r));
         for (const f of DATE_TIMES) {
             const { date, time } = dt[f];
             if (date && !time) problems[f] = [`Please enter the ${DATE_TIME_LABELS[f]} time.`];
@@ -157,9 +169,6 @@ export function useAssessmentDetail() {
 
     const cancel = () => router.push('/assessments');
 
-    const addDrug = () => form.drugs.push({ drugId: null, drugRouteId: null, drugFrequencyId: null });
-    const addAlternative = () => form.hospAlternatives.push({ hospitalizationAlternativeId: null, hospAltDispositionListId: null });
-    const addHospitalization = () => form.hospitalizations.push({ hospitalizationId: null, hospitalizationDispositionId: null });
     const removeRow = (list, i) => list.splice(i, 1);
     const dispositionsFor = (alternativeId) => (lookups.value.hospAltDispositions ?? [])
         .filter((d) => d.hospitalizationAlternativeId === alternativeId)
@@ -181,6 +190,6 @@ export function useAssessmentDetail() {
     return {
         isNew, canEdit, canDelete, title, form, dt, lookups, providers, errors, formError, dialog, isLoading, isSaving,
         panelTitle, isDispatched, isOther, referralAccepted, msg, allErrors,
-        save, remove, cancel, addDrug, addAlternative, addHospitalization, removeRow, dispositionsFor
+        save, remove, cancel, isEmptyRow, removeRow, dispositionsFor
     };
 }

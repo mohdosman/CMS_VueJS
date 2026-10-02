@@ -18,4 +18,7 @@ public static class AssessmentFieldLimits
     /// the cast on save silently wraps.
     /// </summary>
     public const int MaxByteColumnValue = byte.MaxValue;
+
+    /// <summary>Annual household income: the WebForms box held 10 characters, so 9,999,999.99.</summary>
+    public const decimal MaxAnnualHouseholdIncome = 9_999_999.99m;
 }
