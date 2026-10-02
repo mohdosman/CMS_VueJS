@@ -5,14 +5,14 @@ import { useCapabilities } from '../../../common/composables/useCapabilities.js'
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
-import { fieldMessages } from '../../../utils/formErrors.js';
+import { createShowError, createTouch } from '../../../utils/validationUtils.js';
 import { iconOptions } from '../icons.js';
 
 // One form for a new menu item (/admin/menus/0, optional ?parentId=) and an existing one (/admin/menus/:key, the menu item id).
 export function useMenuDetail() {
     const route = useRoute();
     const router = useRouter();
-    const { logSuccess, logApiError } = useLogger();
+    const { logSuccess, logError, logApiError } = useLogger();
 
     // ================================================================
     // State
@@ -27,15 +27,12 @@ export function useMenuDetail() {
     const form = reactive(blankForm());
     const menuId = ref(0);
     const parents = ref([]);
-    const errors = ref({});          // { field: [messages] } from a 400 validation response
+    const serverErrors = ref({});    // { field: [messages] } from a 400 validation response
     const tab = ref('details');      // 'details' or 'permissions'
     const isLoading = ref(true);
     const isSaving = ref(false);
 
     const title = computed(() => (isNew ? 'New Menu Item' : `Edit Menu Item #${menuId.value}`));
-
-    const msg = fieldMessages(errors);
-    const err = (field) => errors.value[field]?.length ?? 0;
 
     // The address text boxes under the name and icon.
     const urlFields = [
@@ -53,12 +50,49 @@ export function useMenuDetail() {
     const canEdit = can('menus.edit');
 
     // ================================================================
+    // Validation
+    // ================================================================
+    const submitted = ref(false);
+    // Which fields the user has visited. A field only shows its message once it was left, or after a submit.
+    const touched = reactive({});
+    const touch = createTouch(touched);
+
+    // The error message for each field; a field that is fine has no entry. The server also checks the name is unique and the parent.
+    const clientErrors = computed(() => {
+        const e = {};
+        if (!String(form.name ?? '').trim()) {
+            e.name = 'Menu item name is required.';
+        }
+        // A blank display order saves as 0.
+        const sequence = Number(form.displaySequence);
+        if (form.displaySequence !== '' && form.displaySequence !== null && (Number.isNaN(sequence) || sequence < 0 || sequence > 255)) {
+            e.displaySequence = 'Display order must be between 0 and 255.';
+        }
+        return e;
+    });
+
+    const isValid = computed(() => Object.keys(clientErrors.value).length === 0);
+    // A field shows its message only after it was touched, or after a submit was attempted.
+    const showError = createShowError(touched, submitted, clientErrors);
+
+    // What the screen shows for a field: the server's message when it sent one, else the form's own once it is due.
+    const msg = (field) => serverErrors.value[field]?.join(' ') || (showError(field) ? clientErrors.value[field] : '');
+    const err = (field) => (msg(field) ? 1 : 0);
+
+    function resetValidation() {
+        submitted.value = false;
+        serverErrors.value = {};
+        Object.keys(touched).forEach((field) => delete touched[field]);
+    }
+
+    // ================================================================
     // Loading
     // ================================================================
     function fill(detail) {
         menuId.value = detail.id;
         Object.assign(form, blankForm(), detail);
         form.parentId = detail.parentId ?? null;
+        resetValidation();
     }
 
     async function getPageData() {
@@ -88,8 +122,15 @@ export function useMenuDetail() {
     // ================================================================
     // Save
     // ================================================================
+    // Checks permission, then saves.
     async function save() {
-        errors.value = {};
+        if (isSaving.value) {
+            return;
+        }
+        if (!canEdit) {
+            logError('You do not have permission to manage menus.');
+            return;
+        }
         isSaving.value = true;
         try {
             const body = { ...form, displaySequence: Number(form.displaySequence) || 0 };
@@ -106,13 +147,25 @@ export function useMenuDetail() {
             // Field problems (400) show next to their inputs; anything else (409 conflict, ...) is a toast.
             const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
             if (fieldErrors) {
-                errors.value = fieldErrors;
+                serverErrors.value = fieldErrors;
+                logError('Please correct the validation errors first.');
             } else {
                 logApiError(e);
             }
         } finally {
             isSaving.value = false;
         }
+    }
+
+    // The form's submit: validates first, and only saves when everything is valid.
+    function onSubmit() {
+        submitted.value = true;
+        serverErrors.value = {};
+        if (!isValid.value) {
+            logError('Please correct the validation errors first.');
+            return;
+        }
+        save();
     }
 
     // ================================================================
@@ -129,13 +182,13 @@ export function useMenuDetail() {
         form, menuId, parents, tab, title, isNew, urlFields,
 
         // Busy and validation state
-        isLoading, isSaving, errors, msg, err,
+        isLoading, isSaving, submitted, touched, touch, isValid, showError, msg, err,
 
         // User and permissions
         canEdit,
 
         // Actions
-        save, cancel,
+        save, onSubmit, cancel,
 
         // Helpers for the template
         iconOptions

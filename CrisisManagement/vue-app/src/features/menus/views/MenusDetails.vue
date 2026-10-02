@@ -3,15 +3,15 @@ import { useMenuDetail } from '../composables/useMenuDetail.js';
 import MenuPermissions from '../components/MenuPermissions.vue';
 
 const {
-    isNew, canEdit, title, form, menuId, parents, tab, urlFields, errors, isLoading, isSaving, msg, err,
-    save, cancel, iconOptions
+    isNew, canEdit, title, form, menuId, parents, tab, urlFields, isLoading, isSaving, msg, err, touch,
+    onSubmit, cancel, iconOptions
 } = useMenuDetail();
 </script>
 
 <template>
     <DetailPanel :title="title" icon="fa fa-bars" form-name="menuForm"
                  main-labelledby="main-title" :can-save="canEdit && !isSaving && !isLoading && tab === 'details'"
-                 :show-buttons="canEdit && tab === 'details'" @save="save" @cancel="cancel">
+                 :show-buttons="canEdit && tab === 'details'" @save="onSubmit" @cancel="cancel">
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
 
@@ -34,7 +34,7 @@ const {
                         <div class="col-md-4 mb-3" :class="{ 'has-error': !!(msg('name')) }">
                             <label class="form-label" for="name">Name <span class="f_req" aria-hidden="true">*</span></label>
                             <input id="name" v-model="form.name" type="text" maxlength="50" class="form-control form-control-sm"
-                                   :aria-invalid="err('name') > 0" aria-describedby="name-err" />
+                                   :aria-invalid="err('name') > 0" aria-describedby="name-err" @blur="touch('name')" />
                             <div id="name-err" class="form-text has-error" role="alert">{{ msg('name') }}</div>
                         </div>
                         <div class="col-md-4 mb-3" :class="{ 'has-error': !!(msg('icon')) }">
@@ -60,7 +60,7 @@ const {
                         <div class="col-md-2 mb-3" :class="{ 'has-error': !!(msg('displaySequence')) }">
                             <label class="form-label" for="displaySequence">Display order</label>
                             <input id="displaySequence" v-model.number="form.displaySequence" type="number" min="0" max="255"
-                                   class="form-control form-control-sm" :aria-invalid="err('displaySequence') > 0" aria-describedby="displaySequence-err" />
+                                   class="form-control form-control-sm" :aria-invalid="err('displaySequence') > 0" aria-describedby="displaySequence-err" @blur="touch('displaySequence')" />
                             <div id="displaySequence-err" class="form-text has-error" role="alert">{{ msg('displaySequence') }}</div>
                         </div>
                         <div class="col-md-6 mb-3" :class="{ 'has-error': !!(msg('description')) }">
