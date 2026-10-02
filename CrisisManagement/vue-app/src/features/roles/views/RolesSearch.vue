@@ -3,7 +3,7 @@ import { useRoleSearch } from '../composables/useRoleSearch.js';
 
 const {
     criteria, paging, roles, totalRecords, isSearching,
-    search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, gotoRole, canAdd, add
+    search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, gotoRole, canAdd, add, isNavigating
 } = useRoleSearch();
 </script>
 
@@ -22,8 +22,8 @@ const {
             </template>
             <template #buttons>
                 <AppButton action="search" :disabled="isSearching" />
-                <AppButton v-if="canAdd" action="add" @click="add" />
-                <AppButton action="clear" @click="clear" />
+                <AppButton v-if="canAdd" action="add" :disabled="isSearching || isNavigating" @click="add" />
+                <AppButton action="clear" :disabled="isSearching || isNavigating" @click="clear" />
             </template>
         </SearchPanel>
 

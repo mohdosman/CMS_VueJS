@@ -11,7 +11,7 @@ import { announce } from '../../../services/liveAnnouncer.js';
 // Role search: the list of roles, filtered by name.
 export function useRoleSearch() {
     const router = useRouter();
-    const { logApiError } = useLogger();
+    const { logApiError, logError } = useLogger();
 
     // ================================================================
     // State
@@ -80,13 +80,25 @@ export function useRoleSearch() {
     // ================================================================
     // Navigation and clear
     // ================================================================
-    function gotoRole(role) {
-        router.push(`/admin/roles/${role.id}`);
+    // Set while a navigation is under way, so a double click opens the screen once and Add/Clear wait.
+    const isNavigating = ref(false);
+
+    async function open(path, failure) {
+        if (isNavigating.value) {
+            return;
+        }
+        isNavigating.value = true;
+        try {
+            await router.push(path);
+        } catch {
+            logError(failure);
+        } finally {
+            isNavigating.value = false;
+        }
     }
 
-    function add() {
-        router.push('/admin/roles/0');
-    }
+    const gotoRole = (role) => open(`/admin/roles/${role.id}`, 'Failed to open role details.');
+    const add = () => open('/admin/roles/0', 'Failed to open role form.');
 
     async function clear() {
         clearState();
@@ -98,7 +110,7 @@ export function useRoleSearch() {
         roles, totalRecords, paging, criteria,
 
         // Busy state
-        isSearching,
+        isSearching, isNavigating,
 
         // User and permissions
         canAdd,
