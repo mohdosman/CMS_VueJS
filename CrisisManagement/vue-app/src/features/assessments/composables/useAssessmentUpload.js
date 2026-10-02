@@ -7,7 +7,7 @@ import { announce } from '../../../services/liveAnnouncer.js';
 // Port of ManageDataFiles.aspx: upload one crisis assessment XML file. The server checks it (well-formed, the schema, the
 // provider NPI inside it) and stores it for the nightly import; this page keeps a history of what was uploaded in this visit.
 export function useAssessmentUpload() {
-    const { logSuccess } = useLogger();
+    const { logSuccess, logApiError } = useLogger();
 
     // ================================================================
     // State
@@ -44,6 +44,9 @@ export function useAssessmentUpload() {
             logSuccess(`${file.name} uploaded.`);
         } catch (err) {
             const fieldErrors = err.response?.status === 400 ? err.response.data?.errors?.file : null;
+            if (!fieldErrors) {
+                logApiError(err);
+            }
             const message = fieldErrors?.join(' ') ?? apiErrorMessage(err);
             history.value.unshift({ name: file.name, status: 'Rejected', message, id: '' });
             announce(`${file.name} was rejected`);

@@ -5,7 +5,6 @@ import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
 import { fieldMessages } from '../../../utils/formErrors.js';
-import { apiErrorMessage } from '../../../utils/apiError.js';
 
 // One form for a new report (/reports/0) and for an existing one (/reports/:key, the report id).
 export function useReportDetail() {
@@ -22,7 +21,6 @@ export function useReportDetail() {
     const form = reactive({ id: null, rowVersion: null, reportName: '', fileName: '', description: '', exportOption: 'PDF' });
     const available = ref([]);       // report files not defined yet (new report)
     const errors = ref({});          // { field: [messages] } from a 400 response
-    const formError = ref('');       // page-level message: a load failure
     const dialog = ref('');          // '' or 'delete'
     const isLoading = ref(true);
     const isSaving = ref(false);
@@ -47,7 +45,7 @@ export function useReportDetail() {
                 Object.assign(form, await reportsApi.get(route.params.key));
             }
         } catch (e) {
-            formError.value = e.response?.status === 404 ? 'Report not found.' : apiErrorMessage(e);
+            logApiError(e, { fallback: 'Report not found.' });
         }
     }
 
@@ -111,7 +109,6 @@ export function useReportDetail() {
     // ================================================================
     useActivate(async () => {
         isLoading.value = true;
-        formError.value = '';
         await getPageData();
         isLoading.value = false;
     });
@@ -121,7 +118,7 @@ export function useReportDetail() {
         form, fileName, available, nameOptions, exportOptions, dialog, title, isNew,
 
         // Busy and validation state
-        isLoading, isSaving, errors, formError, msg,
+        isLoading, isSaving, errors, msg,
 
         // Actions
         save, remove, cancel

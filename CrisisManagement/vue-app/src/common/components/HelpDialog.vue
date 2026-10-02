@@ -3,13 +3,12 @@ import { useHelpDialog } from '../composables/useHelpDialog.js';
 
 const emit = defineEmits(['close']);
 
-const { files, isLoading, error, size, date, downloadUrl } = useHelpDialog();
+const { files, isLoading, size, date, downloadUrl } = useHelpDialog();
 </script>
 
 <template>
     <AppDialog title="Help - Public Files" @close="emit('close')">
-        <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
-        <p v-else-if="isLoading" role="status">Loading...</p>
+        <p v-if="isLoading" role="status">Loading...</p>
         <p v-else-if="!files.length" role="status">No files available.</p>
         <table v-else class="table table-sm table-striped table-bordered">
             <thead>

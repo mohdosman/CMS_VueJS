@@ -2,7 +2,7 @@
 import { useReportDetail } from '../composables/useReportDetail.js';
 
 const {
-    isNew, title, form, fileName, available, nameOptions, exportOptions, formError, dialog, isLoading, isSaving, msg,
+    isNew, title, form, fileName, available, nameOptions, exportOptions, dialog, isLoading, isSaving, msg,
     save, remove, cancel
 } = useReportDetail();
 </script>
@@ -12,8 +12,6 @@ const {
  :can-save="!isSaving && !isLoading" @save="save" @cancel="cancel">
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
-
-            <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
 
             <fieldset :disabled="isLoading" class="border-0 p-0 m-0">
                 <div class="row">

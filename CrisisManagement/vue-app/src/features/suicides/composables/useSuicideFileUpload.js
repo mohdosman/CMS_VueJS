@@ -1,11 +1,14 @@
 import { ref } from 'vue';
 import { suicidesApi } from '../api/suicidesApi.js';
+import { useLogger } from '../../../common/composables/useLogger.js';
 import { apiErrorMessage } from '../../../utils/apiError.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
 // Port of ManageSuicideFiles.aspx: upload one death record spreadsheet (.xlsx). The server reads the first worksheet
 // (row 1 = column names) and stores the file with its records; this page keeps a history of what was uploaded in this visit.
 export function useSuicideFileUpload() {
+    const { logApiError } = useLogger();
+
     // ================================================================
     // State
     // ================================================================
@@ -40,6 +43,9 @@ export function useSuicideFileUpload() {
             history.value.unshift({ name: file.name, status: 'Uploaded', messages: ['Data Imported successfully.'], id: result.id });
         } catch (err) {
             const fieldErrors = err.response?.status === 400 ? err.response.data?.errors?.file : null;
+            if (!fieldErrors) {
+                logApiError(err);
+            }
             history.value.unshift({ name: file.name, status: 'Rejected', messages: fieldErrors ?? [apiErrorMessage(err)], id: '' });
             announce(`${file.name} was rejected`);
         } finally {

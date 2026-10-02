@@ -1,14 +1,15 @@
 import { ref, onMounted } from 'vue';
+import { useLogger } from './useLogger.js';
 import { publicFilesApi } from '../api/publicFilesApi.js';
-import { apiErrorMessage } from '../../utils/apiError.js';
 
 // The Help dialog opened from the navbar: the public (help) files anyone signed in may download.
 export function useHelpDialog() {
+    const { logApiError } = useLogger();
+
     // ================================================================
     // State
     // ================================================================
     const files = ref([]);
-    const error = ref('');
     const isLoading = ref(true);
 
     const size = (bytes) => {
@@ -26,7 +27,7 @@ export function useHelpDialog() {
         try {
             files.value = await publicFilesApi.helpFiles();
         } catch (e) {
-            error.value = apiErrorMessage(e);
+            logApiError(e);
         } finally {
             isLoading.value = false;
         }
@@ -39,7 +40,7 @@ export function useHelpDialog() {
         files,
 
         // Busy and validation state
-        isLoading, error,
+        isLoading,
 
         // Helpers for the template
         size, date, downloadUrl: publicFilesApi.downloadUrl

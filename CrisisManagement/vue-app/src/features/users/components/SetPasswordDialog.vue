@@ -8,13 +8,12 @@ const props = defineProps({
 });
 const emit = defineEmits(['close', 'saved']);
 
-const { password, confirmPassword, isSaving, errors, formError, save } = useSetPassword(props, emit);
+const { password, confirmPassword, isSaving, errors, save } = useSetPassword(props, emit);
 </script>
 
 <template>
     <AppDialog title="Set password" @close="emit('close')">
         <form novalidate autocomplete="off" @submit.prevent="save">
-            <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
 
             <div class="mb-3">
                 <label class="form-label" for="newPassword">New password <span class="f_req" aria-hidden="true">*</span></label>

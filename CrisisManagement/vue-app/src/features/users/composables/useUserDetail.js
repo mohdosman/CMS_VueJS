@@ -5,7 +5,6 @@ import { useCapabilities } from '../../../common/composables/useCapabilities.js'
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
-import { apiErrorMessage } from '../../../utils/apiError.js';
 
 // One form for a new user (/admin/users/0) and an existing one (/admin/users/:key).
 export function useUserDetail() {
@@ -31,7 +30,7 @@ export function useUserDetail() {
     const providers = ref([]);
     const policy = ref({ passwordRules: [], adUserNameRule: '', password: null });
     const errors = ref({});          // { field: [messages] } from a 400 validation response
-    const formError = ref('');       // page-level message: form-level validation, or a load failure
+    const formError = ref('');       // page-level message: form-level validation
     const dialog = ref('');          // '', 'password', 'delete', 'agreements' or 'upload'
     const documentCount = ref(0);
     const isLoading = ref(true);
@@ -76,8 +75,7 @@ export function useUserDetail() {
                 documentCount.value = (await usersApi.documents(route.params.key)).length;
             }
         } catch (e) {
-            // Nothing to edit: keep the reason on the page.
-            formError.value = e.response?.status === 404 ? 'User not found.' : apiErrorMessage(e);
+            logApiError(e, { fallback: 'User not found.' });
         }
     }
 

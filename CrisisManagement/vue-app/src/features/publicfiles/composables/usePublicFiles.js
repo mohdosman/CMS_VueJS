@@ -96,6 +96,9 @@ export function usePublicFiles() {
             await getFiles();
         } catch (err) {
             const fieldErrors = err.response?.status === 400 ? err.response.data?.errors?.file : null;
+            if (!fieldErrors) {
+                logApiError(err);
+            }
             uploadError.value = fieldErrors?.join(' ') ?? apiErrorMessage(err);
         } finally {
             isUploading.value = false;

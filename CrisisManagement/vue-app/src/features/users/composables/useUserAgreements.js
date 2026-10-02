@@ -1,7 +1,6 @@
 import { ref, onMounted } from 'vue';
 import { usersApi } from '../api/usersApi.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
-import { apiErrorMessage } from '../../../utils/apiError.js';
 import { formatDate, formatFileSize } from '../../../utils/formatters.js';
 
 // Lists a user's agreements with download and (for users.edit) delete.
@@ -12,7 +11,6 @@ export function useUserAgreements(props) {
     // State
     // ================================================================
     const docs = ref([]);
-    const error = ref('');
     const isLoading = ref(true);
     const confirming = ref(0);   // id of the document awaiting delete confirmation
 
@@ -23,7 +21,7 @@ export function useUserAgreements(props) {
         try {
             docs.value = await usersApi.documents(props.userKey);
         } catch (e) {
-            error.value = apiErrorMessage(e);
+            logApiError(e);
         } finally {
             isLoading.value = false;
         }
@@ -51,7 +49,7 @@ export function useUserAgreements(props) {
         docs,
 
         // Busy and validation state
-        isLoading, error, confirming,
+        isLoading, confirming,
 
         // Actions
         remove,

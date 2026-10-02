@@ -6,7 +6,6 @@ import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
 import { fieldMessages } from '../../../utils/formErrors.js';
-import { apiErrorMessage } from '../../../utils/apiError.js';
 import { iconOptions } from '../icons.js';
 
 // One form for a new menu item (/admin/menus/0, optional ?parentId=) and an existing one (/admin/menus/:key, the menu item id).
@@ -29,7 +28,6 @@ export function useMenuDetail() {
     const menuId = ref(0);
     const parents = ref([]);
     const errors = ref({});          // { field: [messages] } from a 400 validation response
-    const formError = ref('');       // page-level message: a load failure
     const tab = ref('details');      // 'details' or 'permissions'
     const isLoading = ref(true);
     const isSaving = ref(false);
@@ -75,8 +73,7 @@ export function useMenuDetail() {
                 fill(await menusApi.get(route.params.key));
             }
         } catch (e) {
-            // Nothing to edit: keep the reason on the page.
-            formError.value = e.response?.status === 404 ? 'Menu item not found.' : apiErrorMessage(e);
+            logApiError(e, { fallback: 'Menu item not found.' });
         }
     }
 
@@ -123,7 +120,6 @@ export function useMenuDetail() {
     // ================================================================
     useActivate(async () => {
         isLoading.value = true;
-        formError.value = '';
         await getPageData();
         isLoading.value = false;
     });
@@ -133,7 +129,7 @@ export function useMenuDetail() {
         form, menuId, parents, tab, title, isNew, urlFields,
 
         // Busy and validation state
-        isLoading, isSaving, errors, formError, msg, err,
+        isLoading, isSaving, errors, msg, err,
 
         // User and permissions
         canEdit,

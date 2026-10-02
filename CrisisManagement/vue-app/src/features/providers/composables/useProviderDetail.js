@@ -6,7 +6,6 @@ import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
 import { fieldMessages } from '../../../utils/formErrors.js';
-import { apiErrorMessage } from '../../../utils/apiError.js';
 
 // Port of ManageProvider.aspx: one form for a new provider (/admin/providers/0) and an existing one (/admin/providers/:key).
 export function useProviderDetail() {
@@ -46,7 +45,6 @@ export function useProviderDetail() {
     const states = ref([]);
     const counties = ref([]);
     const errors = ref({});          // { 'physicalAddress.city': [messages] } from a 400 validation response
-    const formError = ref('');       // page-level message: a load failure
     const dialog = ref('');          // '' or 'delete'
     const tab = ref('demographics'); // 'demographics', 'physicalAddress' or 'remitAddress'
     const isLoading = ref(true);
@@ -102,8 +100,7 @@ export function useProviderDetail() {
                 fill(await providersApi.get(route.params.key));
             }
         } catch (e) {
-            // Nothing to edit: keep the reason on the page.
-            formError.value = e.response?.status === 404 ? 'Provider not found.' : apiErrorMessage(e);
+            logApiError(e, { fallback: 'Provider not found.' });
         }
     }
 
@@ -173,7 +170,6 @@ export function useProviderDetail() {
     // ================================================================
     useActivate(async () => {
         isLoading.value = true;
-        formError.value = '';
         await getPageData();
         isLoading.value = false;
     });
@@ -183,7 +179,7 @@ export function useProviderDetail() {
         form, info, states, counties, tab, dialog, title, isNew, sections, addressFields, contactFields,
 
         // Busy and validation state
-        isLoading, isSaving, errors, formError, msg, err,
+        isLoading, isSaving, errors, msg, err,
 
         // User and permissions
         canEdit,

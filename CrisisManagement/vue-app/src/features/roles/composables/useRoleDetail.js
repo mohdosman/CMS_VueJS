@@ -5,7 +5,6 @@ import { useCapabilities } from '../../../common/composables/useCapabilities.js'
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
-import { apiErrorMessage } from '../../../utils/apiError.js';
 
 // One form for a new role (/admin/roles/0) and an existing one (/admin/roles/:key, the role id).
 export function useRoleDetail() {
@@ -24,7 +23,6 @@ export function useRoleDetail() {
     const roleId = ref(0);
     const groups = ref([]);
     const errors = ref({});          // { field: [messages] } from a 400 validation response
-    const formError = ref('');       // page-level message: a load failure
     const dialog = ref('');          // '' or 'delete'
     const isLoading = ref(true);
     const isSaving = ref(false);
@@ -57,8 +55,7 @@ export function useRoleDetail() {
                 fill(await rolesApi.get(route.params.key));
             }
         } catch (e) {
-            // Nothing to edit: keep the reason on the page.
-            formError.value = e.response?.status === 404 ? 'Role not found.' : apiErrorMessage(e);
+            logApiError(e, { fallback: 'Role not found.' });
         }
     }
 
@@ -123,7 +120,6 @@ export function useRoleDetail() {
     // ================================================================
     useActivate(async () => {
         isLoading.value = true;
-        formError.value = '';
         await getPageData();
         isLoading.value = false;
     });
@@ -133,7 +129,7 @@ export function useRoleDetail() {
         form, groups, dialog, title, isNew,
 
         // Busy and validation state
-        isLoading, isSaving, errors, formError, isAdminRole, hasChanges,
+        isLoading, isSaving, errors, isAdminRole, hasChanges,
 
         // User and permissions
         canEdit,

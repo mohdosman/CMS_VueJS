@@ -3,7 +3,7 @@ import { useMenuDetail } from '../composables/useMenuDetail.js';
 import MenuPermissions from '../components/MenuPermissions.vue';
 
 const {
-    isNew, canEdit, title, form, menuId, parents, tab, urlFields, errors, formError, isLoading, isSaving, msg, err,
+    isNew, canEdit, title, form, menuId, parents, tab, urlFields, errors, isLoading, isSaving, msg, err,
     save, cancel, iconOptions
 } = useMenuDetail();
 </script>
@@ -14,8 +14,6 @@ const {
                  :show-buttons="canEdit && tab === 'details'" @save="save" @cancel="cancel">
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
-
-            <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
 
             <!-- Permissions belong to a saved menu item, so a new one only has the Details tab until it is saved. -->
             <ul class="nav nav-tabs mb-3" role="tablist">

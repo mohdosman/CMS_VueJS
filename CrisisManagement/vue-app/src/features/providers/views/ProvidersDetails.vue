@@ -2,7 +2,7 @@
 import { useProviderDetail } from '../composables/useProviderDetail.js';
 
 const {
-    msg, err, isNew, canEdit, title, form, info, states, counties, sections, addressFields, contactFields, errors, formError, dialog, tab,
+    msg, err, isNew, canEdit, title, form, info, states, counties, sections, addressFields, contactFields, errors, dialog, tab,
     isLoading, isSaving, save, remove, cancel
 } = useProviderDetail();
 </script>
@@ -13,8 +13,6 @@ const {
                  :show-buttons="canEdit" @save="save" @cancel="cancel">
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
-
-            <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
 
             <ul class="nav nav-tabs mb-3" role="tablist">
                 <li class="nav-item" role="presentation">

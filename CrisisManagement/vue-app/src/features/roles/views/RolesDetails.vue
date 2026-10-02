@@ -3,7 +3,7 @@ import { useRoleDetail } from '../composables/useRoleDetail.js';
 import PermissionPicker from '../components/PermissionPicker.vue';
 
 const {
-    isNew, canEdit, title, form, groups, errors, formError, dialog, isLoading, isSaving,
+    isNew, canEdit, title, form, groups, errors, dialog, isLoading, isSaving,
     isAdminRole, hasChanges, save, remove, cancel
 } = useRoleDetail();
 </script>
@@ -15,7 +15,6 @@ const {
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
 
-            <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
             <div v-if="isAdminRole" class="alert alert-info" role="status">
                 The Administrator role is built in. It has every permission and cannot be changed.
             </div>

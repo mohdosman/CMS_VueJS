@@ -8,13 +8,12 @@ const props = defineProps({
 });
 const emit = defineEmits(['close']);
 
-const { docs, isLoading, error, confirming, remove, formatDate, formatFileSize, documentUrl } = useUserAgreements(props);
+const { docs, isLoading, confirming, remove, formatDate, formatFileSize, documentUrl } = useUserAgreements(props);
 </script>
 
 <template>
     <AppDialog title="View User Agreement" @close="emit('close', docs.length)">
-        <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
-        <p v-else-if="isLoading" role="status">Loading...</p>
+        <p v-if="isLoading" role="status">Loading...</p>
         <p v-else-if="!docs.length" role="status">No user agreements uploaded for this user.</p>
         <table v-else class="table table-sm table-striped table-bordered">
             <thead>

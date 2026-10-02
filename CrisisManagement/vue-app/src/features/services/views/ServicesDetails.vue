@@ -2,7 +2,7 @@
 import { useServiceDetail } from '../composables/useServiceDetail.js';
 
 const {
-    isNew, canSave, canDelete, title, form, lookups, providers, formError, dialog, isLoading, isSaving,
+    isNew, canSave, canDelete, title, form, lookups, providers, dialog, isLoading, isSaving,
     sessionServices, sessionTotal, sessionPaging, setSessionOrder, sessionSortIcon, onSessionPageChanged, onSessionPageSizeChanged, noProvider, dischargeRequired, durationRequired, patientLocked, msg,
     findExistingPatient, save, remove, cancel
 } = useServiceDetail();
@@ -15,7 +15,6 @@ const {
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
 
-            <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
             <div v-if="msg('form')" class="alert alert-danger" role="alert">{{ msg('form') }}</div>
             <div v-if="noProvider" class="alert alert-warning" role="alert">Current user is not assigned to the Facility/Provider</div>
 

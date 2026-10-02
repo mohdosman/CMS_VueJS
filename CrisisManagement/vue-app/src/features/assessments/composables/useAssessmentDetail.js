@@ -5,7 +5,6 @@ import { useCapabilities } from '../../../common/composables/useCapabilities.js'
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
-import { apiErrorMessage } from '../../../utils/apiError.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
 // Port of ManageAssessment.aspx: one form for a new assessment (/assessments/0) and an existing one (/assessments/f2f-<id> or /assessments/pa-<id>).
@@ -59,7 +58,6 @@ export function useAssessmentDetail() {
     const lookups = ref({});
     const providers = ref([]);
     const errors = ref({});           // { field: [messages] } from a 400 response or the date/time checks
-    const formError = ref('');        // page-level message: a load failure
     const dialog = ref('');           // '' or 'delete'
     const isLoading = ref(true);
     const isSaving = ref(false);
@@ -135,7 +133,6 @@ export function useAssessmentDetail() {
 
     async function load(assessmentKey) {
         isLoading.value = true;
-        formError.value = '';
         try {
             const detail = await assessmentsApi.get(assessmentKey);
             fill(detail);
@@ -147,7 +144,7 @@ export function useAssessmentDetail() {
                 router.replace(`/assessments/${detail.key}`);
             }
         } catch (e) {
-            formError.value = e.response?.status === 404 ? 'Assessment not found.' : apiErrorMessage(e);
+            logApiError(e, { fallback: 'Assessment not found.' });
         } finally {
             isLoading.value = false;
         }
@@ -170,7 +167,7 @@ export function useAssessmentDetail() {
                 await load(key.value);
             }
         } catch (e) {
-            formError.value = apiErrorMessage(e);
+            logApiError(e);
             isLoading.value = false;
         }
     }
@@ -280,7 +277,7 @@ export function useAssessmentDetail() {
         isDispatched, isOther, referralAccepted, panelTitle,
 
         // Busy and validation state
-        isLoading, isSaving, errors, formError, msg, allErrors,
+        isLoading, isSaving, errors, msg, allErrors,
 
         // User and permissions
         canEdit, canDelete,

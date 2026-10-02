@@ -6,7 +6,6 @@ import { useLogger } from '../../../common/composables/useLogger.js';
 import { useSearchState } from '../../../common/composables/useSearchState.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
-import { apiErrorMessage } from '../../../utils/apiError.js';
 import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 import { truncate } from '../../../utils/formatters.js';
@@ -115,11 +114,8 @@ export function useReportSearch() {
             logSuccess(`Report '${report.reportName}' opened successfully`);
         } catch (e) {
             win.close();
-            if ([401, 403].includes(e.response?.status)) {
-                logError(apiErrorMessage(e, 'You do not have permission to run this report'));
-            } else {
-                logError(`Failed to run report '${report.reportName}'`);
-            }
+            const denied = [401, 403].includes(e.response?.status);
+            logApiError(e, { fallback: denied ? 'You do not have permission to run this report' : `Failed to run report '${report.reportName}'` });
         } finally {
             runningKey.value = '';
         }

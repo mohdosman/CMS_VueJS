@@ -2,7 +2,7 @@
 import { useAssessmentDetail } from '../composables/useAssessmentDetail.js';
 
 const {
-    isNew, canEdit, canDelete, title, form, dt, lookups, providers, formError, dialog, isLoading, isSaving,
+    isNew, canEdit, canDelete, title, form, dt, lookups, providers, dialog, isLoading, isSaving,
     panelTitle, isDispatched, isOther, referralAccepted, msg, allErrors,
     save, remove, cancel, isEmptyRow, removeRow, dispositionsFor
 } = useAssessmentDetail();
@@ -15,7 +15,6 @@ const {
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
 
-            <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
             <div v-if="allErrors.length" class="alert alert-danger" role="alert">
                 <strong>Please correct the following:</strong>
                 <ul class="mb-0"><li v-for="(m, i) in allErrors" :key="i">{{ m }}</li></ul>

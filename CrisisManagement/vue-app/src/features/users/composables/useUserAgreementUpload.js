@@ -1,10 +1,13 @@
 import { ref } from 'vue';
 import { usersApi } from '../api/usersApi.js';
+import { useLogger } from '../../../common/composables/useLogger.js';
 import { apiErrorMessage } from '../../../utils/apiError.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
 // Uploads PDFs on selection, one at a time. The server checks type and size again and is the one that counts.
 export function useUserAgreementUpload(props) {
+    const { logApiError } = useLogger();
+
     // ================================================================
     // State
     // ================================================================
@@ -28,6 +31,9 @@ export function useUserAgreementUpload(props) {
             return { name: file.name, error: null };
         } catch (e) {
             const fieldErrors = e.response?.status === 400 ? e.response.data?.errors?.file : null;
+            if (!fieldErrors) {
+                logApiError(e);
+            }
             return { name: file.name, error: fieldErrors?.join(' ') ?? apiErrorMessage(e) };
         }
     }

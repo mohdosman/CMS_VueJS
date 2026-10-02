@@ -5,7 +5,6 @@ import { useCapabilities } from '../../../common/composables/useCapabilities.js'
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
-import { apiErrorMessage } from '../../../utils/apiError.js';
 
 // Port of ManageNotification.aspx: one form for a new notification (/notifications/0) and an existing one (/notifications/:key).
 export function useNotificationDetail() {
@@ -23,7 +22,6 @@ export function useNotificationDetail() {
     const form = reactive({ rowVersion: null, notification: '' });
     const notificationId = ref(0);
     const errors = ref({});          // { field: [messages] } from the checks below or a 400 response
-    const formError = ref('');       // page-level message: a load failure
     const isLoading = ref(true);
     const isSaving = ref(false);
 
@@ -42,8 +40,7 @@ export function useNotificationDetail() {
             notificationId.value = detail.id;
             Object.assign(form, { rowVersion: detail.rowVersion, notification: detail.notification });
         } catch (e) {
-            // Nothing to edit: keep the reason on the page.
-            formError.value = e.response?.status === 404 ? 'Notification not found.' : apiErrorMessage(e);
+            logApiError(e, { fallback: 'Notification not found.' });
         }
     }
 
@@ -101,7 +98,6 @@ export function useNotificationDetail() {
     // ================================================================
     useActivate(async () => {
         isLoading.value = true;
-        formError.value = '';
         if (!isNew.value) {
             await getNotification();
         }
@@ -110,7 +106,7 @@ export function useNotificationDetail() {
 
     return {
         // Form
-        form, errors, formError, title, maxLength,
+        form, errors, title, maxLength,
 
         // Busy state
         isLoading, isSaving,

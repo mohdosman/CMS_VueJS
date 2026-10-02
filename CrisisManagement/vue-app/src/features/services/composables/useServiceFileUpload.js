@@ -7,7 +7,7 @@ import { announce } from '../../../services/liveAnnouncer.js';
 // Port of ManageServiceFiles.aspx: upload one service file (.txt). The server checks it (header, records, footer count, the
 // provider NPI in it) and stores it for the nightly import; this page keeps a history of what was uploaded in this visit.
 export function useServiceFileUpload() {
-    const { logSuccess } = useLogger();
+    const { logSuccess, logApiError } = useLogger();
 
     // ================================================================
     // State
@@ -44,6 +44,9 @@ export function useServiceFileUpload() {
             logSuccess(`${file.name} uploaded.`);
         } catch (err) {
             const fieldErrors = err.response?.status === 400 ? err.response.data?.errors?.file : null;
+            if (!fieldErrors) {
+                logApiError(err);
+            }
             history.value.unshift({ name: file.name, status: 'Rejected', messages: fieldErrors ?? [apiErrorMessage(err)], id: '' });
             announce(`${file.name} was rejected`);
         } finally {

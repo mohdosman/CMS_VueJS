@@ -1,7 +1,7 @@
 <script setup>
 import { useNotificationDetail } from '../composables/useNotificationDetail.js';
 
-const { canEdit, title, maxLength, form, errors, formError, isLoading, isSaving, save, cancel } = useNotificationDetail();
+const { canEdit, title, maxLength, form, errors, isLoading, isSaving, save, cancel } = useNotificationDetail();
 </script>
 
 <template>
@@ -10,8 +10,6 @@ const { canEdit, title, maxLength, form, errors, formError, isLoading, isSaving,
                  :show-buttons="canEdit" @save="save" @cancel="cancel">
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
-
-            <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
 
             <!-- A read-only viewer (notifications.view only) gets the same form with the control disabled. -->
             <fieldset :disabled="!canEdit || isLoading" class="border-0 p-0 m-0">

@@ -5,7 +5,6 @@ import { useCapabilities } from '../../../common/composables/useCapabilities.js'
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
-import { apiErrorMessage } from '../../../utils/apiError.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 
 // Port of ManageService.aspx: one form for a new service (/services/new) and an existing one (/services/:key, the service id).
@@ -32,7 +31,6 @@ export function useServiceDetail() {
     const lookups = ref({});
     const providers = ref([]);
     const errors = ref({});          // { field: [messages] } from a 400 validation response
-    const formError = ref('');       // page-level message: a load failure
     const dialog = ref('');          // '' or 'delete'
     const isLoading = ref(true);
     const isSaving = ref(false);
@@ -101,7 +99,7 @@ export function useServiceDetail() {
                 fill(await servicesApi.get(key));
             }
         } catch (e) {
-            formError.value = e.response?.status === 404 ? 'Service not found.' : apiErrorMessage(e);
+            logApiError(e, { fallback: 'Service not found.' });
         }
     }
 
@@ -199,7 +197,6 @@ export function useServiceDetail() {
     // ================================================================
     useActivate(async () => {
         isLoading.value = true;
-        formError.value = '';
         await getPageData();
         isLoading.value = false;
     });
@@ -213,7 +210,7 @@ export function useServiceDetail() {
         sessionServices, sessionTotal, sessionPaging,
 
         // Busy and validation state
-        isLoading, isSaving, errors, formError, msg, noProvider,
+        isLoading, isSaving, errors, msg, noProvider,
 
         // User and permissions
         canSave, canDelete,
