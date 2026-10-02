@@ -5,7 +5,7 @@ import { useUserAgreementUpload } from '../composables/useUserAgreementUpload.js
 const props = defineProps({ userKey: { type: String, required: true } });
 const emit = defineEmits(['close']);
 
-const { results, stored, MAX_FILES, isBusy, onPick } = useUserAgreementUpload(props);
+const { results, stored, MAX_FILES, formatFileSize, isBusy, onPick } = useUserAgreementUpload(props);
 </script>
 
 <template>
@@ -19,7 +19,7 @@ const { results, stored, MAX_FILES, isBusy, onPick } = useUserAgreementUpload(pr
 
         <ul v-if="results.length" class="list-unstyled" aria-live="polite">
             <li v-for="(r, i) in results" :key="i" :class="r.error ? 'text-danger' : 'text-success'">
-                {{ r.name }}: {{ r.error ?? 'uploaded' }}
+                {{ r.name }} ({{ formatFileSize(r.size) }}): {{ r.error ?? 'uploaded' }}
             </li>
         </ul>
         <p v-if="isBusy" role="status">Uploading...</p>

@@ -2,6 +2,7 @@ import { ref } from 'vue';
 import { usersApi } from '../api/usersApi.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { apiErrorMessage } from '../../../utils/apiError.js';
+import { formatFileSize } from '../../../utils/formatters.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
 // Uploads PDFs on selection, one at a time. The server checks type and size again and is the one that counts.
@@ -14,7 +15,7 @@ export function useUserAgreementUpload(props) {
     const MAX_BYTES = 10 * 1024 * 1024;
     const MAX_FILES = 10;
 
-    const results = ref([]);   // [{ name, error }]
+    const results = ref([]);   // [{ name, size, error }]
     const isBusy = ref(false);
     const stored = ref(0);
 
@@ -23,26 +24,31 @@ export function useUserAgreementUpload(props) {
     // ================================================================
     async function uploadOne(file) {
         if (file.size > MAX_BYTES) {
-            return { name: file.name, error: `Exceeds the ${MAX_BYTES / (1024 * 1024)} MB limit.` };
+            return { name: file.name, size: file.size, error: `Exceeds the ${MAX_BYTES / (1024 * 1024)} MB limit.` };
         }
         try {
             await usersApi.uploadDocument(props.userKey, file);
             stored.value++;
-            return { name: file.name, error: null };
+            return { name: file.name, size: file.size, error: null };
         } catch (e) {
             const fieldErrors = e.response?.status === 400 ? e.response.data?.errors?.file : null;
             if (!fieldErrors) {
                 logApiError(e);
             }
-            return { name: file.name, error: fieldErrors?.join(' ') ?? apiErrorMessage(e) };
+            return { name: file.name, size: file.size, error: fieldErrors?.join(' ') ?? apiErrorMessage(e) };
         }
     }
 
     async function onPick(e) {
-        const files = [...e.target.files].slice(0, MAX_FILES);
+        const picked = [...e.target.files];
+        const files = picked.slice(0, MAX_FILES);
         e.target.value = '';
         isBusy.value = true;
         try {
+            // Files past the limit are named, not silently dropped.
+            for (const file of picked.slice(MAX_FILES)) {
+                results.value.push({ name: file.name, size: file.size, error: `Not uploaded: only ${MAX_FILES} files at a time.` });
+            }
             for (const file of files) {
                 results.value.push(await uploadOne(file));
             }
@@ -55,7 +61,7 @@ export function useUserAgreementUpload(props) {
 
     return {
         // Results
-        results, stored, MAX_FILES,
+        results, stored, MAX_FILES, formatFileSize,
 
         // Busy state
         isBusy,
