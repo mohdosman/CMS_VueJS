@@ -15,14 +15,14 @@ const { password, confirmPassword, isSaving, errors, save } = useSetPassword(pro
     <AppDialog title="Set password" @close="emit('close')">
         <form novalidate autocomplete="off" @submit.prevent="save">
 
-            <div class="mb-3">
+            <div class="mb-3" :class="{ 'has-error': !!(errors.password?.join(' ')) }">
                 <label class="form-label" for="newPassword">New password <span class="f_req" aria-hidden="true">*</span></label>
                 <input id="newPassword" v-model="password" type="password" autocomplete="new-password" autofocus
                        class="form-control form-control-sm" :aria-invalid="!!errors.password"
                        aria-describedby="password-rules newPassword-err" />
                 <div id="newPassword-err" class="form-text has-error" role="alert">{{ errors.password?.join(' ') }}</div>
             </div>
-            <div class="mb-3">
+            <div class="mb-3" :class="{ 'has-error': !!(errors.confirmPassword?.join(' ')) }">
                 <label class="form-label" for="newPasswordConfirm">Confirm password <span class="f_req" aria-hidden="true">*</span></label>
                 <input id="newPasswordConfirm" v-model="confirmPassword" type="password" autocomplete="new-password"
                        class="form-control form-control-sm" :aria-invalid="!!errors.confirmPassword"

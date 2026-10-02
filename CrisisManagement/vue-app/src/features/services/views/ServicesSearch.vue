@@ -34,7 +34,7 @@ const {
                     </div>
                 </div>
                 <div class="row">
-                    <div v-for="x in fields" :key="x.f" class="mb-3" :class="x.col">
+                    <div v-for="x in fields" :key="x.f" class="mb-3" :class="[x.col, { 'has-error': !!(msg(x.f)) }]">
                         <label class="form-label" :for="x.f">{{ x.label }}</label>
                         <input :id="x.f" v-model="criteria[x.f]" type="text" class="form-control form-control-sm"
                                :aria-invalid="!!msg(x.f)" :aria-describedby="`${x.f}-err`" />
@@ -46,7 +46,7 @@ const {
                         <label class="form-label" for="dosAdmitDateFrom">DOS/Admit Date (From)</label>
                         <DateInput id="dosAdmitDateFrom" v-model="criteria.dosAdmitDateFrom" class="form-control form-control-sm" />
                     </div>
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-3 mb-3" :class="{ 'has-error': !!(msg('dosAdmitDateTo')) }">
                         <label class="form-label" for="dosAdmitDateTo">DOS/Admit Date (To)</label>
                         <DateInput id="dosAdmitDateTo" v-model="criteria.dosAdmitDateTo" class="form-control form-control-sm"
                                :aria-invalid="!!msg('dosAdmitDateTo')" aria-describedby="dosAdmitDateTo-err" />

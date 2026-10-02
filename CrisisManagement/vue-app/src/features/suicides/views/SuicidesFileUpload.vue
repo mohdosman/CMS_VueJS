@@ -14,7 +14,7 @@ const { history, isUploading, pickError, onPick } = useSuicideFileUpload();
                     <div class="card-header" role="heading" aria-level="2"><i class="fa fa-upload" aria-hidden="true"></i> Upload File</div>
                     <div class="card-body">
                         <div class="row justify-content-center">
-                            <div class="col-md-6">
+                            <div class="col-md-6" :class="{ 'has-error': !!(pickError) }">
                                 <label class="form-label" for="suicideFile">Select file</label>
                                 <input id="suicideFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="form-control form-control-sm"
                                        :disabled="isUploading" :aria-invalid="!!pickError" aria-describedby="suicideFile-err" @change="onPick" />

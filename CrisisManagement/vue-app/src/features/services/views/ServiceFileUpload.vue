@@ -19,7 +19,7 @@ const { history, isUploading, pickError, onPick } = useServiceFileUpload();
                             <a href="mailto:gina.young@tn.gov" class="text-decoration-underline">gina.young@tn.gov</a> or 615-532-6675.
                         </div>
                         <div class="row justify-content-center">
-                            <div class="col-md-6">
+                            <div class="col-md-6" :class="{ 'has-error': !!(pickError) }">
                                 <label class="form-label" for="serviceFile">Choose text file</label>
                                 <input id="serviceFile" type="file" accept=".txt,text/plain" class="form-control form-control-sm"
                                        :disabled="isUploading" :aria-invalid="!!pickError" aria-describedby="serviceFile-help serviceFile-err" @change="onPick" />

@@ -28,19 +28,19 @@ const {
             <!-- A read-only viewer (providers.view only) gets the same form with every control disabled. -->
             <fieldset :disabled="!canEdit || isLoading" class="border-0 p-0 m-0">
                 <div v-show="tab === 'demographics'" id="panel-demographics" role="tabpanel" aria-labelledby="tab-demographics" class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3" :class="{ 'has-error': !!(msg('name')) }">
                         <label class="form-label" for="name">Provider Name <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="name" v-model="form.name" type="text" maxlength="150" class="form-control form-control-sm"
                                :aria-invalid="err('name') > 0" aria-describedby="name-err" />
                         <div id="name-err" class="form-text has-error" role="alert">{{ msg('name') }}</div>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3" :class="{ 'has-error': !!(msg('abbreviation')) }">
                         <label class="form-label" for="abbreviation">Provider Abbreviation <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="abbreviation" v-model="form.abbreviation" type="text" maxlength="50" class="form-control form-control-sm"
                                :aria-invalid="err('abbreviation') > 0" aria-describedby="abbreviation-err" />
                         <div id="abbreviation-err" class="form-text has-error" role="alert">{{ msg('abbreviation') }}</div>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3" :class="{ 'has-error': !!(msg('edisonNumber')) }">
                         <label class="form-label" for="edisonNumber">Edison Number <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="edisonNumber" v-model="form.edisonNumber" type="text" maxlength="10" inputmode="numeric"
                                class="form-control form-control-sm" :aria-invalid="err('edisonNumber') > 0"
@@ -48,7 +48,7 @@ const {
                         <div id="edisonNumber-help" class="form-text">Exactly 10 digits.</div>
                         <div id="edisonNumber-err" class="form-text has-error" role="alert">{{ msg('edisonNumber') }}</div>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3" :class="{ 'has-error': !!(msg('npi')) }">
                         <label class="form-label" for="npi">NPI</label>
                         <input id="npi" v-model="form.npi" type="text" maxlength="10" inputmode="numeric" class="form-control form-control-sm"
                                :aria-invalid="err('npi') > 0" aria-describedby="npi-help npi-err" />
@@ -62,7 +62,7 @@ const {
                         <div class="col-lg-6">
                             <h3 class="h6 fw-bold text-uppercase border-bottom pb-2 mb-3"><i class="fa fa-map-marker" aria-hidden="true"></i> Address</h3>
                             <div class="row">
-                                <div v-for="a in addressFields" :key="a.f" class="mb-3" :class="a.col">
+                                <div v-for="a in addressFields" :key="a.f" class="mb-3" :class="[a.col, { 'has-error': !!(msg(`${s.key}.${a.f}`)) }]">
                                     <label class="form-label" :for="`${s.key}-${a.f}`">{{ a.label }}</label>
                                     <input :id="`${s.key}-${a.f}`" v-model="form[s.key][a.f]" type="text" class="form-control form-control-sm"
                                            :aria-invalid="err(`${s.key}.${a.f}`) > 0" :aria-describedby="`${s.key}-${a.f}-err`" />
@@ -82,13 +82,13 @@ const {
                                         <option v-for="st in states" :key="st.id" :value="st.id">{{ st.label }}</option>
                                     </select>
                                 </div>
-                                <div class="col-8 col-md-6 mb-3">
+                                <div class="col-8 col-md-6 mb-3" :class="{ 'has-error': !!(msg(`${s.key}.zipcode`)) }">
                                     <label class="form-label" :for="`${s.key}-zipcode`">ZIP</label>
                                     <input :id="`${s.key}-zipcode`" v-model="form[s.key].zipcode" type="text" maxlength="5" class="form-control form-control-sm"
                                            :aria-invalid="err(`${s.key}.zipcode`) > 0" :aria-describedby="`${s.key}-zipcode-err`" />
                                     <div :id="`${s.key}-zipcode-err`" class="form-text has-error" role="alert">{{ msg(`${s.key}.zipcode`) }}</div>
                                 </div>
-                                <div class="col-4 col-md-6 mb-3">
+                                <div class="col-4 col-md-6 mb-3" :class="{ 'has-error': !!(msg(`${s.key}.zipExtension`)) }">
                                     <label class="form-label" :for="`${s.key}-zipExtension`">ZIP+4</label>
                                     <input :id="`${s.key}-zipExtension`" v-model="form[s.key].zipExtension" type="text" maxlength="4" class="form-control form-control-sm"
                                            :aria-invalid="err(`${s.key}.zipExtension`) > 0" :aria-describedby="`${s.key}-zipExtension-err`" />
@@ -99,7 +99,7 @@ const {
                         <div class="col-lg-6">
                             <h3 class="h6 fw-bold text-uppercase border-bottom pb-2 mb-3"><i class="fa fa-user" aria-hidden="true"></i> Contact</h3>
                             <div class="row">
-                                <div v-for="c in contactFields" :key="c.f" class="mb-3" :class="c.col">
+                                <div v-for="c in contactFields" :key="c.f" class="mb-3" :class="[c.col, { 'has-error': !!(msg(`${s.key}.contact.${c.f}`)) }]">
                                     <label class="form-label" :for="`${s.key}-contact-${c.f}`">{{ c.label }}</label>
                                     <input :id="`${s.key}-contact-${c.f}`" v-model="form[s.key].contact[c.f]" :type="c.type || 'text'" class="form-control form-control-sm"
                                            :aria-invalid="err(`${s.key}.contact.${c.f}`) > 0" :aria-describedby="`${s.key}-contact-${c.f}-err`" />

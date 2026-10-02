@@ -17,7 +17,7 @@ const id = useId();
 </script>
 
 <template>
-    <div class="mb-3" :class="col">
+    <div class="mb-3" :class="[col, { 'has-error': !!error }]">
         <label class="form-label" :for="id">{{ label }} <span v-if="required" class="f_req" aria-hidden="true">*</span></label>
         <select :id="id" class="form-select form-select-sm" :value="modelValue" :disabled="disabled" :aria-required="required || undefined"
                 :aria-invalid="!!error" :aria-describedby="`${id}-err`"

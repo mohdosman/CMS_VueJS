@@ -55,27 +55,27 @@ const {
 
         <!-- Add / edit a permission -->
         <AppDialog v-if="dialog === 'permission'" :title="editing ? 'Edit permission' : 'New permission'" @close="close">
-            <div class="mb-3">
+            <div class="mb-3" :class="{ 'has-error': !!(err('groupId')) }">
                 <label class="form-label" for="p-group">Group <span class="f_req" aria-hidden="true">*</span></label>
                 <select id="p-group" v-model="perm.groupId" class="form-select form-select-sm" :aria-invalid="!!err('groupId')" aria-describedby="p-group-err">
                     <option v-for="g in groups" :key="g.id" :value="g.id">{{ g.name }}</option>
                 </select>
                 <div id="p-group-err" class="form-text has-error" role="alert">{{ err('groupId') }}</div>
             </div>
-            <div class="mb-3">
+            <div class="mb-3" :class="{ 'has-error': !!(err('name')) }">
                 <label class="form-label" for="p-name">Name <span class="f_req" aria-hidden="true">*</span></label>
                 <input id="p-name" v-model="perm.name" type="text" maxlength="250" class="form-control form-control-sm" :aria-invalid="!!err('name')"
                        aria-describedby="p-name-err" @keydown.enter.prevent="savePermission" />
                 <div id="p-name-err" class="form-text has-error" role="alert">{{ err('name') }}</div>
             </div>
-            <div class="mb-3">
+            <div class="mb-3" :class="{ 'has-error': !!(err('value')) }">
                 <label class="form-label" for="p-value">Value <span class="f_req" aria-hidden="true">*</span></label>
                 <input id="p-value" v-model="perm.value" type="text" maxlength="250" class="form-control form-control-sm" :aria-invalid="!!err('value')"
                        aria-describedby="p-value-help p-value-err" @keydown.enter.prevent="savePermission" />
                 <div id="p-value-help" class="form-text">Like <code>users.view</code>. Unique across the application, no spaces. Renaming it updates the roles that hold it.</div>
                 <div id="p-value-err" class="form-text has-error" role="alert">{{ err('value') }}</div>
             </div>
-            <div class="mb-3">
+            <div class="mb-3" :class="{ 'has-error': !!(err('description')) }">
                 <label class="form-label" for="p-desc">Description <span class="f_req" aria-hidden="true">*</span></label>
                 <textarea id="p-desc" v-model="perm.description" rows="2" maxlength="250" class="form-control form-control-sm" :aria-invalid="!!err('description')"
                           aria-describedby="p-desc-err"></textarea>
@@ -95,13 +95,13 @@ const {
 
         <!-- New permission group -->
         <AppDialog v-if="dialog === 'group'" title="New permission group" @close="close">
-            <div class="mb-3">
+            <div class="mb-3" :class="{ 'has-error': !!(err('name')) }">
                 <label class="form-label" for="g-name">Group name <span class="f_req" aria-hidden="true">*</span></label>
                 <input id="g-name" v-model="group.name" type="text" maxlength="100" class="form-control form-control-sm" :aria-invalid="!!err('name')"
                        aria-describedby="g-name-err" @keydown.enter.prevent="saveNewGroup" />
                 <div id="g-name-err" class="form-text has-error" role="alert">{{ err('name') }}</div>
             </div>
-            <div class="mb-3">
+            <div class="mb-3" :class="{ 'has-error': !!(err('description')) }">
                 <label class="form-label" for="g-desc">Description</label>
                 <input id="g-desc" v-model="group.description" type="text" maxlength="250" class="form-control form-control-sm"
                        :aria-invalid="!!err('description')" aria-describedby="g-desc-err" @keydown.enter.prevent="saveNewGroup" />

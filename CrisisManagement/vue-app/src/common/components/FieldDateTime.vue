@@ -16,7 +16,7 @@ const set = (part, e) => emit('update:modelValue', { ...props.modelValue, [part]
 </script>
 
 <template>
-    <div class="mb-3" :class="col">
+    <div class="mb-3" :class="[col, { 'has-error': !!error }]">
         <div class="row g-1">
             <div class="col-7">
                 <label class="form-label" :for="`${id}-date`">{{ label }} date <span v-if="required" class="f_req" aria-hidden="true">*</span></label>

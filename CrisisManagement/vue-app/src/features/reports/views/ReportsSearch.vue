@@ -15,13 +15,13 @@ const {
         <SearchPanel title="Report Listing" icon="fa fa-search" form-name="reportForm" @submit="search" @reset="clear">
             <template #fields>
                 <div class="row">
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-4 mb-3" :class="{ 'has-error': !!(msg('reportName')) }">
                         <label class="form-label" for="reportName">Report Name</label>
                         <input id="reportName" v-model="criteria.reportName" type="text" maxlength="50" class="form-control form-control-sm"
                                :aria-invalid="!!msg('reportName')" aria-describedby="reportName-err" />
                         <div id="reportName-err" class="form-text has-error" role="alert">{{ msg('reportName') }}</div>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-4 mb-3" :class="{ 'has-error': !!(msg('description')) }">
                         <label class="form-label" for="description">Description</label>
                         <input id="description" v-model="criteria.description" type="text" maxlength="255" class="form-control form-control-sm"
                                :aria-invalid="!!msg('description')" aria-describedby="description-err" />

@@ -13,6 +13,15 @@
     color: #a94442;
 }
 
+/* A field that failed validation: its wrapper gets .has-error, the theme outlines the .form-control inside it
+   (cms-theme.css), and selects, which use .form-select instead, get the same outline here. */
+.has-error .form-select {
+    border-color: var(--cms-danger, #b3251e);
+}
+.has-error .form-select:focus {
+    box-shadow: 0 0 0 3px rgba(179, 37, 30, .14);
+}
+
 /* Toggled by date/currency directives on the nearest .mb-3. */
 .cc-date-error input,
 .cc-date-future-error input,

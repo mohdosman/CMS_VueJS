@@ -31,13 +31,13 @@ const {
                 <!-- A read-only viewer (menus.view only) gets the same form with every control disabled. -->
                 <fieldset :disabled="!canEdit || isLoading" class="border-0 p-0 m-0">
                     <div class="row">
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-4 mb-3" :class="{ 'has-error': !!(msg('name')) }">
                             <label class="form-label" for="name">Name <span class="f_req" aria-hidden="true">*</span></label>
                             <input id="name" v-model="form.name" type="text" maxlength="50" class="form-control form-control-sm"
                                    :aria-invalid="err('name') > 0" aria-describedby="name-err" />
                             <div id="name-err" class="form-text has-error" role="alert">{{ msg('name') }}</div>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-4 mb-3" :class="{ 'has-error': !!(msg('icon')) }">
                             <label class="form-label" for="icon">Icon</label>
                             <input id="icon" v-model="form.icon" type="text" maxlength="50" list="icon-list" class="form-control form-control-sm"
                                    :aria-invalid="err('icon') > 0" aria-describedby="icon-help icon-err" />
@@ -45,7 +45,7 @@ const {
                             <div id="icon-help" class="form-text">A MudBlazor icon id. Only the listed ones show an icon in the navbar.</div>
                             <div id="icon-err" class="form-text has-error" role="alert">{{ msg('icon') }}</div>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-4 mb-3" :class="{ 'has-error': !!(msg('parentId')) }">
                             <label class="form-label" for="parentId">Parent</label>
                             <select id="parentId" v-model="form.parentId" class="form-select form-select-sm" :aria-invalid="err('parentId') > 0"
                                     aria-describedby="parentId-err">
@@ -57,13 +57,13 @@ const {
                     </div>
 
                     <div class="row">
-                        <div class="col-md-2 mb-3">
+                        <div class="col-md-2 mb-3" :class="{ 'has-error': !!(msg('displaySequence')) }">
                             <label class="form-label" for="displaySequence">Display order</label>
                             <input id="displaySequence" v-model.number="form.displaySequence" type="number" min="0" max="255"
                                    class="form-control form-control-sm" :aria-invalid="err('displaySequence') > 0" aria-describedby="displaySequence-err" />
                             <div id="displaySequence-err" class="form-text has-error" role="alert">{{ msg('displaySequence') }}</div>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6 mb-3" :class="{ 'has-error': !!(msg('description')) }">
                             <label class="form-label" for="description">Description</label>
                             <input id="description" v-model="form.description" type="text" maxlength="250" class="form-control form-control-sm"
                                    :aria-invalid="err('description') > 0" aria-describedby="description-err" />
@@ -78,13 +78,13 @@ const {
                     </div>
 
                     <div class="row">
-                        <div v-for="u in urlFields" :key="u.f" class="col-md-4 mb-3">
+                        <div v-for="u in urlFields" :key="u.f" class="col-md-4 mb-3" :class="{ 'has-error': !!(msg(u.f)) }">
                             <label class="form-label" :for="u.f">{{ u.label }}</label>
                             <input :id="u.f" v-model="form[u.f]" type="text" maxlength="250" class="form-control form-control-sm"
                                    :aria-invalid="err(u.f) > 0" :aria-describedby="`${u.f}-err`" />
                             <div :id="`${u.f}-err`" class="form-text has-error" role="alert">{{ msg(u.f) }}</div>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-4 mb-3" :class="{ 'has-error': !!(msg('comment')) }">
                             <label class="form-label" for="comment">Comment</label>
                             <input id="comment" v-model="form.comment" type="text" maxlength="250" class="form-control form-control-sm"
                                    :aria-invalid="err('comment') > 0" aria-describedby="comment-err" />

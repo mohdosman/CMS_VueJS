@@ -17,7 +17,7 @@ const {
         <SearchPanel title="Search Files" icon="fa fa-files-o" form-name="suicideFileForm" @submit="search" @reset="clear">
             <template #fields>
                 <div class="row">
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-4 mb-3" :class="{ 'has-error': !!(msg('fileName')) }">
                         <label class="form-label" for="fileName">File Name</label>
                         <input id="fileName" v-model="criteria.fileName" type="text" maxlength="10" class="form-control form-control-sm"
                                :aria-invalid="!!msg('fileName')" aria-describedby="fileName-err" />
@@ -27,7 +27,7 @@ const {
                         <label class="form-label" for="dateFrom">Date Processed (From)</label>
                         <DateInput id="dateFrom" v-model="criteria.dateFrom" class="form-control form-control-sm" />
                     </div>
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-3 mb-3" :class="{ 'has-error': !!(msg('dateTo')) }">
                         <label class="form-label" for="dateTo">Date Processed (To)</label>
                         <DateInput id="dateTo" v-model="criteria.dateTo" class="form-control form-control-sm"
                                :aria-invalid="!!msg('dateTo')" aria-describedby="dateTo-err" />

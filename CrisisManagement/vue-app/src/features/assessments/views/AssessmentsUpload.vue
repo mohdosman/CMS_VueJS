@@ -14,7 +14,7 @@ const { history, isUploading, pickError, onPick } = useAssessmentUpload();
                     <div class="card-header" role="heading" aria-level="2"><i class="fa fa-upload" aria-hidden="true"></i> Upload Assessment File</div>
                     <div class="card-body">
                         <div class="row justify-content-center">
-                            <div class="col-md-6">
+                            <div class="col-md-6" :class="{ 'has-error': !!(pickError) }">
                                 <label class="form-label" for="assessmentFile">Choose XML file</label>
                                 <input id="assessmentFile" type="file" accept=".xml,text/xml,application/xml" class="form-control form-control-sm"
                                        :disabled="isUploading" :aria-invalid="!!pickError" aria-describedby="assessmentFile-help assessmentFile-err" @change="onPick" />

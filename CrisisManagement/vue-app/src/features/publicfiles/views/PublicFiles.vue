@@ -20,7 +20,7 @@ const {
                     <div class="card-header" role="heading" aria-level="2"><i class="fa fa-upload" aria-hidden="true"></i> Upload Public File</div>
                     <div class="card-body">
                         <div class="row justify-content-center">
-                            <div class="col-md-6">
+                            <div class="col-md-6" :class="{ 'has-error': !!(uploadError) }">
                                 <label class="form-label" for="publicFile">Choose PDF file</label>
                                 <input id="publicFile" type="file" accept=".pdf,application/pdf" class="form-control form-control-sm"
                                        :disabled="isUploading" :aria-invalid="!!uploadError" aria-describedby="publicFile-err" @change="onPick" />

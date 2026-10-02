@@ -21,7 +21,7 @@ const {
                             <p class="form-text" role="status">No reports available</p>
                         </div>
                         <!-- The name is chosen from the report files on the server; the file name follows from it. -->
-                        <div v-else class="col-md-6 mb-3">
+                        <div v-else class="col-md-6 mb-3" :class="{ 'has-error': !!(msg('reportName')) }">
                             <label class="form-label" for="reportName">Report Name <span class="f_req" aria-hidden="true">*</span></label>
                             <select id="reportName" v-model="form.reportName" class="form-select form-select-sm" aria-required="true"
                                     :aria-invalid="!!msg('reportName')" aria-describedby="reportName-err">
@@ -35,7 +35,7 @@ const {
                     <FieldInput :model-value="fileName" label="File Name" disabled :error="msg('fileName')" col="col-md-6" />
                     <FieldSelect v-model="form.exportOption" label="Export Option" required :options="exportOptions" placeholder="- - SELECT - -"
                                  :error="msg('exportOption')" col="col-md-6" />
-                    <div class="col-md-12 mb-3">
+                    <div class="col-md-12 mb-3" :class="{ 'has-error': !!(msg('description')) }">
                         <label class="form-label" for="description">Description <span class="f_req" aria-hidden="true">*</span></label>
                         <textarea id="description" v-model="form.description" class="form-control form-control-sm" rows="3" maxlength="255" aria-required="true"
                                   :aria-invalid="!!msg('description')" aria-describedby="description-err"></textarea>

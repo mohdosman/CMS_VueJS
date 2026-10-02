@@ -25,7 +25,7 @@ const onInput = (e) => {
 </script>
 
 <template>
-    <div class="mb-3" :class="col">
+    <div class="mb-3" :class="[col, { 'has-error': !!error }]">
         <label class="form-label" :for="id">{{ label }} <span v-if="required" class="f_req" aria-hidden="true">*</span></label>
         <DateInput v-if="type === 'date'" :id="id" class="form-control form-control-sm" :model-value="modelValue ?? ''" :disabled="disabled"
                    :aria-required="required || undefined" :aria-invalid="!!error" :aria-describedby="`${hint ? `${id}-hint ` : ''}${id}-err`"

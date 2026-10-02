@@ -37,18 +37,18 @@ const {
             <!-- A read-only viewer (users.view only) gets the same form with every control disabled. -->
             <fieldset :disabled="!canEdit || isLoading" class="border-0 p-0 m-0">
                 <div class="row align-items-start">
-                    <div class="col-md-2 mb-3">
+                    <div class="col-md-2 mb-3" :class="{ 'has-error': !!(errors.isADAccount?.join(' ')) }">
                         <div class="form-label">Account type</div>
                         <label class="checkbox-inline"><input v-model="form.isADAccount" type="checkbox" :disabled="!isNew" /> Is AD Account</label>
                         <div v-if="err('isADAccount')" class="form-text has-error" role="alert">{{ errors.isADAccount?.join(' ') }}</div>
                     </div>
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-3 mb-3" :class="{ 'has-error': !!(errors.email?.join(' ')) }">
                         <label class="form-label" for="email">Email <span v-if="isNew || form.isADAccount" class="f_req" aria-hidden="true">*</span></label>
                         <input id="email" v-model="form.email" type="email" class="form-control form-control-sm"
                                :disabled="!isNew && !form.isADAccount" :aria-invalid="err('email') > 0" aria-describedby="email-err" />
                         <div id="email-err" class="form-text has-error" role="alert">{{ errors.email?.join(' ') }}</div>
                     </div>
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-3 mb-3" :class="{ 'has-error': !!(errors.userName?.join(' ')) }">
                         <label class="form-label" for="userName">User ID <span v-if="isNew && form.isADAccount" class="f_req" aria-hidden="true">*</span></label>
                         <input id="userName" :value="userIdShown" type="text" class="form-control form-control-sm"
                                :disabled="!(isNew && form.isADAccount)" :aria-invalid="err('userName') > 0"
@@ -62,19 +62,19 @@ const {
                 </div>
 
                 <div class="row">
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-3 mb-3" :class="{ 'has-error': !!(errors.firstName?.join(' ')) }">
                         <label class="form-label" for="firstName">First name <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="firstName" v-model="form.firstName" type="text" class="form-control form-control-sm"
                                :aria-invalid="err('firstName') > 0" aria-describedby="firstName-err" />
                         <div id="firstName-err" class="form-text has-error" role="alert">{{ errors.firstName?.join(' ') }}</div>
                     </div>
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-3 mb-3" :class="{ 'has-error': !!(errors.lastName?.join(' ')) }">
                         <label class="form-label" for="lastName">Last name <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="lastName" v-model="form.lastName" type="text" class="form-control form-control-sm"
                                :aria-invalid="err('lastName') > 0" aria-describedby="lastName-err" />
                         <div id="lastName-err" class="form-text has-error" role="alert">{{ errors.lastName?.join(' ') }}</div>
                     </div>
-                    <div class="col-md-2 mb-3">
+                    <div class="col-md-2 mb-3" :class="{ 'has-error': !!(errors.phoneNumber?.join(' ')) }">
                         <label class="form-label" for="phoneNumber">Phone number</label>
                         <input id="phoneNumber" v-model="form.phoneNumber" type="tel" class="form-control form-control-sm"
                                :aria-invalid="err('phoneNumber') > 0" aria-describedby="phoneNumber-err" />
@@ -98,14 +98,14 @@ const {
 
                 <!-- Existing users get a new password through the Set password dialog (reuse check + history). -->
                 <div v-if="isNew && !form.isADAccount" class="row">
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-3 mb-3" :class="{ 'has-error': !!(errors.password?.join(' ')) }">
                         <label class="form-label" for="password">Password <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="password" v-model="form.password" type="password" autocomplete="new-password"
                                class="form-control form-control-sm" :aria-invalid="err('password') > 0"
                                aria-describedby="password-help password-err" />
                         <div id="password-err" class="form-text has-error" role="alert">{{ errors.password?.join(' ') }}</div>
                     </div>
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-3 mb-3" :class="{ 'has-error': !!(errors.confirmPassword?.join(' ')) }">
                         <label class="form-label" for="confirmPassword">Confirm password <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="confirmPassword" v-model="form.confirmPassword" type="password" autocomplete="new-password"
                                class="form-control form-control-sm" :aria-invalid="err('confirmPassword') > 0"
@@ -118,7 +118,7 @@ const {
                     </div>
                 </div>
 
-                <div class="mb-3">
+                <div class="mb-3" :class="{ 'has-error': !!(errors.roleIds?.join(' ')) }">
                     <RoleChips v-model="form.roleIds" label="Roles *" :options="roles" :disabled="!canEdit" />
                     <div id="roleIds-err" class="form-text has-error" role="alert">{{ errors.roleIds?.join(' ') }}</div>
                 </div>

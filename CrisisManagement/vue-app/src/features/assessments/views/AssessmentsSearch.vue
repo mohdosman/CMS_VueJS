@@ -26,7 +26,7 @@ const {
                         <label class="form-label" for="assessmentDateFrom">Assessment Date (From)</label>
                         <DateInput id="assessmentDateFrom" v-model="criteria.assessmentDateFrom" class="form-control form-control-sm" />
                     </div>
-                    <div class="col-md-2 mb-3">
+                    <div class="col-md-2 mb-3" :class="{ 'has-error': !!(msg('assessmentDateTo')) }">
                         <label class="form-label" for="assessmentDateTo">Assessment Date (To)</label>
                         <DateInput id="assessmentDateTo" v-model="criteria.assessmentDateTo" class="form-control form-control-sm"
                                :aria-invalid="!!msg('assessmentDateTo')" aria-describedby="assessmentDateTo-err" />
@@ -38,7 +38,7 @@ const {
                     </div>
                 </div>
                 <div class="row">
-                    <div v-for="x in fields" :key="x.f" class="mb-3" :class="x.col">
+                    <div v-for="x in fields" :key="x.f" class="mb-3" :class="[x.col, { 'has-error': !!(msg(x.f)) }]">
                         <label class="form-label" :for="x.f">{{ x.label }}</label>
                         <input :id="x.f" v-model="criteria[x.f]" :type="x.type || 'text'" :min="x.type === 'number' ? 1 : undefined"
                                class="form-control form-control-sm" :aria-invalid="!!msg(x.f)" :aria-describedby="`${x.f}-err`" />

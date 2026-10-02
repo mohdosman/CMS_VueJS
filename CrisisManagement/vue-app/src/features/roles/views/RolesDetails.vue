@@ -23,7 +23,7 @@ const {
                  permission picker stays searchable and expandable, only its boxes are disabled. -->
             <fieldset :disabled="!canEdit || isLoading || isAdminRole" class="border-0 p-0 m-0">
                 <div class="row">
-                    <div class="col-md-5 mb-3">
+                    <div class="col-md-5 mb-3" :class="{ 'has-error': !!(errors.name?.join(' ')) }">
                         <label class="form-label" for="name">Role name <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="name" v-model="form.name" type="text" class="form-control form-control-sm"
                                :aria-invalid="!!errors.name?.length" aria-describedby="name-err" />

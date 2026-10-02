@@ -14,7 +14,7 @@ const id = useId();
 </script>
 
 <template>
-    <fieldset class="mb-3 border-0 p-0" :class="col" :disabled="disabled" :aria-describedby="`${id}-err`">
+    <fieldset class="mb-3 border-0 p-0" :class="[col, { 'has-error': !!error }]" :disabled="disabled" :aria-describedby="`${id}-err`">
         <legend class="form-label mb-1" style="font-size: inherit; float: none; width: auto">{{ label }}</legend>
         <label class="checkbox-inline me-3"><input type="radio" :name="id" :checked="modelValue === true" @change="$emit('update:modelValue', true)" /> Yes</label>
         <label class="checkbox-inline"><input type="radio" :name="id" :checked="modelValue === false" @change="$emit('update:modelValue', false)" /> No</label>

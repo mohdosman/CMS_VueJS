@@ -17,7 +17,7 @@ const {
         <SearchPanel title="Search Files" icon="fa fa-files-o" form-name="fileForm" @submit="search" @reset="clear">
             <template #fields>
                 <div class="row">
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-4 mb-3" :class="{ 'has-error': !!(msg('providerId')) }">
                         <label class="form-label" for="providerId">Provider</label>
                         <select id="providerId" v-model="criteria.providerId" class="form-select form-select-sm" aria-required="true"
                                 :aria-invalid="!!msg('providerId')" aria-describedby="providerId-err">
@@ -30,7 +30,7 @@ const {
                         <label class="form-label" for="dateFrom">Date Processed (From)</label>
                         <DateInput id="dateFrom" v-model="criteria.dateFrom" class="form-control form-control-sm" />
                     </div>
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-3 mb-3" :class="{ 'has-error': !!(msg('dateTo')) }">
                         <label class="form-label" for="dateTo">Date Processed (To)</label>
                         <DateInput id="dateTo" v-model="criteria.dateTo" class="form-control form-control-sm"
                                :aria-invalid="!!msg('dateTo')" aria-describedby="dateTo-err" />
