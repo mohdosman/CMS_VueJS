@@ -6,7 +6,7 @@ import { useCapabilities } from '../../../common/composables/useCapabilities.js'
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
-const DEFAULT_CRITERIA = () => ({ name: '', abbreviation: '', edisonNumber: '', npi: '', orderBy: 'name', reverse: false });
+const DEFAULT_CRITERIA = () => ({ name: '', edisonNumber: '', npi: '', orderBy: 'name', reverse: false });
 
 // Module scope on purpose: filters and results survive search -> detail -> back within the SPA.
 const criteria = reactive(DEFAULT_CRITERIA());
@@ -58,7 +58,7 @@ export function useProviderSearch() {
     onMounted(() => (hasSearched.value ? getProviders() : search()));
 
     return {
-        criteria, paging, providers, totalRecords, isSearching,
+        criteria, paging, providers, totalRecords, hasSearched, isSearching,
         search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, gotoProvider, canAdd, add
     };
 }

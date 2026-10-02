@@ -32,8 +32,8 @@ public sealed class ProviderRepository(AppDbContext context) : Repository<Provid
         q = (req.SortBy ?? "").ToLowerInvariant() switch
         {
             "abbreviation" => desc ? q.OrderByDescending(p => p.Abbreviation).ThenBy(p => p.Name) : q.OrderBy(p => p.Abbreviation).ThenBy(p => p.Name),
-            "edisonnumber" => desc ? q.OrderByDescending(p => p.EdisonNumber) : q.OrderBy(p => p.EdisonNumber),
-            "npi" => desc ? q.OrderByDescending(p => p.Npi) : q.OrderBy(p => p.Npi),
+            "edisonnumber" => desc ? q.OrderByDescending(p => p.EdisonNumber).ThenBy(p => p.Name) : q.OrderBy(p => p.EdisonNumber).ThenBy(p => p.Name),
+            "npi" => desc ? q.OrderByDescending(p => p.Npi).ThenBy(p => p.Name) : q.OrderBy(p => p.Npi).ThenBy(p => p.Name),
             _ => desc ? q.OrderByDescending(p => p.Name) : q.OrderBy(p => p.Name)
         };
 
