@@ -1,7 +1,7 @@
 <script setup>
 import { usePublicFiles } from '../composables/usePublicFiles.js';
 import { publicFilesApi } from '../../../common/api/publicFilesApi.js';
-import { formatDateTime, formatFileSize } from '../../../utils/formatters.js';
+import { formatDateTimeFull, formatFileSize } from '../../../utils/formatters.js';
 
 const {
     paging, files, totalRecords, canEdit, uploadError, isUploading, confirming,
@@ -24,8 +24,7 @@ const {
                             <div class="col-md-6">
                                 <label class="form-label" for="publicFile">Choose PDF file</label>
                                 <input id="publicFile" type="file" accept=".pdf,application/pdf" class="form-control form-control-sm"
-                                       :disabled="isUploading" :aria-invalid="!!uploadError" aria-describedby="publicFile-help publicFile-err" @change="onPick" />
-                                <div id="publicFile-help" class="form-text">PDF only, up to 5 MB. The file uploads as soon as you choose it and appears in the Help dialog.</div>
+                                       :disabled="isUploading" :aria-invalid="!!uploadError" aria-describedby="publicFile-err" @change="onPick" />
                                 <div id="publicFile-err" class="form-text has-error" role="alert">{{ uploadError }}</div>
                                 <p v-if="isUploading" role="status" class="mb-0">Uploading...</p>
                             </div>
@@ -55,7 +54,7 @@ const {
                         <tr v-for="f in files" :key="f.id">
                             <td>{{ f.id }}</td>
                             <td>{{ f.fileName }}</td>
-                            <td>{{ formatDateTime(f.createdOn) }}</td>
+                            <td>{{ formatDateTimeFull(f.createdOn) }}</td>
                             <td>{{ formatFileSize(f.fileSize) }}</td>
                             <td class="text-nowrap">
                                 <a class="btn btn-outline-secondary btn-sm" :href="publicFilesApi.downloadUrl(f.id)" download>
@@ -80,8 +79,8 @@ const {
         </div>
 
         <AppDialog v-if="confirming" title="Delete public file" @close="confirming = null">
-            <p>Delete <strong>{{ confirming.fileName }}</strong>? It disappears from the Help dialog. This cannot be undone.</p>
-            <AppButton action="delete" @click="remove">Delete file</AppButton>
+            <p>Delete '{{ confirming.fileName }}' file?</p>
+            <AppButton action="delete" @click="remove">Delete</AppButton>
             <AppButton action="cancel" @click="confirming = null" />
         </AppDialog>
     </div>

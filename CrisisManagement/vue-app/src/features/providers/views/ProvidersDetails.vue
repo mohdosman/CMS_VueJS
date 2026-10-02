@@ -80,7 +80,7 @@ const contactFields = [
                 <section v-for="s in sections" :key="s.key" v-show="tab === s.key" :id="`panel-${s.key}`" role="tabpanel" :aria-labelledby="`tab-${s.key}`" class="mb-2">
                     <div class="row">
                         <div class="col-lg-6">
-                            <h3 class="h6">Address</h3>
+                            <h3 class="h6 fw-bold text-uppercase border-bottom pb-2 mb-3"><i class="fa fa-map-marker" aria-hidden="true"></i> Address</h3>
                             <div class="row">
                                 <div v-for="a in addressFields" :key="a.f" class="mb-3" :class="a.col">
                                     <label class="form-label" :for="`${s.key}-${a.f}`">{{ a.label }}</label>
@@ -117,7 +117,7 @@ const contactFields = [
                             </div>
                         </div>
                         <div class="col-lg-6">
-                            <h3 class="h6">Contact</h3>
+                            <h3 class="h6 fw-bold text-uppercase border-bottom pb-2 mb-3"><i class="fa fa-user" aria-hidden="true"></i> Contact</h3>
                             <div class="row">
                                 <div v-for="c in contactFields" :key="c.f" class="mb-3" :class="c.col">
                                     <label class="form-label" :for="`${s.key}-contact-${c.f}`">{{ c.label }}</label>
