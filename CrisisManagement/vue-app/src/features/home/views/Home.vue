@@ -1,12 +1,12 @@
 <script setup>
-import { useAppStore } from '../../../stores/useAppStore.js';
+import { useHome } from '../composables/useHome.js';
 
-const appStore = useAppStore();
+const { currentUser } = useHome();
 </script>
 
 <template>
   <div class="main_content">
-    <h1>Welcome, {{ appStore.currentUser?.fullName }}</h1>
-    <p v-if="appStore.currentUser?.roles?.length">Roles: {{ appStore.currentUser.roles.join(', ') }}</p>
+    <h1>Welcome, {{ currentUser?.fullName }}</h1>
+    <p v-if="currentUser?.roles?.length">Roles: {{ currentUser.roles.join(', ') }}</p>
   </div>
 </template>
