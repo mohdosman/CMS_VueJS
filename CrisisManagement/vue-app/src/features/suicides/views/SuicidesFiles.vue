@@ -1,9 +1,9 @@
 <script setup>
 import { useSuicideFiles } from '../composables/useSuicideFiles.js';
-import { formatDateTime, formatFileSize } from '../../../utils/formatters.js';
+import { formatDateTimeFull } from '../../../utils/formatters.js';
 
 const {
-    msg, criteria, paging, files, totalRecords, isSearching, errors, current, records, recordTotal, recordPaging, isLoadingRecords,
+    msg, criteria, paging, files, totalRecords, hasSearched, isSearching, errors, current, records, recordTotal, recordPaging, isLoadingRecords,
     search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged,
     openRecords, closeRecords, setRecordOrder, recordSortIcon, onRecordPageChanged, onRecordPageSizeChanged, downloadUrl
 } = useSuicideFiles();
@@ -12,14 +12,14 @@ const {
 
 <template>
     <div class="main_content" role="main" aria-labelledby="main-title">
-        <h1 id="main-title" class="visually-hidden">Display Suicide Files</h1>
+        <h1 id="main-title" class="visually-hidden">Search Files</h1>
 
-        <SearchPanel title="Display Suicide Files" icon="fa fa-files-o" form-name="suicideFileForm" @submit="search" @reset="clear">
+        <SearchPanel title="Search Files" icon="fa fa-files-o" form-name="suicideFileForm" @submit="search" @reset="clear">
             <template #fields>
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="fileName">File Name</label>
-                        <input id="fileName" v-model="criteria.fileName" type="text" class="form-control form-control-sm"
+                        <input id="fileName" v-model="criteria.fileName" type="text" maxlength="10" class="form-control form-control-sm"
                                :aria-invalid="!!msg('fileName')" aria-describedby="fileName-err" />
                         <div id="fileName-err" class="form-text has-error" role="alert">{{ msg('fileName') }}</div>
                     </div>
@@ -44,27 +44,25 @@ const {
         <div class="row" role="region" aria-labelledby="results-heading">
             <h2 id="results-heading" class="visually-hidden">Suicide File Results Grid</h2>
             <div class="col-md-12">
-                <table class="table table-hover table-striped table-sm table-bordered">
+                <table v-if="hasSearched" class="table table-hover table-striped table-sm table-bordered">
                     <thead>
                         <tr>
                             <SortHeader col="id" :sort-icon="sortIcon" @sort="setOrder">Id</SortHeader>
-                            <SortHeader col="fileName" :sort-icon="sortIcon" @sort="setOrder">File Name</SortHeader>
-                            <th scope="col">Size</th>
-                            <SortHeader col="recordCount" :sort-icon="sortIcon" @sort="setOrder">Records</SortHeader>
+                            <th scope="col">File Name</th>
+                            <SortHeader col="recordCount" :sort-icon="sortIcon" class="text-end" @sort="setOrder">Records</SortHeader>
                             <SortHeader col="createdOn" :sort-icon="sortIcon" @sort="setOrder">Date Uploaded</SortHeader>
                             <th scope="col">File</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-if="!files.length" class="msg-error">
-                            <td colspan="6"><div class="text-center"><strong>No files found.</strong></div></td>
+                            <td colspan="5"><div class="text-center"><strong>No Records Found.</strong></div></td>
                         </tr>
                         <tr v-for="f in files" :key="f.id">
                             <td>{{ f.id }}</td>
                             <td>{{ f.fileName }}</td>
-                            <td>{{ formatFileSize(f.fileSize) }}</td>
-                            <td>{{ f.recordCount }}</td>
-                            <td>{{ formatDateTime(f.createdOn) }}</td>
+                            <td class="text-end">{{ f.recordCount }}</td>
+                            <td>{{ formatDateTimeFull(f.createdOn) }}</td>
                             <td>
                                 <AppButton action="cancel" size="xs" @click="openRecords(f)">View<span class="visually-hidden"> records of {{ f.fileName }}</span></AppButton>
                                 <a class="btn btn-outline-secondary btn-xs" :href="downloadUrl(f.id)">Download<span class="visually-hidden"> {{ f.fileName }}</span></a>
@@ -75,7 +73,7 @@ const {
             </div>
         </div>
 
-        <div role="region" aria-labelledby="paging-heading">
+        <div v-if="hasSearched" role="region" aria-labelledby="paging-heading">
             <h2 id="paging-heading" class="visually-hidden">Suicide File Results Paging</h2>
             <SearchPaging :total-items="totalRecords"
                           :page-size="paging.pageSize"
@@ -86,8 +84,7 @@ const {
         </div>
 
         <AppDialog wide v-if="current" :title="`Records in ${current.fileName}`" @close="closeRecords">
-            <p v-if="isLoadingRecords && !records.length" role="status">Loading...</p>
-            <p v-else-if="!records.length" role="status">No records were found.</p>
+            <p v-if="isLoadingRecords && !records.length" role="status">Loading, please wait...</p>
             <template v-else>
                 <div style="overflow: auto; max-height: 24rem">
                     <table class="table table-sm table-striped table-bordered">

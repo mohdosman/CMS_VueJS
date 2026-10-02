@@ -12,6 +12,7 @@ const criteria = reactive(DEFAULT_CRITERIA());
 const paging = reactive({ currentPage: 1, maxPagesToShow: 10, pageSize: 10 });
 const files = ref([]);
 const totalRecords = ref(0);
+const hasSearched = ref(false);
 const isSearching = ref(false);
 const errors = ref({});
 
@@ -35,6 +36,7 @@ export function useSuicideFiles() {
             const result = await suicidesApi.searchFiles(paging.currentPage, paging.pageSize, clean());
             files.value = result.items;
             totalRecords.value = result.totalCount;
+            hasSearched.value = true;
             announce(`${result.totalCount} files found`);
         } catch (e) {
             const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
@@ -56,7 +58,10 @@ export function useSuicideFiles() {
 
     function clear() {
         Object.assign(criteria, DEFAULT_CRITERIA());
-        return search();
+        files.value = [];
+        totalRecords.value = 0;
+        hasSearched.value = false;
+        errors.value = {};
     }
 
     async function loadRecords() {
@@ -86,12 +91,12 @@ export function useSuicideFiles() {
 
     const closeRecords = () => { current.value = null; };
 
-    onMounted(getFiles);
+    onMounted(() => hasSearched.value && getFiles());
 
     const msg = fieldMessages(errors);
 
     return {
-        msg, criteria, paging, files, totalRecords, isSearching, errors, current, records, recordTotal, recordPaging, isLoadingRecords,
+        msg, criteria, paging, files, totalRecords, hasSearched, isSearching, errors, current, records, recordTotal, recordPaging, isLoadingRecords,
         search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged,
         openRecords, closeRecords, setRecordOrder, recordSortIcon, onRecordPageChanged, onRecordPageSizeChanged,
         downloadUrl: suicidesApi.downloadUrl
