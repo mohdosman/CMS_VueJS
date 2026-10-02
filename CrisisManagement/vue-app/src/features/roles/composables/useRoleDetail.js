@@ -1,4 +1,4 @@
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { rolesApi } from '../api/rolesApi.js';
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
@@ -115,11 +115,17 @@ export function useRoleDetail() {
     // Save and delete
     // ================================================================
     // Field problems (400) show next to their inputs; anything else (403, 409 conflict, ...) is a toast.
+    // After a failed submit, move focus to the first field marked invalid (once the errors have rendered).
+    function focusFirstInvalid() {
+        nextTick(() => document.querySelector('[aria-invalid="true"]')?.focus());
+    }
+
     function fail(e) {
         const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
         if (fieldErrors) {
             serverErrors.value = fieldErrors;
             logError('Please correct the validation errors first.');
+            focusFirstInvalid();
         } else {
             logApiError(e);
         }
@@ -157,6 +163,7 @@ export function useRoleDetail() {
         serverErrors.value = {};
         if (!isValid.value) {
             logError('Please correct the validation errors first.');
+            focusFirstInvalid();
             return;
         }
         save();
