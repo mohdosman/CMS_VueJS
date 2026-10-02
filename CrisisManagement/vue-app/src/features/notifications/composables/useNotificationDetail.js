@@ -18,6 +18,7 @@ export function useNotificationDetail() {
     // ================================================================
     const isNew = computed(() => route.params.key === '0');
     const title = 'Manage Notification';
+    const maxLength = 1000;   // the server enforces the same limit
 
     const form = reactive({ rowVersion: null, notification: '' });
     const notificationId = ref(0);
@@ -109,7 +110,7 @@ export function useNotificationDetail() {
 
     return {
         // Form
-        form, errors, formError, title,
+        form, errors, formError, title, maxLength,
 
         // Busy state
         isLoading, isSaving,

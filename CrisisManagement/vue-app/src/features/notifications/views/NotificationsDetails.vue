@@ -1,9 +1,7 @@
 <script setup>
 import { useNotificationDetail } from '../composables/useNotificationDetail.js';
 
-const { canEdit, title, form, errors, formError, isLoading, isSaving, save, cancel } = useNotificationDetail();
-
-const MAX = 1000;
+const { canEdit, title, maxLength, form, errors, formError, isLoading, isSaving, save, cancel } = useNotificationDetail();
 </script>
 
 <template>
@@ -20,7 +18,7 @@ const MAX = 1000;
                 <div class="row">
                     <div class="col-md-8 mb-3">
                         <label class="form-label" for="notification">Notification <span class="f_req" aria-hidden="true">*</span></label>
-                        <textarea id="notification" v-model="form.notification" rows="4" :maxlength="MAX" class="form-control form-control-sm"
+                        <textarea id="notification" v-model="form.notification" rows="4" :maxlength="maxLength" class="form-control form-control-sm"
                                   :aria-invalid="!!errors.notification?.length" aria-describedby="notification-err"></textarea>
                         <div id="notification-err" class="form-text has-error" role="alert">{{ errors.notification?.join(' ') }}</div>
                     </div>
