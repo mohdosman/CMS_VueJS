@@ -39,6 +39,14 @@ export function useServiceSearch() {
 
     const msg = fieldMessages(errors);
 
+    // The text boxes under the provider and service filters.
+    const fields = [
+        { f: 'providerPatientNo', label: 'Provider Patient ID', col: 'col-md-3' },
+        { f: 'ssn', label: 'SSN', col: 'col-md-3' },
+        { f: 'lastName', label: 'Last Name', col: 'col-md-3' },
+        { f: 'firstName', label: 'First Name', col: 'col-md-3' }
+    ];
+
     // Empty text boxes are sent as absent, not as "".
     const cleanCriteria = () => Object.fromEntries(Object.entries(criteria).map(([k, v]) => [k, v === '' ? null : v]));
 
@@ -124,7 +132,7 @@ export function useServiceSearch() {
 
     return {
         // Results
-        services, totalRecords, paging, criteria, providers, serviceCodes, hasSearched,
+        services, totalRecords, paging, criteria, providers, serviceCodes, hasSearched, fields,
 
         // Busy and validation state
         isSearching, errors, msg,
