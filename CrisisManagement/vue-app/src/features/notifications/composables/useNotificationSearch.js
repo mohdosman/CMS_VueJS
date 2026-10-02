@@ -7,6 +7,7 @@ import { useSearchState } from '../../../common/composables/useSearchState.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { announce } from '../../../services/liveAnnouncer.js';
+import { formatDateTimeFull } from '../../../utils/formatters.js';
 
 // Port of SearchNotification.aspx.
 export function useNotificationSearch() {
@@ -118,6 +119,9 @@ export function useNotificationSearch() {
 
         // Actions
         search, setOrder, sortIcon, onPageChanged, onPageSizeChanged,
-        gotoNotification, add, remove
+        gotoNotification, add, remove,
+
+        // Helpers for the template
+        formatDateTimeFull
     };
 }

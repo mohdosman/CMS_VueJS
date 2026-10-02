@@ -6,6 +6,8 @@ import { useActivate } from '../../../common/composables/useActivate.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { apiErrorMessage } from '../../../utils/apiError.js';
 import { announce } from '../../../services/liveAnnouncer.js';
+import { publicFilesApi } from '../../../common/api/publicFilesApi.js';
+import { formatDateTimeFull, formatFileSize } from '../../../utils/formatters.js';
 
 // Port of ManagePublicFiles.aspx: upload a public (help) PDF and list, download and delete the uploaded ones.
 export function usePublicFiles() {
@@ -124,6 +126,9 @@ export function usePublicFiles() {
         canEdit,
 
         // Actions
-        setOrder, sortIcon, onPageChanged, onPageSizeChanged, onPick, remove
+        setOrder, sortIcon, onPageChanged, onPageSizeChanged, onPick, remove,
+
+        // Helpers for the template
+        formatDateTimeFull, formatFileSize, downloadUrl: publicFilesApi.downloadUrl
     };
 }

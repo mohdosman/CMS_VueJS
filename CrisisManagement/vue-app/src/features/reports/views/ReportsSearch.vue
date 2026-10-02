@@ -1,10 +1,9 @@
 <script setup>
 import { useReportSearch } from '../composables/useReportSearch.js';
-import { truncate } from '../../../utils/formatters.js';
 
 const {
     exportLabel, msg, criteria, paging, reports, totalRecords, isSearching, errors, runningKey,
-    search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, run, canAdd, add
+    search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, run, canAdd, add, truncate
 } = useReportSearch();
 
 </script>

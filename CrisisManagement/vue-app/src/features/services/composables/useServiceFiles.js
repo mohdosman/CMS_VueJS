@@ -6,6 +6,7 @@ import { useActivate } from '../../../common/composables/useActivate.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
+import { formatDateTimeFull } from '../../../utils/formatters.js';
 
 // Port of DisplayServiceFiles.aspx: the uploaded service files, their import counts, raw text and import errors.
 export function useServiceFiles() {
@@ -188,6 +189,9 @@ export function useServiceFiles() {
         // Actions
         search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged,
         setErrorOrder, errorSortIcon, onErrorPageChanged, onErrorPageSizeChanged,
-        open, closeDialog
+        open, closeDialog,
+
+        // Helpers for the template
+        formatDateTimeFull
     };
 }

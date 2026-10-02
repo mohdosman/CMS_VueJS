@@ -1,11 +1,10 @@
 <script setup>
 import { usePublicFiles } from '../composables/usePublicFiles.js';
-import { publicFilesApi } from '../../../common/api/publicFilesApi.js';
-import { formatDateTimeFull, formatFileSize } from '../../../utils/formatters.js';
 
 const {
     paging, files, totalRecords, canEdit, uploadError, isUploading, confirming,
-    setOrder, sortIcon, onPageChanged, onPageSizeChanged, onPick, remove
+    setOrder, sortIcon, onPageChanged, onPageSizeChanged, onPick, remove,
+    formatDateTimeFull, formatFileSize, downloadUrl
 } = usePublicFiles();
 
 </script>
@@ -57,7 +56,7 @@ const {
                             <td>{{ formatDateTimeFull(f.createdOn) }}</td>
                             <td>{{ formatFileSize(f.fileSize) }}</td>
                             <td class="text-nowrap">
-                                <a class="btn btn-outline-secondary btn-sm" :href="publicFilesApi.downloadUrl(f.id)" download>
+                                <a class="btn btn-outline-secondary btn-sm" :href="downloadUrl(f.id)" download>
                                     Download<span class="visually-hidden"> {{ f.fileName }}</span>
                                 </a>
                                 <AppButton v-if="canEdit" action="cancel" @click="confirming = f">Delete<span class="visually-hidden"> {{ f.fileName }}</span></AppButton>

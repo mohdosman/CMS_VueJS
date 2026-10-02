@@ -1,11 +1,11 @@
 <script setup>
 import { useServiceFiles } from '../composables/useServiceFiles.js';
-import { formatDateTimeFull } from '../../../utils/formatters.js';
 
 const {
     msg, criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawText, fileErrors,
     errorPaging, errorTotal, setErrorOrder, errorSortIcon, isLoadingDialog,
-    search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, onErrorPageChanged, onErrorPageSizeChanged, open, closeDialog
+    search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, onErrorPageChanged, onErrorPageSizeChanged, open, closeDialog,
+    formatDateTimeFull
 } = useServiceFiles();
 
 </script>

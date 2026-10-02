@@ -6,6 +6,7 @@ import { useActivate } from '../../../common/composables/useActivate.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
+import { formatDateTimeFull } from '../../../utils/formatters.js';
 
 // Port of DisplaySuicideFiles.aspx: the uploaded suicide (death record) files, with a dialog for the records in each.
 export function useSuicideFiles() {
@@ -162,6 +163,9 @@ export function useSuicideFiles() {
         openRecords, closeRecords, setRecordOrder, recordSortIcon, onRecordPageChanged, onRecordPageSizeChanged,
 
         // Helpers for the template
-        downloadUrl
+        downloadUrl,
+
+        // Helpers for the template
+        formatDateTimeFull
     };
 }

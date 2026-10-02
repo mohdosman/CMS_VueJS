@@ -9,6 +9,7 @@ import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../util
 import { apiErrorMessage } from '../../../utils/apiError.js';
 import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
+import { truncate } from '../../../utils/formatters.js';
 
 // Report listing: the list of reports, filtered by name and description, with a Run button on each.
 export function useReportSearch() {
@@ -148,6 +149,6 @@ export function useReportSearch() {
         run, add,
 
         // Helpers for the template
-        exportLabel
+        exportLabel, truncate
     };
 }

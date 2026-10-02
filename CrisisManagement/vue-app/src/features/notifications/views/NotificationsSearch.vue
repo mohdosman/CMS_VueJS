@@ -1,10 +1,10 @@
 <script setup>
 import { useNotificationSearch } from '../composables/useNotificationSearch.js';
-import { formatDateTimeFull } from '../../../utils/formatters.js';
 
 const {
     paging, notifications, totalRecords, confirming,
-    search, remove, setOrder, sortIcon, onPageChanged, onPageSizeChanged, gotoNotification, canEdit, add
+    search, remove, setOrder, sortIcon, onPageChanged, onPageSizeChanged, gotoNotification, canEdit, add,
+    formatDateTimeFull
 } = useNotificationSearch();
 
 </script>

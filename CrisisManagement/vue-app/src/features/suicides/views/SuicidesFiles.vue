@@ -1,11 +1,11 @@
 <script setup>
 import { useSuicideFiles } from '../composables/useSuicideFiles.js';
-import { formatDateTimeFull } from '../../../utils/formatters.js';
 
 const {
     msg, criteria, paging, files, totalRecords, hasSearched, isSearching, errors, current, records, recordTotal, recordPaging, isLoadingRecords,
     search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged,
-    openRecords, closeRecords, setRecordOrder, recordSortIcon, onRecordPageChanged, onRecordPageSizeChanged, downloadUrl
+    openRecords, closeRecords, setRecordOrder, recordSortIcon, onRecordPageChanged, onRecordPageSizeChanged, downloadUrl,
+    formatDateTimeFull
 } = useSuicideFiles();
 
 </script>
