@@ -3,7 +3,7 @@ import { useServiceSearch } from '../composables/useServiceSearch.js';
 
 const {
     msg, criteria, paging, services, totalRecords, providers, serviceCodes, hasSearched, isSearching, errors,
-    search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, canEdit
+    search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, gotoService
 } = useServiceSearch();
 
 const fields = [
@@ -73,7 +73,6 @@ const fields = [
                 <table v-if="hasSearched" class="table table-hover table-striped table-sm table-bordered">
                     <thead>
                         <tr>
-                            <th scope="col">Action</th>
                             <SortHeader col="serviceId" :sort-icon="sortIcon" @sort="setOrder">Id</SortHeader>
                             <SortHeader col="firstName" :sort-icon="sortIcon" @sort="setOrder">First Name</SortHeader>
                             <SortHeader col="lastName" :sort-icon="sortIcon" @sort="setOrder">Last Name</SortHeader>
@@ -87,11 +86,10 @@ const fields = [
                     </thead>
                     <tbody>
                         <tr v-if="!services.length" class="msg-error">
-                            <td colspan="10"><div class="text-center"><strong>No Records Found.</strong></div></td>
+                            <td colspan="9"><div class="text-center"><strong>No Records Found.</strong></div></td>
                         </tr>
-                        <tr v-for="s in services" :key="s.serviceId">
-                            <td><router-link :to="`/services/${s.serviceId}`">{{ canEdit ? 'Edit' : 'View' }}<span class="visually-hidden"> service {{ s.serviceId }}</span></router-link></td>
-                            <td>{{ s.serviceId }}</td>
+                        <tr v-for="s in services" :key="s.serviceId" style="cursor:pointer" @click="gotoService(s)">
+                            <td><router-link :to="`/services/${s.serviceId}`" @click.stop>{{ s.serviceId }}</router-link></td>
                             <td>{{ s.firstName }}</td>
                             <td>{{ s.lastName }}</td>
                             <td>{{ s.providerPatientNo }}</td>

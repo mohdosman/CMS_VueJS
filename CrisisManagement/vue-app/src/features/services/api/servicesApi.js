@@ -11,8 +11,8 @@ export const servicesApi = {
         const { data } = await http.post('services/search', { ...filters, pageIndex, pageSize, sortBy: orderBy, sortDesc: reverse });
         return data;
     },
-    async searchCurrentSession(pageIndex, pageSize) {
-        const { data } = await http.post('services/search-current-session', { pageIndex, pageSize, sortBy: 'serviceId', sortDesc: true });
+    async searchCurrentSession(pageIndex, pageSize, { orderBy, reverse }) {
+        const { data } = await http.post('services/search-current-session', { pageIndex, pageSize, sortBy: orderBy, sortDesc: reverse });
         return data;
     },
 

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CrisisManagement.Features.Services.Api;
 
 // Policies: services.view to search and read, services.enter to enter one (services.edit also grants it), services.edit
-// to change or delete, services.fileupload to upload and services.files.view for Display Service Files (also granted by
+// to change, services.delete to delete, services.fileupload to upload and services.files.view for Display Service Files (also granted by
 // services.fileupload, see PermissionHandler). Everything is limited to the caller's providers.
 public sealed class ServicesController(
     ServiceSearchService search,
@@ -46,7 +46,7 @@ public sealed class ServicesController(
     // ---------------------------------------------------------------- Enter/Edit Service
 
     [HttpGet("lookups")]
-    [Authorize(Policy = "services.enter")]
+    [Authorize(Policy = "services.view")]
     public async Task<IActionResult> Lookups()
     {
         try { return Ok(await editor.GetLookupsAsync()); }
@@ -54,7 +54,7 @@ public sealed class ServicesController(
     }
 
     [HttpGet("entry-providers")]
-    [Authorize(Policy = "services.enter")]
+    [Authorize(Policy = "services.view")]
     public async Task<IActionResult> EntryProviders()
     {
         try { return Ok(await search.GetProvidersAsync()); }
@@ -118,7 +118,7 @@ public sealed class ServicesController(
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Policy = "services.edit")]
+    [Authorize(Policy = "services.delete")]
     public async Task<IActionResult> Delete(int id)
     {
         try

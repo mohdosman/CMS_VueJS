@@ -39,7 +39,7 @@ public sealed class ServiceEditorService(IUnitOfWork uow, ProviderScope scope, C
     public async Task<ServiceEditModel> CreateAsync(ServiceEditModel m)
     {
         var errors = new ErrorBag();
-        if (m.ProviderId is not > 0) errors.Add("providerId", "Provider is required");
+        if (m.ProviderId is not > 0) errors.Add("providerId", "Please select the Provider!");
         errors.ThrowIfAny();
         scope.Require(m.ProviderId!.Value);
 
@@ -70,7 +70,7 @@ public sealed class ServiceEditorService(IUnitOfWork uow, ProviderScope scope, C
         if (s is null) return null;
         scope.Require(s.ProviderId, "You do not have access to this service.");
         var errors = new ErrorBag();
-        if (m.ProviderId is not > 0) errors.Add("providerId", "Provider is required");
+        if (m.ProviderId is not > 0) errors.Add("providerId", "Please select the Provider!");
         errors.ThrowIfAny();
         scope.Require(m.ProviderId!.Value, "You do not have access to this service.");
 
@@ -173,43 +173,43 @@ public sealed class ServiceEditorService(IUnitOfWork uow, ProviderScope scope, C
 
     private static void ValidateService(ServiceEditModel m, List<ServiceCodeRule> rules, ErrorBag e)
     {
-        if (m.CountyId is not > 0) e.Add("countyId", "County is required");
-        if (m.PayorSourceId is not > 0) e.Add("payorSourceId", "Payor source is required");
-        if (m.ServiceCountyId is not > 0) e.Add("serviceCountyId", "Service county is required");
+        if (m.CountyId is not > 0) e.Add("countyId", "Please select the County of Residence.");
+        if (m.PayorSourceId is not > 0) e.Add("payorSourceId", "Please select the Payor Billed for Service.");
+        if (m.ServiceCountyId is not > 0) e.Add("serviceCountyId", "Please select the County of Service.");
         if (m.CountyId > short.MaxValue || m.ServiceCountyId > short.MaxValue) e.Add("form", "One of the selected values is not valid.");
 
-        if (m.DosAdmitDate is not { } admit) e.Add("dosAdmitDate", "Admit date is required");
-        else if (admit.Date > DateTime.Today) e.Add("dosAdmitDate", "Admit date cannot be a future date");
+        if (m.DosAdmitDate is not { } admit) e.Add("dosAdmitDate", "DOS or Admit Date is Required.");
+        else if (admit.Date > DateTime.Today) e.Add("dosAdmitDate", "DOS or Admit Date cannot be future date!");
         if (m.DischargeDate is { } discharge)
         {
-            if (m.DosAdmitDate is { } a && discharge.Date < a.Date) e.Add("dischargeDate", "Discharge date cannot be prior to admit date");
-            if (discharge.Date > DateTime.Today) e.Add("dischargeDate", "Discharge date cannot be a future date");
+            if (m.DosAdmitDate is { } a && discharge.Date < a.Date) e.Add("dischargeDate", "Discharge Date cannot be before DOS Admit date!");
+            if (discharge.Date > DateTime.Today) e.Add("dischargeDate", "Discharge Date cannot be future date!");
         }
-        if (m.DurationHours is { } hours && hours is < 1 or > 999) e.Add("durationHours", "Duration (hours) must be between 1 and 999");
+        if (m.DurationHours is { } hours && hours is < 1 or > 999) e.Add("durationHours", "Please Enter Valid Duration (Hours) greater than 0 upto 3 digits.");
 
         // Discharge date and duration are required per service code; an unknown code keeps both required.
         var rule = rules.FirstOrDefault(r => r.ServiceCodeId == m.ServiceCodeId);
-        if (m.ServiceCodeId is not > 0) e.Add("serviceCodeId", "Service code is required");
-        else if (rule is null) e.Add("serviceCodeId", "Invalid service code");
-        if ((rule?.IsDischargeDateRequired ?? true) && m.DischargeDate is null) e.Add("dischargeDate", "Discharge date is required");
-        if ((rule?.IsDurationHoursRequired ?? true) && m.DurationHours is null) e.Add("durationHours", "Duration hours is required");
+        if (m.ServiceCodeId is not > 0) e.Add("serviceCodeId", "Please select the Service.");
+        else if (rule is null) e.Add("serviceCodeId", "Invalid ServiceCode.");
+        if ((rule?.IsDischargeDateRequired ?? true) && m.DischargeDate is null) e.Add("dischargeDate", "Discharge Date is Required.");
+        if ((rule?.IsDurationHoursRequired ?? true) && m.DurationHours is null) e.Add("durationHours", "Duration (Hours) is Required.");
     }
 
     private static void ValidatePatient(ServiceEditModel m, ErrorBag e)
     {
         var ppn = m.ProviderPatientNo?.Trim() ?? "";
-        if (ppn.Length == 0) e.Add("providerPatientNo", "Provider patient number is required");
+        if (ppn.Length == 0) e.Add("providerPatientNo", "Provider Patient No is Required.");
         else if (ppn.Length > PatientFieldLimits.MaxProviderPatientNoLength) e.Add("providerPatientNo", $"Provider patient number cannot exceed {PatientFieldLimits.MaxProviderPatientNoLength} characters.");
         var first = m.FirstName?.Trim() ?? "";
-        if (first.Length == 0) e.Add("firstName", "First name is required");
+        if (first.Length == 0) e.Add("firstName", "First Name is Required.");
         else if (first.Length > PatientFieldLimits.MaxNameLength) e.Add("firstName", $"First name cannot exceed {PatientFieldLimits.MaxNameLength} characters.");
         var last = m.LastName?.Trim() ?? "";
-        if (last.Length == 0) e.Add("lastName", "Last name is required");
+        if (last.Length == 0) e.Add("lastName", "Last Name is Required.");
         else if (last.Length > PatientFieldLimits.MaxNameLength) e.Add("lastName", $"Last name cannot exceed {PatientFieldLimits.MaxNameLength} characters.");
-        if (m.Dob is not { } dob) e.Add("dob", "Date of birth is required");
-        else if (dob.Date > DateTime.Today) e.Add("dob", "Date of birth cannot be a future date");
-        if (m.GenderId is not > 0) e.Add("genderId", "Gender is required");
+        if (m.Dob is not { } dob) e.Add("dob", "DOB is Required.");
+        else if (dob.Date > DateTime.Today) e.Add("dob", "DOB cannot be future date!");
+        if (m.GenderId is not > 0) e.Add("genderId", "Please select the Gender!");
         else if (m.GenderId > byte.MaxValue) e.Add("form", "One of the selected values is not valid.");
-        if (!SsnPolicy.IsValid(m.Ssn)) e.Add("ssn", "SSN is invalid");
+        if (!SsnPolicy.IsValid(m.Ssn)) e.Add("ssn", "SSN format is not valid.");
     }
 }

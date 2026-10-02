@@ -1,7 +1,7 @@
 import { ref, reactive, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { servicesApi } from '../api/servicesApi.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
-import { useCapabilities } from '../../../common/composables/useCapabilities.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
@@ -26,7 +26,7 @@ const errors = ref({});
 const clean = () => Object.fromEntries(Object.entries(criteria).map(([k, v]) => [k, v === '' ? null : v]));
 
 export function useServiceSearch() {
-    const { can } = useCapabilities();
+    const router = useRouter();
     const { logApiError } = useLogger();
 
     async function getServices() {
@@ -68,9 +68,6 @@ export function useServiceSearch() {
         return search();   // like WebForms, Clear goes back to the full list
     }
 
-    // The link in the Action column reads View for a user who cannot edit.
-    const canEdit = can('services.edit');
-
     onMounted(async () => {
         if (!providers.value.length) {
             try {
@@ -84,10 +81,12 @@ export function useServiceSearch() {
         await (hasSearched.value ? getServices() : search());
     });
 
+    const gotoService = (s) => router.push(`/services/${s.serviceId}`);
+
     const msg = fieldMessages(errors);
 
     return {
         msg, criteria, paging, services, totalRecords, providers, serviceCodes, hasSearched, isSearching, errors,
-        search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, canEdit
+        search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, gotoService
     };
 }

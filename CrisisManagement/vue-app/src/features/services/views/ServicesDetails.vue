@@ -3,7 +3,7 @@ import { useServiceDetail } from '../composables/useServiceDetail.js';
 
 const {
     isNew, canSave, canDelete, title, form, lookups, providers, formError, dialog, isLoading, isSaving,
-    sessionServices, sessionTotal, dischargeRequired, durationRequired, patientLocked, msg, allErrors,
+    sessionServices, sessionTotal, sessionPaging, setSessionOrder, sessionSortIcon, onSessionPageChanged, onSessionPageSizeChanged, noProvider, dischargeRequired, durationRequired, patientLocked, msg,
     findExistingPatient, save, remove, cancel
 } = useServiceDetail();
 
@@ -11,35 +11,33 @@ const {
 
 <template>
     <DetailPanel :title="title" icon="fa fa-medkit" form-name="serviceEntryForm" main-labelledby="main-title"
- :can-save="canSave && !isSaving && !isLoading" :show-buttons="canSave" @save="save" @cancel="cancel">
+ :can-save="canSave && !isSaving && !isLoading" :show-buttons="canSave && !noProvider" @save="save" @cancel="cancel">
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
 
             <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
-            <div v-if="allErrors.length" class="alert alert-danger" role="alert">
-                <strong>Please correct the following:</strong>
-                <ul class="mb-0"><li v-for="(m, i) in allErrors" :key="i">{{ m }}</li></ul>
-            </div>
+            <div v-if="msg('form')" class="alert alert-danger" role="alert">{{ msg('form') }}</div>
+            <div v-if="noProvider" class="alert alert-warning" role="alert">Current user is not assigned to the Facility/Provider</div>
 
             <!-- A read-only viewer (services.view only) gets the same form with every control disabled. -->
             <fieldset :disabled="!canSave || isLoading" class="border-0 p-0 m-0">
                 <div class="row">
                     <FieldSelect v-model="form.providerId" label="Provider" required :options="providers" :error="msg('providerId')" col="col-md-6 col-lg-4"
                                  @update:model-value="findExistingPatient" />
-                    <FieldInput v-model="form.providerPatientNo" label="Provider Patient ID" required :maxlength="50" :disabled="!isNew"
-                                :error="msg('providerPatientNo')" col="col-md-6 col-lg-4" @change="findExistingPatient" />
-                    <FieldInput v-model="form.ssn" label="SSN" :maxlength="11" hint="9 digits, or 000-00-0000." :disabled="patientLocked" :error="msg('ssn')" col="col-md-6 col-lg-4" />
+                    <FieldInput v-model="form.providerPatientNo" label="Provider Patient No" required :maxlength="50" :disabled="!isNew"
+                                :error="msg('providerPatientNo')" col="col-md-6 col-lg-4" @change="findExistingPatient" @keydown.enter.prevent />
+                    <FieldInput v-model="form.ssn" label="SSN" :maxlength="11" :disabled="patientLocked" :error="msg('ssn')" col="col-md-6 col-lg-4" />
                     <FieldInput v-model="form.firstName" label="First Name" required :maxlength="150" :disabled="!isNew" :error="msg('firstName')" col="col-md-6 col-lg-4" />
                     <FieldInput v-model="form.lastName" label="Last Name" required :maxlength="150" :disabled="patientLocked" :error="msg('lastName')" col="col-md-6 col-lg-4" />
-                    <FieldInput v-model="form.dob" label="Date of Birth" type="date" required :disabled="patientLocked" :error="msg('dob')" col="col-md-6 col-lg-4" />
+                    <FieldInput v-model="form.dob" label="DOB" type="date" required :disabled="patientLocked" :error="msg('dob')" col="col-md-6 col-lg-4" />
                     <FieldSelect v-model="form.genderId" label="Gender" required :options="lookups.genders" :disabled="!isNew" :error="msg('genderId')" col="col-md-6 col-lg-4" />
                     <FieldSelect v-model="form.countyId" label="County of Residence" required :options="lookups.counties" :error="msg('countyId')" col="col-md-6 col-lg-4" />
                     <FieldSelect v-model="form.payorSourceId" label="Payor Billed for Service" required :options="lookups.payorSources" :error="msg('payorSourceId')" col="col-md-6 col-lg-4" />
                     <FieldSelect v-model="form.primaryInsurerId" label="Primary Insurer" :options="lookups.payorSources" :error="msg('primaryInsurerId')" col="col-md-6 col-lg-4" />
                     <FieldSelect v-model="form.serviceCodeId" label="Service" required :options="lookups.serviceCodes" :error="msg('serviceCodeId')" col="col-md-6 col-lg-4" />
-                    <FieldInput v-model="form.dosAdmitDate" label="DOS/Admit Date" type="date" required :error="msg('dosAdmitDate')" col="col-md-6 col-lg-4" />
+                    <FieldInput v-model="form.dosAdmitDate" label="DOS or Admit Date" type="date" required :error="msg('dosAdmitDate')" col="col-md-6 col-lg-4" />
                     <FieldInput v-model="form.dischargeDate" label="Discharge Date" type="date" :required="dischargeRequired" :error="msg('dischargeDate')" col="col-md-6 col-lg-4" />
-                    <FieldInput v-model="form.durationHours" label="Duration Hours" type="number" :min="1" :max="999" :required="durationRequired"
+                    <FieldInput v-model="form.durationHours" label="Duration (Hours)" type="number" :min="1" :max="999" :required="durationRequired"
                                 :error="msg('durationHours')" col="col-md-6 col-lg-4" />
                     <FieldSelect v-model="form.serviceCountyId" label="County of Service" required :options="lookups.counties" :error="msg('serviceCountyId')" col="col-md-6 col-lg-4" />
                 </div>
@@ -55,14 +53,17 @@ const {
         </template>
 
         <template #below>
-            <div v-if="isNew && sessionServices.length" class="row mt-2" role="region" aria-labelledby="session-heading">
+            <div v-if="isNew && sessionServices.length" class="row mt-2" role="region" aria-label="Services entered in this session">
                 <div class="col-md-12">
-                    <h2 id="session-heading" class="h6">Services entered in this session ({{ sessionTotal }})</h2>
                     <table class="table table-sm table-striped table-bordered">
                         <thead>
                             <tr>
-                                <th scope="col">Id</th><th scope="col">Provider Patient No</th><th scope="col">Provider</th><th scope="col">SSN</th>
-                                <th scope="col">DOS/Admit Date</th><th scope="col">Discharge Date</th>
+                                <SortHeader col="serviceId" :sort-icon="sessionSortIcon" @sort="setSessionOrder">Id</SortHeader>
+                                <SortHeader col="providerPatientNo" :sort-icon="sessionSortIcon" @sort="setSessionOrder">Provider Patient No</SortHeader>
+                                <SortHeader col="providerAbbrev" :sort-icon="sessionSortIcon" @sort="setSessionOrder">Provider</SortHeader>
+                                <SortHeader col="ssn" :sort-icon="sessionSortIcon" @sort="setSessionOrder">SSN</SortHeader>
+                                <SortHeader col="dosAdmitDate" :sort-icon="sessionSortIcon" @sort="setSessionOrder">DOS/Admit Date</SortHeader>
+                                <SortHeader col="dischargeDate" :sort-icon="sessionSortIcon" @sort="setSessionOrder">Discharge Date</SortHeader>
                             </tr>
                         </thead>
                         <tbody>
@@ -73,6 +74,12 @@ const {
                             </tr>
                         </tbody>
                     </table>
+                    <SearchPaging :total-items="sessionTotal"
+                                  :page-size="sessionPaging.pageSize"
+                                  :current-page="sessionPaging.currentPage"
+                                  :max-pages="sessionPaging.maxPagesToShow"
+                                  @page-changed="onSessionPageChanged"
+                                  @page-size-changed="onSessionPageSizeChanged" />
                 </div>
             </div>
 

@@ -4,6 +4,7 @@ import { servicesApi } from '../api/servicesApi.js';
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { apiErrorMessage } from '../../../utils/apiError.js';
+import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 
 const blankForm = (providerId = null) => ({
     id: null, rowVersion: null, providerId, patientId: null,
@@ -18,12 +19,12 @@ export function useServiceDetail() {
     const route = useRoute();
     const router = useRouter();
     const { can } = useCapabilities();
-    const { logSuccess, logWarning, log, logApiError } = useLogger();
+    const { logApiError } = useLogger();
 
     const key = route.params.key ?? '0';
     const isNew = key === '0';
     const canSave = isNew ? can('services.enter') : can('services.edit');
-    const canDelete = can('services.edit');
+    const canDelete = can('services.delete');
 
     const form = reactive(blankForm());
     const lookups = ref({});
@@ -35,8 +36,11 @@ export function useServiceDetail() {
     const isSaving = ref(false);
     const sessionServices = ref([]); // what was entered in this session (new mode)
     const sessionTotal = ref(0);
+    const sessionPaging = reactive({ currentPage: 1, maxPagesToShow: 10, pageSize: 15 });
+    const sessionCriteria = reactive({ orderBy: 'serviceId', reverse: true });
+    const noProvider = ref(false);   // a user who is assigned no provider cannot enter a service
 
-    const title = isNew ? 'Enter Service' : 'Edit Service';
+    const title = isNew ? 'Enter Service' : `Manage Service - ID : ${key}`;
 
     // Whether discharge date and duration are required depends on the service code; no code (or an unknown one) requires both.
     const rule = computed(() => (lookups.value.serviceCodeRules ?? []).find((r) => r.serviceCodeId === form.serviceCodeId));
@@ -47,7 +51,6 @@ export function useServiceDetail() {
     const patientLocked = computed(() => !isNew || !!form.patientId);
 
     const msg = (f) => errors.value[f]?.join(' ') ?? '';
-    const allErrors = computed(() => Object.values(errors.value).flat());
 
     function fill(detail) {
         Object.assign(form, blankForm(), Object.fromEntries(Object.entries(detail).filter(([, v]) => v !== null)));
@@ -70,9 +73,6 @@ export function useServiceDetail() {
             if (found.length === 1) {
                 const p = found[0];
                 Object.assign(form, { patientId: p.patientId, ssn: p.ssn ?? '', firstName: p.firstName ?? '', lastName: p.lastName, dob: day(p.dob), genderId: p.genderId ?? null });
-                log('Existing patient found and populated.');
-            } else if (found.length > 1) {
-                logWarning('More than one patient has that number. Enter the details manually.');
             }
         } catch (e) {
             logApiError(e);
@@ -81,13 +81,17 @@ export function useServiceDetail() {
 
     async function loadSessionServices() {
         try {
-            const r = await servicesApi.searchCurrentSession(1, 50);
+            const r = await servicesApi.searchCurrentSession(sessionPaging.currentPage, sessionPaging.pageSize, sessionCriteria);
             sessionServices.value = r.items;
             sessionTotal.value = r.totalCount;
         } catch (e) {
             logApiError(e);
         }
     }
+
+    const setSessionOrder = createSetOrder(sessionCriteria, sessionPaging, loadSessionServices);
+    const sessionSortIcon = (col) => getSortIcon(col, sessionCriteria);
+    const { onPageChanged: onSessionPageChanged, onPageSizeChanged: onSessionPageSizeChanged } = createPagingHandlers(sessionPaging, loadSessionServices);
 
     // Field problems (400) show next to their inputs; anything else (403, 409 conflict, ...) is a toast.
     function fail(e) {
@@ -103,13 +107,12 @@ export function useServiceDetail() {
             const payload = Object.fromEntries(Object.entries(form).map(([k, v]) => [k, v === '' ? null : v]));
             if (isNew) {
                 await servicesApi.create(payload);
-                logSuccess('Service created.');
                 Object.assign(form, blankForm(form.providerId));
                 lastLookup = '';
+                sessionPaging.currentPage = 1;
                 await loadSessionServices();
             } else {
                 await servicesApi.update(form.id, payload);
-                logSuccess('Service updated.');
                 router.push('/services');
             }
         } catch (e) {
@@ -122,7 +125,6 @@ export function useServiceDetail() {
     async function remove() {
         try {
             await servicesApi.remove(form.id);
-            logSuccess('Service deleted.');
             router.push('/services');
         } catch (e) {
             dialog.value = '';
@@ -137,6 +139,7 @@ export function useServiceDetail() {
             [lookups.value, providers.value] = await Promise.all([servicesApi.lookups(), servicesApi.entryProviders()]);
             if (isNew) {
                 if (providers.value.length === 1) form.providerId = providers.value[0].id;
+                noProvider.value = providers.value.length === 0;
                 await loadSessionServices();
             } else fill(await servicesApi.get(key));
         } catch (e) {
@@ -148,7 +151,7 @@ export function useServiceDetail() {
 
     return {
         isNew, canSave, canDelete, title, form, lookups, providers, errors, formError, dialog, isLoading, isSaving,
-        sessionServices, sessionTotal, dischargeRequired, durationRequired, patientLocked, msg, allErrors,
+        sessionServices, sessionTotal, sessionPaging, setSessionOrder, sessionSortIcon, onSessionPageChanged, onSessionPageSizeChanged, noProvider, dischargeRequired, durationRequired, patientLocked, msg,
         findExistingPatient, save, remove, cancel
     };
 }
