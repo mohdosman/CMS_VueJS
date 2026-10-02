@@ -1,26 +1,33 @@
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive } from 'vue';
 import { assessmentsApi } from '../api/assessmentsApi.js';
-import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
+import { useSearchState } from '../../../common/composables/useSearchState.js';
+import { useActivate } from '../../../common/composables/useActivate.js';
+import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { fieldMessages } from '../../../utils/formErrors.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
-const DEFAULT_CRITERIA = () => ({ providerId: null, dateFrom: '', dateTo: '', orderBy: 'createdOn', reverse: true });
-
-// Module scope on purpose: the filters and results survive opening a file and coming back.
-const criteria = reactive(DEFAULT_CRITERIA());
-const paging = reactive({ currentPage: 1, maxPagesToShow: 10, pageSize: 10 });
-const files = ref([]);
-const totalRecords = ref(0);
-const providers = ref([]);
-const hasSearched = ref(false);
-const isSearching = ref(false);
-const errors = ref({});
-
-const clean = () => Object.fromEntries(Object.entries(criteria).map(([k, v]) => [k, v === '' ? null : v]));
-
+// Port of DisplayDataFiles.aspx: the uploaded assessment files, their import counts, raw XML and import errors.
 export function useAssessmentFiles() {
     const { logApiError } = useLogger();
+
+    // ================================================================
+    // State
+    // ================================================================
+    const files = ref([]);
+    const totalRecords = ref(0);
+    const providers = ref([]);
+    const paging = reactive({ currentPage: 1, maxPagesToShow: 10, pageSize: 10 });
+
+    // The screen opens blank: nothing is listed until the user searches (isDefault).
+    const DEFAULT_CRITERIA = { providerId: null, dateFrom: '', dateTo: '', orderBy: 'createdOn', reverse: true, isDefault: true };
+    const criteria = reactive({ ...DEFAULT_CRITERIA });
+
+    const { load, save, clear: clearState } = useSearchState('assessmentFileSearchJSON', criteria, DEFAULT_CRITERIA, paging);
+
+    const hasSearched = ref(false);
+    const isSearching = ref(false);
+    const errors = ref({});
 
     // Raw file text and import errors open in dialogs.
     const dialog = ref('');          // '', 'raw' or 'errors'
@@ -29,53 +36,109 @@ export function useAssessmentFiles() {
     const fileErrors = ref([]);
     const isLoadingDialog = ref(false);
 
+    // Each async load bumps its counter, so a slow earlier response can't overwrite a newer one.
+    let requestSequence = 0;
+
+    const msg = fieldMessages(errors);
+
+    // Empty text boxes are sent as absent, and the screen's own flag is not a filter.
+    const cleanCriteria = () => Object.fromEntries(
+        Object.entries(criteria).filter(([k]) => k !== 'isDefault').map(([k, v]) => [k, v === '' ? null : v])
+    );
+
+    // ================================================================
+    // Sorting, paging and search
+    // ================================================================
+    const setOrder = createSetOrder(criteria, paging, getFiles);
+    const sortIcon = (col) => getSortIcon(col, criteria);
+    const { onPageChanged, onPageSizeChanged } = createPagingHandlers(paging, getFiles);
+
     async function getFiles() {
+        // The default load shows no results until the user searches.
+        if (criteria.isDefault) {
+            return;
+        }
+        const requestId = ++requestSequence;
         errors.value = {};
         isSearching.value = true;
         try {
-            const result = await assessmentsApi.searchFiles(paging.currentPage, paging.pageSize, clean());
+            const result = await assessmentsApi.searchFiles(paging.currentPage, paging.pageSize, cleanCriteria());
+            if (requestId !== requestSequence) {
+                return;
+            }
             files.value = result.items;
             totalRecords.value = result.totalCount;
             hasSearched.value = true;
             announce(`${result.totalCount} files found`);
         } catch (e) {
-            const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
-            if (fieldErrors) errors.value = fieldErrors;
-            else logApiError(e);
+            if (requestId === requestSequence) {
+                const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
+                if (fieldErrors) {
+                    errors.value = fieldErrors;
+                } else {
+                    logApiError(e);
+                }
+            }
         } finally {
-            isSearching.value = false;
+            if (requestId === requestSequence) {
+                isSearching.value = false;
+            }
         }
     }
 
-    const setOrder = createSetOrder(criteria, paging, getFiles);
-    const sortIcon = (col) => getSortIcon(col, criteria);
-    const { onPageChanged, onPageSizeChanged } = createPagingHandlers(paging, getFiles);
-
-    function search() {
+    async function search() {
+        if (isSearching.value) {
+            return;
+        }
+        criteria.isDefault = false;
         paging.currentPage = 1;
-        return getFiles();
+        save();
+        await getFiles();
     }
 
+    // Nothing to choose from: preselect the only provider instead of making the user open the list.
     function defaultProvider() {
-        if (providers.value.length === 1 && !criteria.providerId) criteria.providerId = providers.value[0].id;
+        if (providers.value.length === 1 && !criteria.providerId) {
+            criteria.providerId = providers.value[0].id;
+        }
     }
+
+    // Runs each time the screen is shown: restore the saved criteria and, if the user had searched, list again.
+    useActivate(async () => {
+        load();
+        try {
+            providers.value = await assessmentsApi.fileProviders();
+        } catch (e) {
+            logApiError(e);
+        }
+        defaultProvider();
+        await getFiles();
+    });
 
     function clear() {
-        Object.assign(criteria, DEFAULT_CRITERIA());
+        requestSequence++;
+        clearState();
         defaultProvider();
+        isSearching.value = false;
         files.value = [];
         totalRecords.value = 0;
         hasSearched.value = false;
         errors.value = {};
     }
 
+    // ================================================================
+    // Dialogs: raw XML and import errors
+    // ================================================================
     async function open(kind, file) {
         current.value = file;
         dialog.value = kind;
         isLoadingDialog.value = true;
         try {
-            if (kind === 'raw') rawXml.value = (await assessmentsApi.fileRaw(file.id)).xml;
-            else fileErrors.value = await assessmentsApi.fileErrors(file.id);
+            if (kind === 'raw') {
+                rawXml.value = (await assessmentsApi.fileRaw(file.id)).xml;
+            } else {
+                fileErrors.value = await assessmentsApi.fileErrors(file.id);
+            }
         } catch (e) {
             dialog.value = '';
             logApiError(e);
@@ -84,24 +147,23 @@ export function useAssessmentFiles() {
         }
     }
 
-    const closeDialog = () => { dialog.value = ''; current.value = null; };
-
-    onMounted(async () => {
-        if (!providers.value.length) {
-            try {
-                providers.value = await assessmentsApi.fileProviders();
-            } catch (e) {
-                logApiError(e);
-            }
-        }
-        defaultProvider();
-        if (hasSearched.value) await getFiles();
-    });
-
-    const msg = fieldMessages(errors);
+    function closeDialog() {
+        dialog.value = '';
+        current.value = null;
+    }
 
     return {
-        msg, criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawXml, fileErrors, isLoadingDialog,
-        search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, open, closeDialog
+        // Results
+        files, totalRecords, paging, criteria, providers, hasSearched,
+
+        // Dialogs
+        dialog, current, rawXml, fileErrors, isLoadingDialog,
+
+        // Busy and validation state
+        isSearching, errors, msg,
+
+        // Actions
+        search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged,
+        open, closeDialog
     };
 }
