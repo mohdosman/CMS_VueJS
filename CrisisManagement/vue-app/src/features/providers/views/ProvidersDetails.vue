@@ -2,13 +2,13 @@
 import { useProviderDetail } from '../composables/useProviderDetail.js';
 
 const {
-    msg, err, isNew, canEdit, title, form, info, states, counties, errors, formError, dialog,
+    msg, err, isNew, canEdit, title, form, info, states, counties, errors, formError, dialog, tab,
     isLoading, isSaving, save, remove, cancel
 } = useProviderDetail();
 
 const sections = [
-    { key: 'physicalAddress', title: 'Physical address' },
-    { key: 'remitAddress', title: 'Remit address' }
+    { key: 'physicalAddress', title: 'Physical Address' },
+    { key: 'remitAddress', title: 'Remit Address' }
 ];
 const addressFields = [
     { f: 'addressLine1', label: 'Address line 1', col: 'col-12' },
@@ -17,11 +17,11 @@ const addressFields = [
 ];
 const contactFields = [
     { f: 'title', label: 'Title', col: 'col-md-4' },
-    { f: 'firstName', label: 'First name', col: 'col-md-4' },
-    { f: 'lastName', label: 'Last name', col: 'col-md-4' },
+    { f: 'firstName', label: 'First Name', col: 'col-md-4' },
+    { f: 'lastName', label: 'Last Name', col: 'col-md-4' },
     { f: 'emailAddress', label: 'Email', col: 'col-md-6', type: 'email' },
     { f: 'phone', label: 'Phone', col: 'col-md-3', type: 'tel' },
-    { f: 'wirelessPhone', label: 'Wireless phone', col: 'col-md-3', type: 'tel' }
+    { f: 'wirelessPhone', label: 'Mobile', col: 'col-md-3', type: 'tel' }
 ];
 </script>
 
@@ -34,24 +34,34 @@ const contactFields = [
 
             <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
 
+            <ul class="nav nav-tabs mb-3" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button id="tab-demographics" type="button" class="nav-link" :class="{ active: tab === 'demographics' }" role="tab"
+                            :aria-selected="tab === 'demographics'" aria-controls="panel-demographics" @click="tab = 'demographics'">Demographics</button>
+                </li>
+                <li v-for="s in sections" :key="s.key" class="nav-item" role="presentation">
+                    <button :id="`tab-${s.key}`" type="button" class="nav-link" :class="{ active: tab === s.key }" role="tab"
+                            :aria-selected="tab === s.key" :aria-controls="`panel-${s.key}`" @click="tab = s.key">{{ s.title }}</button>
+                </li>
+            </ul>
+
             <!-- A read-only viewer (providers.view only) gets the same form with every control disabled. -->
             <fieldset :disabled="!canEdit || isLoading" class="border-0 p-0 m-0">
-                <h2 class="h6">Provider demographics</h2>
-                <div class="row">
+                <div v-show="tab === 'demographics'" id="panel-demographics" role="tabpanel" aria-labelledby="tab-demographics" class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label" for="name">Provider name <span class="f_req" aria-hidden="true">*</span></label>
+                        <label class="form-label" for="name">Provider Name <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="name" v-model="form.name" type="text" maxlength="150" class="form-control form-control-sm"
                                :aria-invalid="err('name') > 0" aria-describedby="name-err" />
                         <div id="name-err" class="form-text has-error" role="alert">{{ msg('name') }}</div>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label" for="abbreviation">Abbreviation <span class="f_req" aria-hidden="true">*</span></label>
+                        <label class="form-label" for="abbreviation">Provider Abbreviation <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="abbreviation" v-model="form.abbreviation" type="text" maxlength="50" class="form-control form-control-sm"
                                :aria-invalid="err('abbreviation') > 0" aria-describedby="abbreviation-err" />
                         <div id="abbreviation-err" class="form-text has-error" role="alert">{{ msg('abbreviation') }}</div>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label" for="edisonNumber">Edison number <span class="f_req" aria-hidden="true">*</span></label>
+                        <label class="form-label" for="edisonNumber">Edison Number <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="edisonNumber" v-model="form.edisonNumber" type="text" maxlength="10" inputmode="numeric"
                                class="form-control form-control-sm" :aria-invalid="err('edisonNumber') > 0"
                                aria-describedby="edisonNumber-help edisonNumber-err" />
@@ -67,10 +77,10 @@ const contactFields = [
                     </div>
                 </div>
 
-                <section v-for="s in sections" :key="s.key" class="mb-2" :aria-labelledby="`${s.key}-heading`">
-                    <h2 :id="`${s.key}-heading`" class="h6 mt-2">{{ s.title }}</h2>
+                <section v-for="s in sections" :key="s.key" v-show="tab === s.key" :id="`panel-${s.key}`" role="tabpanel" :aria-labelledby="`tab-${s.key}`" class="mb-2">
                     <div class="row">
                         <div class="col-lg-6">
+                            <h3 class="h6">Address</h3>
                             <div class="row">
                                 <div v-for="a in addressFields" :key="a.f" class="mb-3" :class="a.col">
                                     <label class="form-label" :for="`${s.key}-${a.f}`">{{ a.label }}</label>
@@ -93,13 +103,13 @@ const contactFields = [
                                     </select>
                                 </div>
                                 <div class="col-8 col-md-6 mb-3">
-                                    <label class="form-label" :for="`${s.key}-zipcode`">ZIP code</label>
+                                    <label class="form-label" :for="`${s.key}-zipcode`">ZIP</label>
                                     <input :id="`${s.key}-zipcode`" v-model="form[s.key].zipcode" type="text" maxlength="5" class="form-control form-control-sm"
                                            :aria-invalid="err(`${s.key}.zipcode`) > 0" :aria-describedby="`${s.key}-zipcode-err`" />
                                     <div :id="`${s.key}-zipcode-err`" class="form-text has-error" role="alert">{{ msg(`${s.key}.zipcode`) }}</div>
                                 </div>
                                 <div class="col-4 col-md-6 mb-3">
-                                    <label class="form-label" :for="`${s.key}-zipExtension`">Ext.</label>
+                                    <label class="form-label" :for="`${s.key}-zipExtension`">ZIP+4</label>
                                     <input :id="`${s.key}-zipExtension`" v-model="form[s.key].zipExtension" type="text" maxlength="4" class="form-control form-control-sm"
                                            :aria-invalid="err(`${s.key}.zipExtension`) > 0" :aria-describedby="`${s.key}-zipExtension-err`" />
                                     <div :id="`${s.key}-zipExtension-err`" class="form-text has-error" role="alert">{{ msg(`${s.key}.zipExtension`) }}</div>
@@ -107,6 +117,7 @@ const contactFields = [
                             </div>
                         </div>
                         <div class="col-lg-6">
+                            <h3 class="h6">Contact</h3>
                             <div class="row">
                                 <div v-for="c in contactFields" :key="c.f" class="mb-3" :class="c.col">
                                     <label class="form-label" :for="`${s.key}-contact-${c.f}`">{{ c.label }}</label>

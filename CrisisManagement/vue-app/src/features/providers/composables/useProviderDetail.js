@@ -41,6 +41,7 @@ export function useProviderDetail() {
     const errors = ref({});          // { 'physicalAddress.city': [messages] } from a 400 validation response
     const formError = ref('');       // page-level message: a load failure
     const dialog = ref('');          // '' or 'delete'
+    const tab = ref('demographics'); // 'demographics', 'physicalAddress' or 'remitAddress'
     const isLoading = ref(true);
     const isSaving = ref(false);
 
@@ -59,21 +60,23 @@ export function useProviderDetail() {
     // Field problems (400) show next to their inputs; anything else (403, 409 conflict, ...) is a toast.
     function fail(e) {
         const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
-        if (fieldErrors) errors.value = fieldErrors;
-        else logApiError(e);
+        if (fieldErrors) {
+            errors.value = fieldErrors;
+            // Show the first tab that has a problem.
+            const first = Object.keys(fieldErrors).find((k) => k.startsWith('physicalAddress') || k.startsWith('remitAddress'));
+            const demographics = Object.keys(fieldErrors).some((k) => !k.startsWith('physicalAddress') && !k.startsWith('remitAddress'));
+            tab.value = demographics ? 'demographics' : first.split('.')[0];
+        } else logApiError(e);
     }
 
     async function save() {
         errors.value = {};
         isSaving.value = true;
         try {
-            const detail = isNew ? await providersApi.create(form) : await providersApi.update(providerId.value, form);
+            if (isNew) await providersApi.create(form);
+            else await providersApi.update(providerId.value, form);
             logSuccess('Provider saved.');
-            if (isNew) {
-                router.replace(`/admin/providers/${detail.id}`);
-                return;
-            }
-            fill(detail);
+            router.push('/admin/providers');
         } catch (e) {
             fail(e);
         } finally {
@@ -112,5 +115,5 @@ export function useProviderDetail() {
     const msg = fieldMessages(errors);
     const err = (f) => errors.value[f]?.length ?? 0;
 
-    return { msg, err, isNew, canEdit, title, form, info, states, counties, errors, formError, dialog, isLoading, isSaving, save, remove, cancel };
+    return { msg, err, isNew, canEdit, title, form, info, states, counties, errors, formError, dialog, tab, isLoading, isSaving, save, remove, cancel };
 }

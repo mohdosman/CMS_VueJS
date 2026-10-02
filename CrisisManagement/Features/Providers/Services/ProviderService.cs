@@ -141,6 +141,9 @@ public sealed class ProviderService(IUnitOfWork uow, IHttpContextAccessor http)
         Max(e, $"{key}.city", $"{section} city", a.City, ProviderFieldLimits.MaxAddressLineLength);
         Max(e, $"{key}.zipcode", $"{section} ZIP code", a.Zipcode, ProviderFieldLimits.MaxZipcodeLength);
         Max(e, $"{key}.zipExtension", $"{section} ZIP extension", a.ZipExtension, ProviderFieldLimits.MaxZipExtensionLength);
+        // Digits only, as on the Blazor form (a too-long value already has the length message above).
+        if (Has(a.Zipcode) && !e.ContainsKey($"{key}.zipcode") && !(a.Zipcode!.Trim().Length == 5 && a.Zipcode.Trim().All(char.IsAsciiDigit))) Add(e, $"{key}.zipcode", "ZIP must be a 5 digit number.");
+        if (Has(a.ZipExtension) && !e.ContainsKey($"{key}.zipExtension") && !(a.ZipExtension!.Trim().Length == 4 && a.ZipExtension.Trim().All(char.IsAsciiDigit))) Add(e, $"{key}.zipExtension", "ZIP+4 must be a 4 digit number.");
 
         var c = a.Contact ?? new ProviderContactModel();
         Max(e, $"{key}.contact.title", $"{section} contact title", c.Title, ProviderFieldLimits.MaxContactNameLength);

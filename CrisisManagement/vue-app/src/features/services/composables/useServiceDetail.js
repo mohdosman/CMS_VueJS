@@ -19,7 +19,7 @@ export function useServiceDetail() {
     const route = useRoute();
     const router = useRouter();
     const { can } = useCapabilities();
-    const { logApiError } = useLogger();
+    const { logSuccess, logApiError } = useLogger();
 
     const key = route.params.key ?? '0';
     const isNew = key === '0';
@@ -107,12 +107,14 @@ export function useServiceDetail() {
             const payload = Object.fromEntries(Object.entries(form).map(([k, v]) => [k, v === '' ? null : v]));
             if (isNew) {
                 await servicesApi.create(payload);
+                logSuccess('Service created.');
                 Object.assign(form, blankForm(form.providerId));
                 lastLookup = '';
                 sessionPaging.currentPage = 1;
                 await loadSessionServices();
             } else {
                 await servicesApi.update(form.id, payload);
+                logSuccess('Service updated.');
                 router.push('/services');
             }
         } catch (e) {
@@ -125,6 +127,7 @@ export function useServiceDetail() {
     async function remove() {
         try {
             await servicesApi.remove(form.id);
+            logSuccess('Service deleted.');
             router.push('/services');
         } catch (e) {
             dialog.value = '';
