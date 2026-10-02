@@ -1,10 +1,6 @@
 <script setup>
-import { ref, reactive, computed } from 'vue';
-import { announce } from '../../../services/liveAnnouncer.js';
+import { usePermissionPicker } from '../composables/usePermissionPicker.js';
 
-// The permission catalog as collapsible group cards with a switch per permission (SafetyNet role screen).
-// "View: x" / "Manage: x" permissions are shown as one row with two switches, because manage implies view,
-// so a row holds at most one of them.
 const props = defineProps({
     groups: { type: Array, required: true },      // [{ groupName, items: [{ name, value, description }] }]
     modelValue: { type: Array, required: true },  // selected permission values
@@ -12,70 +8,9 @@ const props = defineProps({
 });
 const emit = defineEmits(['update:modelValue']);
 
-const search = ref('');
-const selectedOnly = ref(false);
-const openGroups = reactive({});
-
-const selected = computed(() => new Set(props.modelValue));
-const has = (v) => selected.value.has(v);
-
-function set(values, on) {
-    const next = new Set(props.modelValue);
-    for (const v of values) (on ? next.add(v) : next.delete(v));
-    emit('update:modelValue', [...next]);
-}
-
-// Turning one of a View/Manage pair on turns the other off.
-function setPair(item, other, on) {
-    const next = new Set(props.modelValue);
-    if (on) { next.add(item.value); if (other) next.delete(other.value); } else next.delete(item.value);
-    emit('update:modelValue', [...next]);
-}
-
-function matches(i) {
-    const t = search.value.trim().toLowerCase();
-    return !t || [i.name, i.value, i.description].some((s) => (s ?? '').toLowerCase().includes(t));
-}
-const visibleItems = (g) => g.items.filter((i) => (!selectedOnly.value || has(i.value)) && matches(i));
-
-function rows(items) {
-    const byLabel = new Map();
-    const unpaired = [];
-    for (const item of items) {
-        const m = /^(view|manage):\s*(.+)$/i.exec(item.name);
-        if (!m) { unpaired.push(item); continue; }
-        const label = m[2].trim();
-        if (!byLabel.has(label)) byLabel.set(label, { label, view: null, manage: null });
-        byLabel.get(label)[m[1].toLowerCase()] = item;
-    }
-    return { pairs: [...byLabel.values()], unpaired };
-}
-
-const visibleGroups = computed(() =>
-    props.groups
-        .map((g) => ({ g, items: visibleItems(g) }))
-        .filter((x) => x.items.length)
-        .map((x, i) => ({ ...x, ...rows(x.items), key: i, selected: x.g.items.filter((it) => has(it.value)).length })));
-
-// A group is open when toggled open, or while searching / filtering (so matches are visible).
-const filtering = computed(() => !!search.value.trim() || selectedOnly.value);
-const isOpen = (name) => filtering.value || !!openGroups[name];
-const toggleGroup = (name) => { if (!filtering.value) openGroups[name] = !openGroups[name]; };
-const expandAll = () => { props.groups.forEach((g) => { openGroups[g.groupName] = true; }); announce('All groups expanded'); };
-const collapseAll = () => { props.groups.forEach((g) => { openGroups[g.groupName] = false; }); announce('All groups collapsed'); };
-
-// Select all prefers View on a pair, keeping the pair mutually exclusive.
-function selectGroup(vg) {
-    const next = new Set(props.modelValue);
-    vg.unpaired.forEach((i) => next.add(i.value));
-    vg.pairs.forEach((p) => {
-        const keep = p.view ?? p.manage;
-        next.add(keep.value);
-        if (p.view && p.manage) next.delete(p.manage.value);
-    });
-    emit('update:modelValue', [...next]);
-}
-const clearGroup = (vg) => set(vg.items.map((i) => i.value), false);
+const {
+    search, selectedOnly, visibleGroups, has, set, setPair, isOpen, toggleGroup, expandAll, collapseAll, selectGroup, clearGroup
+} = usePermissionPicker(props, emit);
 </script>
 
 <template>
