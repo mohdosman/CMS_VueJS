@@ -1,135 +1,16 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
-import { menusApi } from '../api/menusApi.js';
-import { useLogger } from '../../../common/composables/useLogger.js';
-import { announce } from '../../../services/liveAnnouncer.js';
+import { useMenuPermissions } from '../composables/useMenuPermissions.js';
 
-// The Permissions tab of a saved menu item: its permissions grouped by permission group, plus the dialogs to add,
-// edit and delete them and to create or rename permission groups. This lives inside the page form, so the dialogs
-// use plain buttons and inputs (no nested <form>); Enter in a field submits the dialog.
 const props = defineProps({
     menuId: { type: Number, required: true },
     canEdit: { type: Boolean, default: false }
 });
-const { logSuccess, logApiError } = useLogger();
 
-const rows = ref([]);
-const groups = ref([]);
-const filter = ref('');
-const isLoading = ref(true);
-
-const dialog = ref('');          // '', 'permission', 'group', 'groups' or 'delete'
-const errors = ref({});          // field errors of the open dialog
-const editing = ref(null);       // the permission being edited, or null when adding
-const perm = reactive({ groupId: null, name: '', value: '', description: '' });
-const group = reactive({ id: 0, name: '', description: '' });   // 'group' dialog (id 0 = new) and the row being renamed in 'groups'
-const renaming = ref(0);         // group id being edited inline in the 'groups' dialog
-const confirming = ref(null);
-const isSaving = ref(false);
-
-const err = (f) => errors.value[f]?.join(' ');
-const shown = computed(() => {
-    const t = filter.value.trim().toLowerCase();
-    const list = t ? rows.value.filter((r) => r.name.toLowerCase().includes(t) || r.value.toLowerCase().includes(t)) : rows.value;
-    const byGroup = new Map();
-    for (const r of list) {
-        if (!byGroup.has(r.groupName)) byGroup.set(r.groupName, []);
-        byGroup.get(r.groupName).push(r);
-    }
-    return [...byGroup].map(([name, items]) => ({ name, items }));
-});
-
-async function load() {
-    try {
-        [rows.value, groups.value] = await Promise.all([menusApi.permissions(props.menuId), menusApi.groups()]);
-    } catch (e) {
-        logApiError(e);
-    } finally {
-        isLoading.value = false;
-    }
-}
-
-function close() {
-    dialog.value = '';
-    errors.value = {};
-    editing.value = null;
-    renaming.value = 0;
-    confirming.value = null;
-}
-
-// Runs a save; a 400 keeps the dialog open with the messages next to the fields, anything else is a toast.
-async function attempt(action, success) {
-    errors.value = {};
-    isSaving.value = true;
-    try {
-        await action();
-        logSuccess(success);
-        return true;
-    } catch (e) {
-        const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
-        if (fieldErrors) errors.value = fieldErrors;
-        else logApiError(e);
-        return false;
-    } finally {
-        isSaving.value = false;
-    }
-}
-
-// ---- permission add / edit / delete
-function openPermission(p = null) {
-    editing.value = p;
-    Object.assign(perm, p
-        ? { groupId: p.groupId, name: p.name, value: p.value, description: p.description }
-        : { groupId: groups.value[0]?.id ?? null, name: '', value: '', description: '' });
-    errors.value = {};
-    dialog.value = 'permission';
-}
-
-async function savePermission() {
-    const body = { menuId: props.menuId, ...perm };
-    if (await attempt(() => (editing.value ? menusApi.updatePermission(editing.value.id, body) : menusApi.createPermission(body)),
-        editing.value ? 'Permission updated.' : 'Permission created.')) {
-        close();
-        await load();
-    }
-}
-
-async function removePermission() {
-    const p = confirming.value;
-    if (await attempt(() => menusApi.removePermission(p.id), 'Permission deleted.')) {
-        close();
-        await load();
-    }
-}
-
-// ---- groups
-function openNewGroup() {
-    Object.assign(group, { id: 0, name: '', description: '' });
-    errors.value = {};
-    dialog.value = 'group';
-}
-
-async function saveNewGroup() {
-    if (await attempt(() => menusApi.createGroup({ name: group.name, description: group.description }), 'Group created.')) {
-        close();
-        groups.value = await menusApi.groups();
-    }
-}
-
-function startRename(g) {
-    Object.assign(group, { id: g.id, name: g.name, description: g.description });
-    renaming.value = g.id;
-    errors.value = {};
-}
-
-async function saveRename() {
-    if (await attempt(() => menusApi.updateGroup(group.id, { name: group.name, description: group.description }), 'Group updated.')) {
-        renaming.value = 0;
-        await load();
-    }
-}
-
-onMounted(load);
+const {
+    groups, filter, shown, dialog, editing, perm, group, renaming, confirming, isLoading, isSaving, errors, err,
+    openPermission, savePermission, removePermission, openNewGroup, saveNewGroup, startRename, saveRename, close,
+    announce
+} = useMenuPermissions(props);
 </script>
 
 <template>

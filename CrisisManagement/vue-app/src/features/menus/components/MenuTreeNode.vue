@@ -1,8 +1,6 @@
 <script setup>
-import { ref } from 'vue';
-import { iconClass } from '../icons.js';
+import { useMenuTreeNode } from '../composables/useMenuTreeNode.js';
 
-// One menu item with its sub-menus (recursive). Roots and the first level start open.
 const props = defineProps({
     node: { type: Object, required: true },
     depth: { type: Number, default: 0 },
@@ -11,8 +9,7 @@ const props = defineProps({
 });
 const emit = defineEmits(['edit', 'add-child', 'remove']);
 
-const open = ref(props.depth < 2);
-const isOpen = () => props.forceOpen || open.value;
+const { open, isOpen, iconClass } = useMenuTreeNode(props);
 </script>
 
 <template>
