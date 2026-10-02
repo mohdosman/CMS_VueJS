@@ -1,13 +1,10 @@
 <script setup>
 import { useReportDetail } from '../composables/useReportDetail.js';
 
-const { isNew, title, form, fileName, available, formError, dialog, isLoading, isSaving, msg, save, remove, cancel } = useReportDetail();
-
-// Fixed by the report server: PDF, CSV, Excel and text.
-const exportOptions = [
-    { id: 'PDF', label: 'PDF' }, { id: 'CSV', label: 'CSV' }, { id: 'MSExcel', label: 'Excel' }, { id: 'TXT', label: 'TXT' }
-];
-const nameOptions = () => available.value.map((n) => ({ id: n, label: n }));
+const {
+    isNew, title, form, fileName, nameOptions, exportOptions, formError, dialog, isLoading, isSaving, msg,
+    save, remove, cancel
+} = useReportDetail();
 </script>
 
 <template>

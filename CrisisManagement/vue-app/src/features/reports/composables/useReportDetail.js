@@ -28,6 +28,12 @@ export function useReportDetail() {
     const isSaving = ref(false);
 
     const msg = fieldMessages(errors);
+
+    // Fixed by the report server: PDF, CSV, Excel and text.
+    const exportOptions = [
+        { id: 'PDF', label: 'PDF' }, { id: 'CSV', label: 'CSV' }, { id: 'MSExcel', label: 'Excel' }, { id: 'TXT', label: 'TXT' }
+    ];
+    const nameOptions = computed(() => available.value.map((name) => ({ id: name, label: name })));
     const fileName = computed(() => (isNew ? (form.reportName ? `${form.reportName}.rpt` : '') : form.fileName));
 
     // ================================================================
@@ -112,7 +118,7 @@ export function useReportDetail() {
 
     return {
         // Form
-        form, fileName, available, dialog, title, isNew,
+        form, fileName, available, nameOptions, exportOptions, dialog, title, isNew,
 
         // Busy and validation state
         isLoading, isSaving, errors, formError, msg,
