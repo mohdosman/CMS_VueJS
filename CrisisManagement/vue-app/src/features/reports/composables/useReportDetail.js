@@ -1,16 +1,23 @@
 import { ref, reactive, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { reportsApi } from '../api/reportsApi.js';
+import { useCapabilities } from '../../../common/composables/useCapabilities.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
-import { fieldMessages } from '../../../utils/formErrors.js';
+import { createShowError, createTouch } from '../../../utils/validationUtils.js';
 
 // One form for a new report (/reports/0) and for an existing one (/reports/:key, the report id).
 export function useReportDetail() {
     const route = useRoute();
     const router = useRouter();
-    const { logSuccess, logApiError } = useLogger();
+    const { logSuccess, logError, logApiError } = useLogger();
+
+    // ================================================================
+    // User permissions
+    // ================================================================
+    const { can } = useCapabilities();
+    const canEdit = can('reports.edit');
 
     // ================================================================
     // State
@@ -20,12 +27,10 @@ export function useReportDetail() {
 
     const form = reactive({ id: null, rowVersion: null, reportName: '', fileName: '', description: '', exportOption: 'PDF' });
     const available = ref([]);       // report files not defined yet (new report)
-    const errors = ref({});          // { field: [messages] } from a 400 response
+    const serverErrors = ref({});    // { field: [messages] } from a 400 response
     const dialog = ref('');          // '' or 'delete'
     const isLoading = ref(true);
     const isSaving = ref(false);
-
-    const msg = fieldMessages(errors);
 
     // Fixed by the report server: PDF, CSV, Excel and text.
     const exportOptions = [
@@ -33,6 +38,36 @@ export function useReportDetail() {
     ];
     const nameOptions = computed(() => available.value.map((name) => ({ id: name, label: name })));
     const fileName = computed(() => (isNew ? (form.reportName ? `${form.reportName}.rpt` : '') : form.fileName));
+
+    // ================================================================
+    // Validation
+    // ================================================================
+    const submitted = ref(false);
+    // Which fields the user has visited. A field only shows its message once it was left, or after a submit.
+    const touched = reactive({});
+    const touch = createTouch(touched);
+
+    // The error message for each field; a field that is fine has no entry. The server also checks the name against the report files.
+    const clientErrors = computed(() => {
+        const e = {};
+        if (isNew && !form.reportName.trim()) {
+            e.reportName = 'Report name is required.';
+        }
+        if (!form.exportOption) {
+            e.exportOption = 'Export option is required';
+        }
+        if (!form.description.trim()) {
+            e.description = 'Description is required.';
+        }
+        return e;
+    });
+
+    const isValid = computed(() => Object.keys(clientErrors.value).length === 0);
+    // A field shows its message only after it was touched, or after a submit was attempted.
+    const showError = createShowError(touched, submitted, clientErrors);
+
+    // What the screen shows for a field: the server's message when it sent one, else the form's own once it is due.
+    const msg = (field) => serverErrors.value[field]?.join(' ') || (showError(field) ? clientErrors.value[field] : '');
 
     // ================================================================
     // Loading
@@ -68,14 +103,22 @@ export function useReportDetail() {
     function fail(e) {
         const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
         if (fieldErrors) {
-            errors.value = fieldErrors;
+            serverErrors.value = fieldErrors;
+            logError('Please correct the validation errors first.');
         } else {
             logApiError(e);
         }
     }
 
+    // Checks permission, then saves.
     async function save() {
-        errors.value = {};
+        if (isSaving.value) {
+            return;
+        }
+        if (!canEdit) {
+            logError('You do not have permission to manage reports.');
+            return;
+        }
         isSaving.value = true;
         try {
             if (isNew) {
@@ -91,6 +134,17 @@ export function useReportDetail() {
         } finally {
             isSaving.value = false;
         }
+    }
+
+    // The form's submit: validates first, and only saves when everything is valid.
+    function onSubmit() {
+        submitted.value = true;
+        serverErrors.value = {};
+        if (!isValid.value) {
+            logError('Please correct the validation errors first.');
+            return;
+        }
+        save();
     }
 
     async function remove() {
@@ -118,9 +172,12 @@ export function useReportDetail() {
         form, fileName, available, nameOptions, exportOptions, dialog, title, isNew,
 
         // Busy and validation state
-        isLoading, isSaving, errors, msg,
+        isLoading, isSaving, submitted, touched, touch, isValid, showError, msg,
+
+        // User and permissions
+        canEdit,
 
         // Actions
-        save, remove, cancel
+        save, onSubmit, remove, cancel
     };
 }

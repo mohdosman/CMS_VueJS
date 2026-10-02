@@ -2,14 +2,14 @@
 import { useReportDetail } from '../composables/useReportDetail.js';
 
 const {
-    isNew, title, form, fileName, available, nameOptions, exportOptions, dialog, isLoading, isSaving, msg,
-    save, remove, cancel
+    isNew, title, form, fileName, available, nameOptions, exportOptions, dialog, isLoading, isSaving, msg, touch,
+    onSubmit, remove, cancel
 } = useReportDetail();
 </script>
 
 <template>
     <DetailPanel :title="title" icon="fa fa-bar-chart" form-name="reportEditForm" main-labelledby="main-title"
- :can-save="!isSaving && !isLoading" @save="save" @cancel="cancel">
+ :can-save="!isSaving && !isLoading" @save="onSubmit" @cancel="cancel">
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
 
@@ -24,7 +24,7 @@ const {
                         <div v-else class="col-md-6 mb-3" :class="{ 'has-error': !!(msg('reportName')) }">
                             <label class="form-label" for="reportName">Report Name <span class="f_req" aria-hidden="true">*</span></label>
                             <select id="reportName" v-model="form.reportName" class="form-select form-select-sm" aria-required="true"
-                                    :aria-invalid="!!msg('reportName')" aria-describedby="reportName-err">
+                                    :aria-invalid="!!msg('reportName')" aria-describedby="reportName-err" @blur="touch('reportName')">
                                 <option value="">- - SELECT - -</option>
                                 <option v-for="n in available" :key="n" :value="n">{{ n }}</option>
                             </select>
@@ -34,11 +34,11 @@ const {
                     <FieldInput v-else :model-value="form.reportName" label="Report Name" disabled col="col-md-6" />
                     <FieldInput :model-value="fileName" label="File Name" disabled :error="msg('fileName')" col="col-md-6" />
                     <FieldSelect v-model="form.exportOption" label="Export Option" required :options="exportOptions" placeholder="- - SELECT - -"
-                                 :error="msg('exportOption')" col="col-md-6" />
+                                 :error="msg('exportOption')" col="col-md-6" @touch="touch('exportOption')" />
                     <div class="col-md-12 mb-3" :class="{ 'has-error': !!(msg('description')) }">
                         <label class="form-label" for="description">Description <span class="f_req" aria-hidden="true">*</span></label>
                         <textarea id="description" v-model="form.description" class="form-control form-control-sm" rows="3" maxlength="255" aria-required="true"
-                                  :aria-invalid="!!msg('description')" aria-describedby="description-err"></textarea>
+                                  :aria-invalid="!!msg('description')" aria-describedby="description-err" @blur="touch('description')"></textarea>
                         <div id="description-err" class="form-text has-error" role="alert">{{ msg('description') }}</div>
                     </div>
                 </div>
