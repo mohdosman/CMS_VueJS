@@ -26,6 +26,7 @@ export function useRoleDetail() {
     const serverErrors = ref({});    // { field: [messages] } from a 400 validation response
     const dialog = ref('');          // '' or 'delete'
     const isLoading = ref(true);
+    const loadFailed = ref(false);    // the role (or the permission list) did not load, so there is nothing safe to edit
     const isSaving = ref(false);
 
     const isAdminRole = computed(() => saved.value.name.toLowerCase() === 'administrator');
@@ -86,12 +87,14 @@ export function useRoleDetail() {
     }
 
     async function getPageData() {
+        loadFailed.value = false;
         try {
             groups.value = await rolesApi.permissions();
             if (!isNew) {
                 fill(await rolesApi.get(route.params.key));
             }
         } catch (e) {
+            loadFailed.value = true;
             logApiError(e, { fallback: 'Role not found.' });
         }
     }
@@ -185,7 +188,7 @@ export function useRoleDetail() {
         form, groups, dialog, title, isNew,
 
         // Busy and validation state
-        isLoading, isSaving, submitted, touched, touch, isValid, showError, msg, isAdminRole, hasChanges,
+        isLoading, loadFailed, isSaving, submitted, touched, touch, isValid, showError, msg, isAdminRole, hasChanges,
 
         // User and permissions
         canEdit,
