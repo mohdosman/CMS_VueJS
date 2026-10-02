@@ -1,83 +1,128 @@
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { usersApi } from '../api/usersApi.js';
-import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
+import { useSearchState } from '../../../common/composables/useSearchState.js';
+import { useActivate } from '../../../common/composables/useActivate.js';
+import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
-// YesNoFilter on the server: 0 = All, 1 = Yes, 2 = No.
-const DEFAULT_CRITERIA = () => ({
-    userName: '', firstName: '', lastName: '', email: '',
-    roleIds: [], providerIds: [],
-    isEnabled: 1, isADAccount: 0, isLockedOut: 0,
-    orderBy: 'userName', reverse: false
-});
-
-// Module scope on purpose: filters and results survive search -> detail -> back
-// within the SPA. A page reload starts fresh.
-const criteria = reactive(DEFAULT_CRITERIA());
-const paging = reactive({ currentPage: 1, maxPagesToShow: 10, pageSize: 20 });
-const users = ref([]);
-const totalRecords = ref(0);
-const roles = ref([]);
-const providers = ref([]);
-const hasSearched = ref(false);
-const isSearching = ref(false);
-
+// User search: the list of users, filtered by name, roles, providers and account flags.
 export function useUserSearch() {
     const router = useRouter();
-    const { can } = useCapabilities();
     const { logApiError } = useLogger();
 
-    async function getUsers() {
-        isSearching.value = true;
-        try {
-            const result = await usersApi.search(paging.currentPage, paging.pageSize, criteria);
-            users.value = result.items;
-            totalRecords.value = result.totalCount;
-            hasSearched.value = true;
-            announce(`${result.totalCount} users found`);
-        } catch (e) {
-            logApiError(e);
-        } finally {
-            isSearching.value = false;
-        }
-    }
+    // ================================================================
+    // State
+    // ================================================================
+    const users = ref([]);
+    const totalRecords = ref(0);
+    const roles = ref([]);
+    const providers = ref([]);
+    const paging = reactive({ currentPage: 1, maxPagesToShow: 10, pageSize: 20 });
 
+    // YesNoFilter on the server: 0 = All, 1 = Yes, 2 = No.
+    const DEFAULT_CRITERIA = {
+        userName: '', firstName: '', lastName: '', email: '',
+        roleIds: [], providerIds: [],
+        isEnabled: 1, isADAccount: 0, isLockedOut: 0,
+        orderBy: 'userName', reverse: false
+    };
+    const criteria = reactive(structuredClone(DEFAULT_CRITERIA));
+
+    const { load, save, clear: clearState } = useSearchState('userSearchJSON', criteria, DEFAULT_CRITERIA, paging);
+
+    const isSearching = ref(false);
+
+    // Each async load bumps its counter, so a slow earlier response can't overwrite a newer one.
+    let requestSequence = 0;
+
+    // ================================================================
+    // User permissions
+    // ================================================================
+    const { can } = useCapabilities();
+    const canAdd = can('users.edit');
+
+    // ================================================================
+    // Sorting, paging and search
+    // ================================================================
     const setOrder = createSetOrder(criteria, paging, getUsers);
     const sortIcon = (col) => getSortIcon(col, criteria);
     const { onPageChanged, onPageSizeChanged } = createPagingHandlers(paging, getUsers);
 
-    function search() {
-        paging.currentPage = 1;
-        return getUsers();
-    }
-
-    function clear() {
-        Object.assign(criteria, DEFAULT_CRITERIA());
-        return search();
-    }
-
-    const gotoUser = (u) => router.push(`/admin/users/${u.userKey}`);
-    const canAdd = can('users.edit');
-    const add = () => router.push('/admin/users/0');
-
-    onMounted(async () => {
-        // Lookups are scoped server-side to what this user may see.
-        if (!roles.value.length) {
-            try {
-                [roles.value, providers.value] = await Promise.all([usersApi.roles(), usersApi.providers()]);
-            } catch (e) {
+    async function getUsers() {
+        const requestId = ++requestSequence;
+        isSearching.value = true;
+        try {
+            const result = await usersApi.search(paging.currentPage, paging.pageSize, criteria);
+            if (requestId !== requestSequence) {
+                return;
+            }
+            users.value = result.items;
+            totalRecords.value = result.totalCount;
+            announce(`${result.totalCount} users found`);
+        } catch (e) {
+            if (requestId === requestSequence) {
                 logApiError(e);
             }
+        } finally {
+            if (requestId === requestSequence) {
+                isSearching.value = false;
+            }
         }
-        // Coming back from a detail screen: refresh in place so edits and deletes show, keeping the page.
-        await (hasSearched.value ? getUsers() : search());
+    }
+
+    async function search() {
+        paging.currentPage = 1;
+        save();
+        await getUsers();
+    }
+
+    // Lookups are scoped server-side to what this user may see.
+    async function getLookups() {
+        try {
+            [roles.value, providers.value] = await Promise.all([usersApi.roles(), usersApi.providers()]);
+        } catch (e) {
+            logApiError(e);
+        }
+    }
+
+    // Runs each time the screen is shown: restore the saved criteria and list again.
+    useActivate(async () => {
+        load();
+        await getLookups();
+        await getUsers();
     });
 
+    // ================================================================
+    // Navigation and clear
+    // ================================================================
+    function gotoUser(user) {
+        router.push(`/admin/users/${user.userKey}`);
+    }
+
+    function add() {
+        router.push('/admin/users/0');
+    }
+
+    async function clear() {
+        clearState();
+        await getUsers();
+    }
+
     return {
-        criteria, paging, users, totalRecords, roles, providers, isSearching,
-        search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, gotoUser, canAdd, add
+        // Results
+        users, totalRecords, paging, criteria, roles, providers,
+
+        // Busy state
+        isSearching,
+
+        // User and permissions
+        canAdd,
+
+        // Actions
+        search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged,
+        gotoUser, add
     };
 }

@@ -1,26 +1,29 @@
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { usersApi } from '../api/usersApi.js';
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
+import { useActivate } from '../../../common/composables/useActivate.js';
+import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
 import { apiErrorMessage } from '../../../utils/apiError.js';
 
-const blankForm = () => ({
-    rowVersion: null, userName: '', firstName: '', lastName: '', email: '', phoneNumber: '', notes: '',
-    password: '', confirmPassword: '',
-    isEnabled: true, isADAccount: false, twoFactorEnabled: false,
-    roleIds: [], providerIds: []
-});
-
-// One form for both create (/admin/users/0) and edit (/admin/users/:key).
+// One form for a new user (/admin/users/0) and an existing one (/admin/users/:key).
 export function useUserDetail() {
     const route = useRoute();
     const router = useRouter();
-    const { can } = useCapabilities();
     const { logSuccess, logApiError } = useLogger();
 
+    // ================================================================
+    // State
+    // ================================================================
+    const blankForm = () => ({
+        rowVersion: null, userName: '', firstName: '', lastName: '', email: '', phoneNumber: '', notes: '',
+        password: '', confirmPassword: '',
+        isEnabled: true, isADAccount: false, twoFactorEnabled: false,
+        roleIds: [], providerIds: []
+    });
+
     const isNew = route.params.key === '0';
-    const canEdit = can('users.edit');
 
     const form = reactive(blankForm());
     const info = ref(null);          // read-only facts about an existing user
@@ -38,6 +41,15 @@ export function useUserDetail() {
     const hasAdminRole = computed(() =>
         roles.value.some((r) => form.roleIds.includes(r.id) && r.label.toLowerCase() === 'administrator'));
 
+    // ================================================================
+    // User permissions
+    // ================================================================
+    const { can } = useCapabilities();
+    const canEdit = can('users.edit');
+
+    // ================================================================
+    // Loading
+    // ================================================================
     function fill(detail) {
         info.value = detail;
         Object.assign(form, blankForm(), {
@@ -48,6 +60,34 @@ export function useUserDetail() {
         });
     }
 
+    async function getPageData() {
+        try {
+            [roles.value, providers.value, policy.value] = await Promise.all([usersApi.roles(), usersApi.providers(), usersApi.policy()]);
+            if (!isNew) {
+                fill(await usersApi.get(route.params.key));
+                documentCount.value = (await usersApi.documents(route.params.key)).length;
+            }
+        } catch (e) {
+            // Nothing to edit: keep the reason on the page.
+            formError.value = e.response?.status === 404 ? 'User not found.' : apiErrorMessage(e);
+        }
+    }
+
+    // ================================================================
+    // Navigation
+    // ================================================================
+    function backToList() {
+        restoreSearchOnReturn();
+        router.push('/admin/users');
+    }
+
+    function cancel() {
+        backToList();
+    }
+
+    // ================================================================
+    // Save and delete
+    // ================================================================
     // Field problems (400) show next to their inputs; anything else (403, 409 conflict, ...) is a toast.
     function fail(e) {
         const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
@@ -83,7 +123,7 @@ export function useUserDetail() {
         try {
             await usersApi.remove(route.params.key);
             logSuccess('User deleted.');
-            router.push('/admin/users');
+            backToList();
         } catch (e) {
             // 403 / 409 explain themselves ("has documents", "your own account").
             dialog.value = '';
@@ -91,6 +131,9 @@ export function useUserDetail() {
         }
     }
 
+    // ================================================================
+    // Password, agreements and MFA
+    // ================================================================
     // A password reset bumps the security stamp but not the row version, so the form stays valid.
     function passwordSet() {
         dialog.value = '';
@@ -102,9 +145,12 @@ export function useUserDetail() {
         dialog.value = '';
         documentCount.value = count;
     }
+
     async function uploadClosed(uploaded) {
         dialog.value = '';
-        if (uploaded) documentCount.value = (await usersApi.documents(route.params.key)).length;
+        if (uploaded) {
+            documentCount.value = (await usersApi.documents(route.params.key)).length;
+        }
     }
 
     // Administrator lifts the two-factor requirement and forgets the user's device; reload so the form shows the result.
@@ -120,25 +166,27 @@ export function useUserDetail() {
         }
     }
 
-    const cancel = () => router.push('/admin/users');
-
-    onMounted(async () => {
-        try {
-            [roles.value, providers.value, policy.value] = await Promise.all([usersApi.roles(), usersApi.providers(), usersApi.policy()]);
-            if (!isNew) {
-                fill(await usersApi.get(route.params.key));
-                documentCount.value = (await usersApi.documents(route.params.key)).length;
-            }
-        } catch (e) {
-            // Nothing to edit: keep the reason on the page.
-            formError.value = e.response?.status === 404 ? 'User not found.' : apiErrorMessage(e);
-        } finally {
-            isLoading.value = false;
-        }
+    // ================================================================
+    // Page load
+    // ================================================================
+    useActivate(async () => {
+        isLoading.value = true;
+        formError.value = '';
+        await getPageData();
+        isLoading.value = false;
     });
 
     return {
-        isNew, canEdit, form, info, roles, providers, policy, errors, formError, dialog,
-        isLoading, isSaving, hasAdminRole, documentCount, resetMfa, save, remove, passwordSet, agreementsClosed, uploadClosed, cancel
+        // Form
+        form, info, roles, providers, policy, dialog, documentCount, isNew,
+
+        // Busy and validation state
+        isLoading, isSaving, errors, formError, hasAdminRole,
+
+        // User and permissions
+        canEdit,
+
+        // Actions
+        save, remove, cancel, passwordSet, agreementsClosed, uploadClosed, resetMfa
     };
 }

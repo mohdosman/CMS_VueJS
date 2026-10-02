@@ -52,7 +52,7 @@ export function useSearchState(storageKey, criteria, defaults, paging = null, op
     const initialPaging = paging ? { ...paging } : null;
 
     function applyDefaults() {
-        Object.assign(criteria, defaults);
+        Object.assign(criteria, structuredClone(defaults));   // a copy, so a list in the criteria is never shared with the defaults
     }
 
     function load() {
@@ -81,7 +81,7 @@ export function useSearchState(storageKey, criteria, defaults, paging = null, op
     function clear() {
         sessionStorage.removeItem(storageKey);
         if (clearModeOnClear) sessionStorage.removeItem(MODE_KEY);
-        Object.assign(criteria, defaults);
+        applyDefaults();
         if (paging) {
             Object.assign(paging, initialPaging, defaultPaging);
             paging.currentPage = 1;
