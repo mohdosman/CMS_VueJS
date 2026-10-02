@@ -28,7 +28,7 @@ public sealed class DocumentRepository(AppDbContext context) : Repository<Docume
     public async Task<PagedResult<HelpFileViewModel>> SearchPublicFilesAsync(string? fileName, string? sortBy, bool desc, int page, int size)
     {
         var q = HelpDocuments;
-        if (!string.IsNullOrWhiteSpace(fileName)) { var v = $"%{fileName.Trim()}%"; q = q.Where(d => EF.Functions.Like(d.FileName, v)); }
+        if (!string.IsNullOrWhiteSpace(fileName)) { var v = LikePattern.Contains(fileName!); q = q.Where(d => EF.Functions.Like(d.FileName, v, LikePattern.Escape)); }
 
         q = (sortBy ?? "").ToLowerInvariant() switch
         {

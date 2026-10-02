@@ -26,10 +26,10 @@ public sealed class UserRepository(AppDbContext context) : Repository<Applicatio
             q = q.Where(u => _db.ProviderUsers.Any(pu => pu.UserId == u.Id && providerIds.Contains(pu.ProviderId)));
         }
 
-        if (Has(req.UserName)) { var v = $"%{req.UserName!.Trim()}%"; q = q.Where(u => EF.Functions.Like(u.UserName!, v)); }
-        if (Has(req.FirstName)) { var v = $"%{req.FirstName!.Trim()}%"; q = q.Where(u => EF.Functions.Like(u.FirstName, v)); }
-        if (Has(req.LastName)) { var v = $"%{req.LastName!.Trim()}%"; q = q.Where(u => EF.Functions.Like(u.LastName, v)); }
-        if (Has(req.Email)) { var v = $"%{req.Email!.Trim()}%"; q = q.Where(u => EF.Functions.Like(u.Email!, v)); }
+        if (Has(req.UserName)) { var v = LikePattern.Contains(req.UserName!); q = q.Where(u => EF.Functions.Like(u.UserName!, v, LikePattern.Escape)); }
+        if (Has(req.FirstName)) { var v = LikePattern.Contains(req.FirstName!); q = q.Where(u => EF.Functions.Like(u.FirstName, v, LikePattern.Escape)); }
+        if (Has(req.LastName)) { var v = LikePattern.Contains(req.LastName!); q = q.Where(u => EF.Functions.Like(u.LastName, v, LikePattern.Escape)); }
+        if (Has(req.Email)) { var v = LikePattern.Contains(req.Email!); q = q.Where(u => EF.Functions.Like(u.Email!, v, LikePattern.Escape)); }
 
         if (ToBool(req.IsEnabled) is bool enabled) q = q.Where(u => u.IsActive == enabled);
         if (ToBool(req.IsADAccount) is bool ad) q = q.Where(u => u.IsADAccount == ad);

@@ -23,8 +23,8 @@ public sealed class ProviderRepository(AppDbContext context) : Repository<Provid
         var q = _entities.AsNoTracking();
         if (onlyIds is not null) q = q.Where(p => onlyIds.Contains(p.ProviderId));
 
-        if (Has(req.Name)) { var v = $"%{req.Name!.Trim()}%"; q = q.Where(p => EF.Functions.Like(p.Name, v)); }
-        if (Has(req.Abbreviation)) { var v = $"%{req.Abbreviation!.Trim()}%"; q = q.Where(p => EF.Functions.Like(p.Abbreviation, v)); }
+        if (Has(req.Name)) { var v = LikePattern.Contains(req.Name!); q = q.Where(p => EF.Functions.Like(p.Name, v, LikePattern.Escape)); }
+        if (Has(req.Abbreviation)) { var v = LikePattern.Contains(req.Abbreviation!); q = q.Where(p => EF.Functions.Like(p.Abbreviation, v, LikePattern.Escape)); }
         if (Has(req.EdisonNumber)) { var v = req.EdisonNumber!.Trim(); q = q.Where(p => p.EdisonNumber == v); }
         if (Has(req.Npi)) { var v = req.Npi!.Trim(); q = q.Where(p => p.Npi == v); }
 

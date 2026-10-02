@@ -1,6 +1,7 @@
 using CrisisManagement.Data.Context;
 using CrisisManagement.Data.Models.Identity;
 using CrisisManagement.Data.Repositories.Interfaces;
+using CrisisManagement.Shared.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace CrisisManagement.Data.Repositories;
@@ -17,7 +18,7 @@ public sealed class RoleRepository(AppDbContext context) : Repository<Applicatio
     public async Task<(List<IdName> Items, int Total)> SearchAsync(string? nameLike, string? sortBy, bool desc, int page, int size)
     {
         var q = _entities.AsNoTracking();
-        if (!string.IsNullOrWhiteSpace(nameLike)) { var v = $"%{nameLike.Trim()}%"; q = q.Where(r => EF.Functions.Like(r.Name!, v)); }
+        if (!string.IsNullOrWhiteSpace(nameLike)) { var v = LikePattern.Contains(nameLike!); q = q.Where(r => EF.Functions.Like(r.Name!, v, LikePattern.Escape)); }
 
         var total = await q.CountAsync();
         q = (sortBy ?? "").ToLowerInvariant() switch
