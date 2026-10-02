@@ -3,7 +3,7 @@ import { useServiceSearch } from '../composables/useServiceSearch.js';
 
 const {
     msg, criteria, paging, services, totalRecords, providers, serviceCodes, hasSearched, isSearching, errors,
-    search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, canAdd, add
+    search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, canEdit
 } = useServiceSearch();
 
 const fields = [
@@ -16,14 +16,14 @@ const fields = [
 
 <template>
     <div class="main_content" role="main" aria-labelledby="main-title">
-        <h1 id="main-title" class="visually-hidden">Manage Service</h1>
+        <h1 id="main-title" class="visually-hidden">Search Services</h1>
 
-        <SearchPanel title="Manage Service" icon="fa fa-search" form-name="serviceForm" @submit="search" @reset="clear">
+        <SearchPanel title="Search Services" icon="fa fa-search" form-name="serviceForm" @submit="search" @reset="clear">
             <template #fields>
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="providerId">Provider</label>
-                        <select id="providerId" v-model="criteria.providerId" class="form-select form-select-sm">
+                        <select id="providerId" v-model="criteria.providerId" class="form-select form-select-sm" :disabled="providers.length === 1">
                             <option :value="null">- - ALL - -</option>
                             <option v-for="p in providers" :key="p.id" :value="p.id">{{ p.label }}</option>
                         </select>
@@ -63,7 +63,6 @@ const fields = [
             </template>
             <template #buttons>
                 <AppButton action="search" :disabled="isSearching" />
-                <AppButton v-if="canAdd" action="add" @click="add" />
                 <AppButton action="clear" @click="clear" />
             </template>
         </SearchPanel>
@@ -71,10 +70,10 @@ const fields = [
         <div class="row" role="region" aria-labelledby="results-heading">
             <h2 id="results-heading" class="visually-hidden">Service Results Grid</h2>
             <div class="col-md-12">
-                <p v-if="!hasSearched" class="text-muted text-center">Choose your filters, then click Search.</p>
-                <table v-else class="table table-hover table-striped table-sm table-bordered">
+                <table v-if="hasSearched" class="table table-hover table-striped table-sm table-bordered">
                     <thead>
                         <tr>
+                            <th scope="col">Action</th>
                             <SortHeader col="serviceId" :sort-icon="sortIcon" @sort="setOrder">Id</SortHeader>
                             <SortHeader col="firstName" :sort-icon="sortIcon" @sort="setOrder">First Name</SortHeader>
                             <SortHeader col="lastName" :sort-icon="sortIcon" @sort="setOrder">Last Name</SortHeader>
@@ -88,10 +87,11 @@ const fields = [
                     </thead>
                     <tbody>
                         <tr v-if="!services.length" class="msg-error">
-                            <td colspan="9"><div class="text-center"><strong>No services found.</strong></div></td>
+                            <td colspan="10"><div class="text-center"><strong>No Records Found.</strong></div></td>
                         </tr>
                         <tr v-for="s in services" :key="s.serviceId">
-                            <td><router-link :to="`/services/${s.serviceId}`">{{ s.serviceId }}</router-link></td>
+                            <td><router-link :to="`/services/${s.serviceId}`">{{ canEdit ? 'Edit' : 'View' }}<span class="visually-hidden"> service {{ s.serviceId }}</span></router-link></td>
+                            <td>{{ s.serviceId }}</td>
                             <td>{{ s.firstName }}</td>
                             <td>{{ s.lastName }}</td>
                             <td>{{ s.providerPatientNo }}</td>

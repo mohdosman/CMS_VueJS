@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using CrisisManagement.Data;
 using CrisisManagement.Data.Constants;
 using CrisisManagement.Data.Models.SP;
@@ -13,6 +14,8 @@ namespace CrisisManagement.Features.Services.Services;
 // The caller is limited to their own providers.
 public sealed class ServiceSearchService(IUnitOfWork uow, ProviderScope scope, CurrentSession session)
 {
+    private static readonly Regex SsnDigits = new(@"^\d{9}$");
+
     private static readonly Dictionary<string, string> SortColumns = new(StringComparer.OrdinalIgnoreCase)
     {
         ["serviceId"] = "ServiceId", ["firstName"] = "FirstName", ["lastName"] = "LastName", ["providerPatientNo"] = "ProviderPatientNo",
@@ -31,6 +34,7 @@ public sealed class ServiceSearchService(IUnitOfWork uow, ProviderScope scope, C
         var errors = new ErrorBag();
         if (r.DosAdmitDateFrom is { } from && r.DosAdmitDateTo is { } to && from > to)
             errors.Add("dosAdmitDateTo", "DOS/Admit Date(From) should be less than equal to DOS/Admit Date(To).");
+        if (!string.IsNullOrWhiteSpace(r.Ssn) && !SsnDigits.IsMatch(r.Ssn.Trim())) errors.Add("ssn", "SSN is 9 digits, no hyphens or spaces.");
         foreach (var (key, label, value) in new[]
         {
             ("providerPatientNo", "Provider Patient ID", r.ProviderPatientNo), ("lastName", "Last Name", r.LastName), ("firstName", "First Name", r.FirstName)
@@ -47,8 +51,7 @@ public sealed class ServiceSearchService(IUnitOfWork uow, ProviderScope scope, C
             .AddProviderIds("UserProviderIds", allowed)
             .Add("ServiceCodeId", r.ServiceCodeId)
             .AddEscaped("ProviderPatientNo", r.ProviderPatientNo)
-            // An SSN that is not nine digits (or ddd-dd-dddd) is left out of the search, as in the Blazor CMS.
-            .Add("SSN", SsnPolicy.TryNormalize(r.Ssn, out var ssn) ? ssn : null)
+            .Add("SSN", string.IsNullOrWhiteSpace(r.Ssn) ? null : r.Ssn.Trim())
             .Add("DOSAdmitDateFrom", r.DosAdmitDateFrom)
             .Add("DOSAdmitDateTo", r.DosAdmitDateTo)
             .AddEscaped("LastName", r.LastName)

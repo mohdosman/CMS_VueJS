@@ -1,5 +1,4 @@
 import { ref, reactive, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { servicesApi } from '../api/servicesApi.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
@@ -14,7 +13,7 @@ const DEFAULT_CRITERIA = () => ({
 
 // Module scope on purpose: filters and results survive search -> detail -> back within the SPA.
 const criteria = reactive(DEFAULT_CRITERIA());
-const paging = reactive({ currentPage: 1, maxPagesToShow: 10, pageSize: 10 });
+const paging = reactive({ currentPage: 1, maxPagesToShow: 10, pageSize: 20 });
 const services = ref([]);
 const totalRecords = ref(0);
 const providers = ref([]);
@@ -27,7 +26,6 @@ const errors = ref({});
 const clean = () => Object.fromEntries(Object.entries(criteria).map(([k, v]) => [k, v === '' ? null : v]));
 
 export function useServiceSearch() {
-    const router = useRouter();
     const { can } = useCapabilities();
     const { logApiError } = useLogger();
 
@@ -67,14 +65,11 @@ export function useServiceSearch() {
     function clear() {
         Object.assign(criteria, DEFAULT_CRITERIA());
         defaultProvider();
-        services.value = [];
-        totalRecords.value = 0;
-        hasSearched.value = false;
-        errors.value = {};
+        return search();   // like WebForms, Clear goes back to the full list
     }
 
-    const canAdd = can('services.enter');
-    const add = () => router.push('/services/new');
+    // The link in the Action column reads View for a user who cannot edit.
+    const canEdit = can('services.edit');
 
     onMounted(async () => {
         if (!providers.value.length) {
@@ -85,13 +80,14 @@ export function useServiceSearch() {
             }
         }
         defaultProvider();
-        if (hasSearched.value) await getServices();
+        // The page opens on the full list, as WebForms does.
+        await (hasSearched.value ? getServices() : search());
     });
 
     const msg = fieldMessages(errors);
 
     return {
         msg, criteria, paging, services, totalRecords, providers, serviceCodes, hasSearched, isSearching, errors,
-        search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, canAdd, add
+        search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, canEdit
     };
 }
