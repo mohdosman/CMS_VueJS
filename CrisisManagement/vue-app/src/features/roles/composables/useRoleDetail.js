@@ -5,12 +5,13 @@ import { useCapabilities } from '../../../common/composables/useCapabilities.js'
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
+import { createShowError, createTouch } from '../../../utils/validationUtils.js';
 
 // One form for a new role (/admin/roles/0) and an existing one (/admin/roles/:key, the role id).
 export function useRoleDetail() {
     const route = useRoute();
     const router = useRouter();
-    const { logSuccess, logApiError } = useLogger();
+    const { logSuccess, logError, logApiError } = useLogger();
 
     // ================================================================
     // State
@@ -22,7 +23,7 @@ export function useRoleDetail() {
     const saved = ref({ name: '', permissions: [] });   // what the server holds, for the unsaved-changes flag
     const roleId = ref(0);
     const groups = ref([]);
-    const errors = ref({});          // { field: [messages] } from a 400 validation response
+    const serverErrors = ref({});    // { field: [messages] } from a 400 validation response
     const dialog = ref('');          // '' or 'delete'
     const isLoading = ref(true);
     const isSaving = ref(false);
@@ -40,12 +41,43 @@ export function useRoleDetail() {
     const canEdit = can('roles.edit');
 
     // ================================================================
+    // Validation
+    // ================================================================
+    const submitted = ref(false);
+    // Which fields the user has visited. A field only shows its message once it was left, or after a submit.
+    const touched = reactive({});
+    const touch = createTouch(touched);
+
+    // The error message for each field; a field that is fine has no entry. The server also checks the name is unique.
+    const clientErrors = computed(() => {
+        const e = {};
+        if (!form.name.trim()) {
+            e.name = 'Role name is required.';
+        }
+        return e;
+    });
+
+    const isValid = computed(() => Object.keys(clientErrors.value).length === 0);
+    // A field shows its message only after it was touched, or after a submit was attempted.
+    const showError = createShowError(touched, submitted, clientErrors);
+
+    // What the screen shows for a field: the server's message when it sent one, else the form's own once it is due.
+    const msg = (field) => serverErrors.value[field]?.join(' ') || (showError(field) ? clientErrors.value[field] : '');
+
+    function resetValidation() {
+        submitted.value = false;
+        serverErrors.value = {};
+        Object.keys(touched).forEach((field) => delete touched[field]);
+    }
+
+    // ================================================================
     // Loading
     // ================================================================
     function fill(detail) {
         roleId.value = detail.id;
         Object.assign(form, { rowVersion: detail.rowVersion, name: detail.name, permissions: [...detail.permissions] });
         saved.value = { name: detail.name, permissions: [...detail.permissions] };
+        resetValidation();
     }
 
     async function getPageData() {
@@ -78,14 +110,22 @@ export function useRoleDetail() {
     function fail(e) {
         const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
         if (fieldErrors) {
-            errors.value = fieldErrors;
+            serverErrors.value = fieldErrors;
+            logError('Please correct the validation errors first.');
         } else {
             logApiError(e);
         }
     }
 
+    // Checks permission, then saves.
     async function save() {
-        errors.value = {};
+        if (isSaving.value) {
+            return;
+        }
+        if (!canEdit) {
+            logError('You do not have permission to manage roles.');
+            return;
+        }
         isSaving.value = true;
         try {
             const body = { ...form, name: form.name.trim() };
@@ -101,6 +141,17 @@ export function useRoleDetail() {
         } finally {
             isSaving.value = false;
         }
+    }
+
+    // The form's submit: validates first, and only saves when everything is valid.
+    function onSubmit() {
+        submitted.value = true;
+        serverErrors.value = {};
+        if (!isValid.value) {
+            logError('Please correct the validation errors first.');
+            return;
+        }
+        save();
     }
 
     async function remove() {
@@ -129,12 +180,12 @@ export function useRoleDetail() {
         form, groups, dialog, title, isNew,
 
         // Busy and validation state
-        isLoading, isSaving, errors, isAdminRole, hasChanges,
+        isLoading, isSaving, submitted, touched, touch, isValid, showError, msg, isAdminRole, hasChanges,
 
         // User and permissions
         canEdit,
 
         // Actions
-        save, remove, cancel
+        save, onSubmit, remove, cancel
     };
 }

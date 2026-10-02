@@ -3,15 +3,15 @@ import { useRoleDetail } from '../composables/useRoleDetail.js';
 import PermissionPicker from '../components/PermissionPicker.vue';
 
 const {
-    isNew, canEdit, title, form, groups, errors, dialog, isLoading, isSaving,
-    isAdminRole, hasChanges, save, remove, cancel
+    isNew, canEdit, title, form, groups, dialog, isLoading, isSaving, touch, msg,
+    isAdminRole, hasChanges, onSubmit, remove, cancel
 } = useRoleDetail();
 </script>
 
 <template>
     <DetailPanel :title="title" icon="fa fa-shield" form-name="roleForm"
                  main-labelledby="main-title" :can-save="canEdit && !isSaving && !isLoading && !isAdminRole"
-                 :show-buttons="canEdit" @save="save" @cancel="cancel">
+                 :show-buttons="canEdit" @save="onSubmit" @cancel="cancel">
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
 
@@ -23,11 +23,11 @@ const {
                  permission picker stays searchable and expandable, only its boxes are disabled. -->
             <fieldset :disabled="!canEdit || isLoading || isAdminRole" class="border-0 p-0 m-0">
                 <div class="row">
-                    <div class="col-md-5 mb-3" :class="{ 'has-error': !!(errors.name?.join(' ')) }">
+                    <div class="col-md-5 mb-3" :class="{ 'has-error': !!msg('name') }">
                         <label class="form-label" for="name">Role name <span class="f_req" aria-hidden="true">*</span></label>
                         <input id="name" v-model="form.name" type="text" class="form-control form-control-sm"
-                               :aria-invalid="!!errors.name?.length" aria-describedby="name-err" />
-                        <div id="name-err" class="form-text has-error" role="alert">{{ errors.name?.join(' ') }}</div>
+                               :aria-invalid="!!msg('name')" aria-describedby="name-err" @blur="touch('name')" />
+                        <div id="name-err" class="form-text has-error" role="alert">{{ msg('name') }}</div>
                     </div>
                 </div>
             </fieldset>
@@ -36,7 +36,7 @@ const {
                 <h2 class="h6 mb-0">Add/Remove Permissions</h2>
                 <span v-if="hasChanges && canEdit" class="badge text-bg-warning" role="status">Unsaved changes</span>
             </div>
-            <div id="permissions-err" class="form-text has-error mb-2" role="alert">{{ errors.permissions?.join(' ') }}</div>
+            <div id="permissions-err" class="form-text has-error mb-2" role="alert">{{ msg('permissions') }}</div>
 
             <PermissionPicker v-model="form.permissions" :groups="groups" :disabled="!canEdit || isAdminRole || isLoading" />
         </template>
