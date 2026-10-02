@@ -55,6 +55,25 @@ export function useProviderDetail() {
     const msg = fieldMessages(errors);
     const err = (field) => errors.value[field]?.length ?? 0;
 
+    // The tabs after Demographics, and the fields in each address and its contact.
+    const sections = [
+        { key: 'physicalAddress', title: 'Physical Address' },
+        { key: 'remitAddress', title: 'Remit Address' }
+    ];
+    const addressFields = [
+        { f: 'addressLine1', label: 'Address line 1', col: 'col-12' },
+        { f: 'addressLine2', label: 'Address line 2', col: 'col-12' },
+        { f: 'city', label: 'City', col: 'col-md-6' }
+    ];
+    const contactFields = [
+        { f: 'title', label: 'Title', col: 'col-md-4' },
+        { f: 'firstName', label: 'First Name', col: 'col-md-4' },
+        { f: 'lastName', label: 'Last Name', col: 'col-md-4' },
+        { f: 'emailAddress', label: 'Email', col: 'col-md-6', type: 'email' },
+        { f: 'phone', label: 'Phone', col: 'col-md-3', type: 'tel' },
+        { f: 'wirelessPhone', label: 'Mobile', col: 'col-md-3', type: 'tel' }
+    ];
+
     // ================================================================
     // User permissions
     // ================================================================
@@ -161,7 +180,7 @@ export function useProviderDetail() {
 
     return {
         // Form
-        form, info, states, counties, tab, dialog, title, isNew,
+        form, info, states, counties, tab, dialog, title, isNew, sections, addressFields, contactFields,
 
         // Busy and validation state
         isLoading, isSaving, errors, formError, msg, err,
