@@ -5,13 +5,14 @@ import { useCapabilities } from '../../../common/composables/useCapabilities.js'
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
+import { createShowError, createTouch, requireSelect } from '../../../utils/validationUtils.js';
 import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 
 // Port of ManageService.aspx: one form for a new service (/services/new) and an existing one (/services/:key, the service id).
 export function useServiceDetail() {
     const route = useRoute();
     const router = useRouter();
-    const { logSuccess, logApiError } = useLogger();
+    const { logSuccess, logError, logApiError } = useLogger();
 
     // ================================================================
     // State
@@ -30,7 +31,7 @@ export function useServiceDetail() {
     const form = reactive(blankForm());
     const lookups = ref({});
     const providers = ref([]);
-    const errors = ref({});          // { field: [messages] } from a 400 validation response
+    const serverErrors = ref({});    // { field: [messages] } from a 400 validation response
     const dialog = ref('');          // '' or 'delete'
     const isLoading = ref(true);
     const isSaving = ref(false);
@@ -44,8 +45,6 @@ export function useServiceDetail() {
 
     // The last provider patient number looked up, so the same one is not looked up twice.
     let lastLookup = '';
-
-    const msg = (field) => errors.value[field]?.join(' ') ?? '';
 
     // Whether discharge date and duration are required depends on the service code; no code (or an unknown one) requires both.
     const rule = computed(() => (lookups.value.serviceCodeRules ?? []).find((r) => r.serviceCodeId === form.serviceCodeId));
@@ -63,6 +62,70 @@ export function useServiceDetail() {
     const canDelete = can('services.delete');
 
     // ================================================================
+    // Validation
+    // ================================================================
+    const submitted = ref(false);
+    // Which fields the user has visited. A field only shows its message once it was left, or after a submit.
+    const touched = reactive({});
+    const touch = createTouch(touched);
+
+    const blank = (value) => !String(value ?? '').trim();
+
+    // The error message for each field; a field that is fine has no entry. The patient fields only count when entering a service.
+    // The server also checks the dates (not in the future, discharge not before admit), the SSN and duplicates.
+    const clientErrors = computed(() => {
+        const e = {};
+        const select = (field, message) => !requireSelect(form[field]) && (e[field] = message);
+        select('providerId', 'Please select the Provider!');
+        if (isNew) {
+            if (blank(form.providerPatientNo)) {
+                e.providerPatientNo = 'Provider Patient No is Required.';
+            }
+            if (blank(form.firstName)) {
+                e.firstName = 'First Name is Required.';
+            }
+            if (blank(form.lastName)) {
+                e.lastName = 'Last Name is Required.';
+            }
+            if (blank(form.dob)) {
+                e.dob = 'DOB is Required.';
+            }
+            select('genderId', 'Please select the Gender!');
+        }
+        select('countyId', 'Please select the County of Residence.');
+        select('payorSourceId', 'Please select the Payor Billed for Service.');
+        select('serviceCodeId', 'Please select the Service.');
+        if (blank(form.dosAdmitDate)) {
+            e.dosAdmitDate = 'DOS or Admit Date is Required.';
+        }
+        if (dischargeRequired.value && blank(form.dischargeDate)) {
+            e.dischargeDate = 'Discharge Date is Required.';
+        }
+        if (blank(form.durationHours)) {
+            if (durationRequired.value) {
+                e.durationHours = 'Duration (Hours) is Required.';
+            }
+        } else if (!Number.isInteger(Number(form.durationHours)) || form.durationHours < 1 || form.durationHours > 999) {
+            e.durationHours = 'Please Enter Valid Duration (Hours) greater than 0 upto 3 digits.';
+        }
+        select('serviceCountyId', 'Please select the County of Service.');
+        return e;
+    });
+
+    const isValid = computed(() => Object.keys(clientErrors.value).length === 0);
+    // A field shows its message only after it was touched, or after a submit was attempted.
+    const showError = createShowError(touched, submitted, clientErrors);
+
+    // What the screen shows for a field: the server's message when it sent one, else the form's own once it is due.
+    const msg = (field) => serverErrors.value[field]?.join(' ') || (showError(field) ? clientErrors.value[field] : '');
+
+    function resetValidation() {
+        submitted.value = false;
+        serverErrors.value = {};
+        Object.keys(touched).forEach((field) => delete touched[field]);
+    }
+
+    // ================================================================
     // Loading
     // ================================================================
     function fill(detail) {
@@ -70,6 +133,7 @@ export function useServiceDetail() {
         form.dob = day(detail.dob);
         form.dosAdmitDate = day(detail.dosAdmitDate);
         form.dischargeDate = day(detail.dischargeDate);
+        resetValidation();
     }
 
     async function loadSessionServices() {
@@ -151,14 +215,22 @@ export function useServiceDetail() {
     function fail(e) {
         const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
         if (fieldErrors) {
-            errors.value = fieldErrors;
+            serverErrors.value = fieldErrors;
+            logError('Please correct the validation errors first.');
         } else {
             logApiError(e);
         }
     }
 
+    // Checks permission, then saves. Entering a service clears the form for the next one; editing returns to the search.
     async function save() {
-        errors.value = {};
+        if (isSaving.value) {
+            return;
+        }
+        if (!canSave) {
+            logError('You do not have permission to manage services.');
+            return;
+        }
         isSaving.value = true;
         try {
             const payload = Object.fromEntries(Object.entries(form).map(([k, v]) => [k, v === '' ? null : v]));
@@ -166,6 +238,7 @@ export function useServiceDetail() {
                 await servicesApi.create(payload);
                 logSuccess('Service created.');
                 Object.assign(form, blankForm(form.providerId));
+                resetValidation();
                 lastLookup = '';
                 sessionPaging.currentPage = 1;
                 await loadSessionServices();
@@ -179,6 +252,17 @@ export function useServiceDetail() {
         } finally {
             isSaving.value = false;
         }
+    }
+
+    // The form's submit: validates first, and only saves when everything is valid.
+    function onSubmit() {
+        submitted.value = true;
+        serverErrors.value = {};
+        if (!isValid.value) {
+            logError('Please correct the validation errors first.');
+            return;
+        }
+        save();
     }
 
     async function remove() {
@@ -210,13 +294,13 @@ export function useServiceDetail() {
         sessionServices, sessionTotal, sessionPaging,
 
         // Busy and validation state
-        isLoading, isSaving, errors, msg, noProvider,
+        isLoading, isSaving, submitted, touched, touch, isValid, showError, msg, noProvider,
 
         // User and permissions
         canSave, canDelete,
 
         // Actions
-        findExistingPatient, save, remove, cancel,
+        findExistingPatient, save, onSubmit, remove, cancel,
         setSessionOrder, sessionSortIcon, onSessionPageChanged, onSessionPageSizeChanged
     };
 }

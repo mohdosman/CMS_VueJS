@@ -3,15 +3,15 @@ import { useServiceDetail } from '../composables/useServiceDetail.js';
 
 const {
     isNew, canSave, canDelete, title, form, lookups, providers, dialog, isLoading, isSaving,
-    sessionServices, sessionTotal, sessionPaging, setSessionOrder, sessionSortIcon, onSessionPageChanged, onSessionPageSizeChanged, noProvider, dischargeRequired, durationRequired, patientLocked, msg,
-    findExistingPatient, save, remove, cancel
+    sessionServices, sessionTotal, sessionPaging, setSessionOrder, sessionSortIcon, onSessionPageChanged, onSessionPageSizeChanged, noProvider, dischargeRequired, durationRequired, patientLocked, msg, touch,
+    findExistingPatient, onSubmit, remove, cancel
 } = useServiceDetail();
 
 </script>
 
 <template>
     <DetailPanel :title="title" icon="fa fa-medkit" form-name="serviceEntryForm" main-labelledby="main-title"
- :can-save="canSave && !isSaving && !isLoading" :show-buttons="canSave && !noProvider" @save="save" @cancel="cancel">
+ :can-save="canSave && !isSaving && !isLoading" :show-buttons="canSave && !noProvider" @save="onSubmit" @cancel="cancel">
         <template #fields>
             <h1 id="main-title" class="visually-hidden">{{ title }}</h1>
 
@@ -21,24 +21,24 @@ const {
             <!-- A read-only viewer (services.view only) gets the same form with every control disabled. -->
             <fieldset :disabled="!canSave || isLoading" class="border-0 p-0 m-0">
                 <div class="row">
-                    <FieldSelect v-model="form.providerId" label="Provider" required :options="providers" :error="msg('providerId')" col="col-md-6 col-lg-4"
+                    <FieldSelect v-model="form.providerId" label="Provider" required :options="providers" :error="msg('providerId')" @touch="touch('providerId')" col="col-md-6 col-lg-4"
                                  @update:model-value="findExistingPatient" />
                     <FieldInput v-model="form.providerPatientNo" label="Provider Patient No" required :maxlength="50" :disabled="!isNew"
-                                :error="msg('providerPatientNo')" col="col-md-6 col-lg-4" @change="findExistingPatient" @keydown.enter.prevent />
-                    <FieldInput v-model="form.ssn" label="SSN" :maxlength="11" :disabled="patientLocked" :error="msg('ssn')" col="col-md-6 col-lg-4" />
-                    <FieldInput v-model="form.firstName" label="First Name" required :maxlength="150" :disabled="!isNew" :error="msg('firstName')" col="col-md-6 col-lg-4" />
-                    <FieldInput v-model="form.lastName" label="Last Name" required :maxlength="150" :disabled="patientLocked" :error="msg('lastName')" col="col-md-6 col-lg-4" />
-                    <FieldInput v-model="form.dob" label="DOB" type="date" required :disabled="patientLocked" :error="msg('dob')" col="col-md-6 col-lg-4" />
-                    <FieldSelect v-model="form.genderId" label="Gender" required :options="lookups.genders" :disabled="!isNew" :error="msg('genderId')" col="col-md-6 col-lg-4" />
-                    <FieldSelect v-model="form.countyId" label="County of Residence" required :options="lookups.counties" :error="msg('countyId')" col="col-md-6 col-lg-4" />
-                    <FieldSelect v-model="form.payorSourceId" label="Payor Billed for Service" required :options="lookups.payorSources" :error="msg('payorSourceId')" col="col-md-6 col-lg-4" />
-                    <FieldSelect v-model="form.primaryInsurerId" label="Primary Insurer" :options="lookups.payorSources" :error="msg('primaryInsurerId')" col="col-md-6 col-lg-4" />
-                    <FieldSelect v-model="form.serviceCodeId" label="Service" required :options="lookups.serviceCodes" :error="msg('serviceCodeId')" col="col-md-6 col-lg-4" />
-                    <FieldInput v-model="form.dosAdmitDate" label="DOS or Admit Date" type="date" required :error="msg('dosAdmitDate')" col="col-md-6 col-lg-4" />
-                    <FieldInput v-model="form.dischargeDate" label="Discharge Date" type="date" :required="dischargeRequired" :error="msg('dischargeDate')" col="col-md-6 col-lg-4" />
+                                :error="msg('providerPatientNo')" @touch="touch('providerPatientNo')" col="col-md-6 col-lg-4" @change="findExistingPatient" @keydown.enter.prevent />
+                    <FieldInput v-model="form.ssn" label="SSN" :maxlength="11" :disabled="patientLocked" :error="msg('ssn')" @touch="touch('ssn')" col="col-md-6 col-lg-4" />
+                    <FieldInput v-model="form.firstName" label="First Name" required :maxlength="150" :disabled="!isNew" :error="msg('firstName')" @touch="touch('firstName')" col="col-md-6 col-lg-4" />
+                    <FieldInput v-model="form.lastName" label="Last Name" required :maxlength="150" :disabled="patientLocked" :error="msg('lastName')" @touch="touch('lastName')" col="col-md-6 col-lg-4" />
+                    <FieldInput v-model="form.dob" label="DOB" type="date" required :disabled="patientLocked" :error="msg('dob')" @touch="touch('dob')" col="col-md-6 col-lg-4" />
+                    <FieldSelect v-model="form.genderId" label="Gender" required :options="lookups.genders" :disabled="!isNew" :error="msg('genderId')" @touch="touch('genderId')" col="col-md-6 col-lg-4" />
+                    <FieldSelect v-model="form.countyId" label="County of Residence" required :options="lookups.counties" :error="msg('countyId')" @touch="touch('countyId')" col="col-md-6 col-lg-4" />
+                    <FieldSelect v-model="form.payorSourceId" label="Payor Billed for Service" required :options="lookups.payorSources" :error="msg('payorSourceId')" @touch="touch('payorSourceId')" col="col-md-6 col-lg-4" />
+                    <FieldSelect v-model="form.primaryInsurerId" label="Primary Insurer" :options="lookups.payorSources" :error="msg('primaryInsurerId')" @touch="touch('primaryInsurerId')" col="col-md-6 col-lg-4" />
+                    <FieldSelect v-model="form.serviceCodeId" label="Service" required :options="lookups.serviceCodes" :error="msg('serviceCodeId')" @touch="touch('serviceCodeId')" col="col-md-6 col-lg-4" />
+                    <FieldInput v-model="form.dosAdmitDate" label="DOS or Admit Date" type="date" required :error="msg('dosAdmitDate')" @touch="touch('dosAdmitDate')" col="col-md-6 col-lg-4" />
+                    <FieldInput v-model="form.dischargeDate" label="Discharge Date" type="date" :required="dischargeRequired" :error="msg('dischargeDate')" @touch="touch('dischargeDate')" col="col-md-6 col-lg-4" />
                     <FieldInput v-model="form.durationHours" label="Duration (Hours)" type="number" :min="1" :max="999" :required="durationRequired"
-                                :error="msg('durationHours')" col="col-md-6 col-lg-4" />
-                    <FieldSelect v-model="form.serviceCountyId" label="County of Service" required :options="lookups.counties" :error="msg('serviceCountyId')" col="col-md-6 col-lg-4" />
+                                :error="msg('durationHours')" @touch="touch('durationHours')" col="col-md-6 col-lg-4" />
+                    <FieldSelect v-model="form.serviceCountyId" label="County of Service" required :options="lookups.counties" :error="msg('serviceCountyId')" @touch="touch('serviceCountyId')" col="col-md-6 col-lg-4" />
                 </div>
             </fieldset>
         </template>
