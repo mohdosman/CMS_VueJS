@@ -6,6 +6,14 @@ export const formatDate = (v, empty = '-') => (v ? new Date(v).toLocaleDateStrin
 // "1/2/2026, 3:04:05 PM", or `empty` when there is no value.
 export const formatDateTime = (v, empty = '') => (v ? new Date(v).toLocaleString('en-US') : empty);
 
+// "01/02/2026 03:04:05 PM", the legacy grids' Date Uploaded format.
+export const formatDateTimeFull = (v, empty = '') => {
+    if (!v) return empty;
+    const d = new Date(v);
+    const p = (n) => String(n).padStart(2, '0');
+    return `${p(d.getMonth() + 1)}/${p(d.getDate())}/${d.getFullYear()} ${p(d.getHours() % 12 || 12)}:${p(d.getMinutes())}:${p(d.getSeconds())} ${d.getHours() < 12 ? 'AM' : 'PM'}`;
+};
+
 // 1536 -> "2 KB", 5242880 -> "5.00 MB".
 export const formatFileSize = (b) => {
     if (b == null) return '';

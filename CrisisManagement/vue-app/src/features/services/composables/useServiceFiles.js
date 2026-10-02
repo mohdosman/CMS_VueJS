@@ -27,7 +27,8 @@ export function useServiceFiles() {
     const current = ref(null);       // the file the dialog is about
     const rawText = ref('');
     const fileErrors = ref([]);
-    const errorPaging = reactive({ currentPage: 1, maxPagesToShow: 5, pageSize: 10 });
+    const errorPaging = reactive({ currentPage: 1, maxPagesToShow: 5, pageSize: 20 });
+    const errorCriteria = reactive({ orderBy: 'id', reverse: false });
     const errorTotal = ref(0);
     const isLoadingDialog = ref(false);
 
@@ -74,7 +75,7 @@ export function useServiceFiles() {
     async function loadErrors() {
         isLoadingDialog.value = true;
         try {
-            const r = await servicesApi.fileErrors(current.value.id, errorPaging.currentPage, errorPaging.pageSize);
+            const r = await servicesApi.fileErrors(current.value.id, errorPaging.currentPage, errorPaging.pageSize, errorCriteria);
             fileErrors.value = r.items;
             errorTotal.value = r.totalCount;
         } catch (e) {
@@ -85,6 +86,8 @@ export function useServiceFiles() {
         }
     }
 
+    const setErrorOrder = createSetOrder(errorCriteria, errorPaging, loadErrors);
+    const errorSortIcon = (col) => getSortIcon(col, errorCriteria);
     const { onPageChanged: onErrorPageChanged, onPageSizeChanged: onErrorPageSizeChanged } = createPagingHandlers(errorPaging, loadErrors);
 
     async function open(kind, file) {
@@ -92,6 +95,7 @@ export function useServiceFiles() {
         dialog.value = kind;
         if (kind === 'errors') {
             errorPaging.currentPage = 1;
+            Object.assign(errorCriteria, { orderBy: 'id', reverse: false });
             return loadErrors();
         }
         isLoadingDialog.value = true;
@@ -123,7 +127,7 @@ export function useServiceFiles() {
 
     return {
         msg, criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawText, fileErrors,
-        errorPaging, errorTotal, isLoadingDialog,
+        errorPaging, errorTotal, setErrorOrder, errorSortIcon, isLoadingDialog,
         search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, onErrorPageChanged, onErrorPageSizeChanged, open, closeDialog
     };
 }

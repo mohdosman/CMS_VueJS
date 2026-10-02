@@ -88,7 +88,7 @@ public static class SuicideWorkbookReader
         }
         catch (Exception ex) when (ex is OpenXmlPackageException or InvalidDataException or XmlException or IOException or FileFormatException or InvalidOperationException or ArgumentException or KeyNotFoundException)
         {
-            return (null, ["Invalid .xlsx Excel file."]);
+            return (null, ["Invalid excel file."]);
         }
     }
 
@@ -99,12 +99,12 @@ public static class SuicideWorkbookReader
         {
             using var zip = new ZipArchive(new MemoryStream(content), ZipArchiveMode.Read);
             if (zip.Entries.Any(e => e.FullName.EndsWith("vbaProject.bin", StringComparison.OrdinalIgnoreCase))) problems.Add("File contains macros. File cannot be processed.");
-            else if (zip.Entries.Sum(e => e.Length) > MaxUnpackedBytes) problems.Add("Invalid .xlsx Excel file.");
-            else if (!zip.Entries.Any(e => e.FullName.Equals("xl/workbook.xml", StringComparison.OrdinalIgnoreCase))) problems.Add("Invalid .xlsx Excel file.");
+            else if (zip.Entries.Sum(e => e.Length) > MaxUnpackedBytes) problems.Add("Invalid excel file.");
+            else if (!zip.Entries.Any(e => e.FullName.Equals("xl/workbook.xml", StringComparison.OrdinalIgnoreCase))) problems.Add("Invalid excel file.");
         }
         catch (InvalidDataException)
         {
-            problems.Add("Invalid .xlsx Excel file.");
+            problems.Add("Invalid excel file.");
         }
     }
 

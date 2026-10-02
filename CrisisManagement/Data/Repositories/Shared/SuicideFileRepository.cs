@@ -16,6 +16,8 @@ public sealed class SuicideFileRepository(AppDbContext context) : ISuicideFileRe
         return f is null ? null : new SuicideFileDownload(f.FileName, f.FileText);
     }
 
+    public Task<bool> FileNameExistsAsync(string fileName) => context.SuicideFiles.AsNoTracking().AnyAsync(x => x.FileName == fileName);
+
     public async Task<PagedResult<SuicideImportItem>> SearchImportsAsync(int fileId, int page, int size, string? sortBy, bool desc)
     {
         var query = context.SuicideFileImports.AsNoTracking().Where(x => x.SuicideFileId == fileId);

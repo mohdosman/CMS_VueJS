@@ -31,7 +31,8 @@ export const servicesApi = {
         return data;
     },
     fileRaw: async (id) => (await http.get(`services/files/${id}/raw`)).data,
-    fileErrors: async (id, pageIndex, pageSize) => (await http.post(`services/files/${id}/errors`, { pageIndex, pageSize })).data,
+    fileErrors: async (id, pageIndex, pageSize, { orderBy, reverse }) =>
+        (await http.post(`services/files/${id}/errors`, { pageIndex, pageSize, sortBy: orderBy, sortDesc: reverse })).data,
     uploadFile: async (file) => {
         const body = new FormData();
         body.append('file', file);

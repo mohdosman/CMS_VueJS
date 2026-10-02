@@ -9,6 +9,9 @@ public interface ISuicideFileRepository
     // Name and content of the file (untracked); null when there is no such file.
     Task<SuicideFileDownload?> GetFileAsync(int id);
 
+    // True when a file with this name was already uploaded.
+    Task<bool> FileNameExistsAsync(string fileName);
+
     // The records of one file. sortBy: lastName, firstName, ssn; anything else lists them in file order.
     Task<PagedResult<SuicideImportItem>> SearchImportsAsync(int fileId, int page, int size, string? sortBy, bool desc);
 

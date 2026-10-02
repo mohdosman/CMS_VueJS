@@ -91,7 +91,7 @@ public sealed class ServiceFileErrorSearchRequest
 }
 
 public sealed record ServiceFileErrorItem(
-    int Id, int ImportId, string? Ssn, string? FirstName, string? LastName, string? ServiceCode, string? DosAdmitDate, string? Description);
+    int Id, int ImportId, string? Ssn, string? Dob, string? FirstName, string? LastName, string? ServiceCode, string? DosAdmitDate, string? Description);
 
 public sealed record ServiceFileRaw(int Id, string FileName, string Content);
 

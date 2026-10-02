@@ -27,7 +27,7 @@ public sealed class ServiceFileService(IUnitOfWork uow, ProviderScope scope, ILo
 
     private static readonly Dictionary<string, string> ErrorSortColumns = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["id"] = "ServiceFileErrorId", ["importId"] = "ServiceFileImportId", ["ssn"] = "SSN", ["firstName"] = "FirstName",
+        ["id"] = "ServiceFileErrorId", ["importId"] = "ServiceFileImportId", ["ssn"] = "SSN", ["dob"] = "DOB", ["firstName"] = "FirstName",
         ["lastName"] = "LastName", ["serviceCode"] = "ServiceCode", ["dosAdmitDate"] = "DOSAdmitDate", ["description"] = "ServiceFileErrorCodeDescription"
     };
 
@@ -36,7 +36,7 @@ public sealed class ServiceFileService(IUnitOfWork uow, ProviderScope scope, ILo
     public async Task<PagedResult<ServiceFileListItem>> SearchAsync(ServiceFileSearchRequest r)
     {
         var errors = new ErrorBag();
-        if (r.ProviderId is not > 0) errors.Add("providerId", "Provider is required.");
+        if (r.ProviderId is not > 0) errors.Add("providerId", "Please select the Provider!");
         if (r.DateFrom is { } from && r.DateTo is { } to && from > to)
             errors.Add("dateTo", "Date Processed(From) should be less than equal to Date Processed(To).");
         errors.ThrowIfAny();
@@ -78,7 +78,7 @@ public sealed class ServiceFileService(IUnitOfWork uow, ProviderScope scope, ILo
         return new PagedResult<ServiceFileErrorItem>
         {
             TotalCount = total,
-            Items = rows.Select(x => new ServiceFileErrorItem(x.ServiceFileErrorId, x.ServiceFileImportId, x.SSN, x.FirstName, x.LastName,
+            Items = rows.Select(x => new ServiceFileErrorItem(x.ServiceFileErrorId, x.ServiceFileImportId, x.SSN, x.DOB, x.FirstName, x.LastName,
                 x.ServiceCode, x.DOSAdmitDate, x.ServiceFileErrorCodeDescription)).ToList()
         };
     }

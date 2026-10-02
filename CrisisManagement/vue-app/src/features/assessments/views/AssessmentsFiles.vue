@@ -1,7 +1,7 @@
 <script setup>
 import { useAssessmentFiles } from '../composables/useAssessmentFiles.js';
 import { computed } from 'vue';
-import { formatDateTime, prettyXml } from '../../../utils/formatters.js';
+import { formatDateTimeFull, prettyXml } from '../../../utils/formatters.js';
 import XmlNode from '../components/XmlNode.vue';
 
 const {
@@ -84,7 +84,7 @@ const xmlRoot = computed(() => {
                             <td>{{ f.f2FTotal }}</td>
                             <td>{{ f.f2FImported }}</td>
                             <td>{{ f.f2FErrors }}</td>
-                            <td>{{ formatDateTime(f.createdOn) }}</td>
+                            <td>{{ formatDateTimeFull(f.createdOn) }}</td>
                             <td><AppButton action="cancel" size="xs" @click="open('raw', f)">View<span class="visually-hidden"> raw file {{ f.fileName }}</span></AppButton></td>
                             <td><AppButton action="cancel" size="xs" :disabled="!f.isProcessed" @click="open('errors', f)">View<span class="visually-hidden"> errors of {{ f.fileName }}</span></AppButton></td>
                         </tr>

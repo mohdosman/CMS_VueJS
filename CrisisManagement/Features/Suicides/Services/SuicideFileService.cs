@@ -55,6 +55,8 @@ public sealed class SuicideFileService(IUnitOfWork uow, IHttpContextAccessor htt
     {
         var name = UploadChecks.Require(fileName, content, MaxFileBytes, ".xlsx Excel", FileSignatures.Excel);
 
+        if (await uow.SuicideFiles.FileNameExistsAsync(name)) throw Reject("Duplicate File.");
+
         var (result, problems) = SuicideWorkbookReader.Read(content);
         if (result is null) throw Reject(problems.ToArray());
 
