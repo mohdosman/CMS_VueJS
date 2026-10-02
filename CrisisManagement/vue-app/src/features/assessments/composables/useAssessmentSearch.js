@@ -72,6 +72,7 @@ export function useAssessmentSearch() {
 
     function clear() {
         Object.assign(criteria, DEFAULT_CRITERIA());
+        criteria.incompleteOnly = true;   // like WebForms, Clear returns to the incomplete work list
         defaultProvider();
         return search();
     }
@@ -80,7 +81,8 @@ export function useAssessmentSearch() {
     const keyOf = (a) => (a.f2FAssessmentId > 0 ? `f2f-${a.f2FAssessmentId}` : a.phoneAssessmentId > 0 ? `pa-${a.phoneAssessmentId}` : '');
     const gotoAssessment = (a) => keyOf(a) && router.push(`/assessments/${keyOf(a)}`);
     const canAdd = can('assessments.edit');
-    const add = () => router.push('/assessments/0');
+    // The provider picked in the search carries over to the new assessment, as in WebForms.
+    const add = () => router.push({ path: '/assessments/0', query: criteria.providerId ? { providerId: criteria.providerId } : {} });
 
     onMounted(async () => {
         if (!providers.value.length) {

@@ -45,7 +45,6 @@ const xmlRoot = computed(() => {
                         <div id="dateTo-err" class="form-text has-error" role="alert">{{ msg('dateTo') }}</div>
                     </div>
                 </div>
-                <p class="form-text">Lists the files that have been imported. A file you just uploaded appears after the overnight import.</p>
             </template>
             <template #buttons>
                 <AppButton action="search" :disabled="isSearching" />
@@ -56,8 +55,7 @@ const xmlRoot = computed(() => {
         <div class="row" role="region" aria-labelledby="results-heading">
             <h2 id="results-heading" class="visually-hidden">File Results Grid</h2>
             <div class="col-md-12">
-                <p v-if="!hasSearched" class="text-muted text-center">Select a provider, then click Search.</p>
-                <table v-else class="table table-hover table-striped table-sm table-bordered">
+                <table v-if="hasSearched" class="table table-hover table-striped table-sm table-bordered">
                     <thead>
                         <tr>
                             <SortHeader col="fileName" :sort-icon="sortIcon" @sort="setOrder">File Name</SortHeader>

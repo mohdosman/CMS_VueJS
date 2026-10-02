@@ -178,7 +178,9 @@ export function useAssessmentDetail() {
         try {
             [lookups.value, providers.value] = await Promise.all([assessmentsApi.lookups(), assessmentsApi.providers()]);
             if (isNew.value) {
-                if (providers.value.length === 1) form.providerId = providers.value[0].id;
+                const wanted = Number(route.query.providerId);
+                if (providers.value.some((p) => p.id === wanted)) form.providerId = wanted;
+                else if (providers.value.length === 1) form.providerId = providers.value[0].id;
                 isLoading.value = false;
             } else await load(key.value);
         } catch (e) {
