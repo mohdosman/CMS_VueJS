@@ -132,6 +132,17 @@
     line-height: 1.3;
 }
 
+.permission-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.permission-desc {
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+}
+
 /* ── Paired (View/Manage) permission table ───────────────── */
 /* Boxed and capped at 860px, as in the CMS Blazor role editor. */
 .permission-pair-table {

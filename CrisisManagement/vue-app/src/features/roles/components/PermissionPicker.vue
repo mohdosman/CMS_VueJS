@@ -58,7 +58,10 @@ const {
                             <input type="checkbox" class="permission-switch-input" role="switch" :checked="has(i.value)"
                                    :disabled="disabled" @change="set([i.value], $event.target.checked)" />
                             <span class="permission-switch" aria-hidden="true"></span>
-                            <span class="permission-name">{{ i.name }}</span>
+                            <span class="permission-meta">
+                                <span class="permission-name">{{ i.name }}</span>
+                                <small v-if="i.description" class="permission-desc text-muted">{{ i.description }}</small>
+                            </span>
                         </label>
                     </div>
 
