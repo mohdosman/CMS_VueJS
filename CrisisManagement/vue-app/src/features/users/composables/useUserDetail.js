@@ -5,12 +5,13 @@ import { useCapabilities } from '../../../common/composables/useCapabilities.js'
 import { useLogger } from '../../../common/composables/useLogger.js';
 import { useActivate } from '../../../common/composables/useActivate.js';
 import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
+import { createShowError, createTouch } from '../../../utils/validationUtils.js';
 
 // One form for a new user (/admin/users/0) and an existing one (/admin/users/:key).
 export function useUserDetail() {
     const route = useRoute();
     const router = useRouter();
-    const { logSuccess, logApiError } = useLogger();
+    const { logSuccess, logError, logApiError } = useLogger();
 
     // ================================================================
     // State
@@ -29,14 +30,12 @@ export function useUserDetail() {
     const roles = ref([]);
     const providers = ref([]);
     const policy = ref({ passwordRules: [], adUserNameRule: '', password: null });
-    const errors = ref({});          // { field: [messages] } from a 400 validation response
+    const serverErrors = ref({});    // { field: [messages] } from a 400 validation response
     const formError = ref('');       // page-level message: form-level validation
     const dialog = ref('');          // '', 'password', 'delete', 'agreements' or 'upload'
     const documentCount = ref(0);
     const isLoading = ref(true);
     const isSaving = ref(false);
-
-    const err = (field) => errors.value[field]?.length ?? 0;
 
     // A local account signs in with its email, so its user ID is the email (fixed once created).
     const userIdShown = computed(() => (form.isADAccount || !isNew ? form.userName : form.email));
@@ -55,6 +54,90 @@ export function useUserDetail() {
     const canEdit = can('users.edit');
 
     // ================================================================
+    // Validation
+    // ================================================================
+    const submitted = ref(false);
+    // Which fields the user has visited. A field only shows its message once it was left, or after a submit.
+    const touched = reactive({});
+    const touch = createTouch(touched);
+
+    const blank = (value) => !String(value ?? '').trim();
+
+    // Whether a password meets the server's structured rules (the ones the checklist shows).
+    function passwordMeetsPolicy(password) {
+        const rules = policy.value.password;
+        if (!rules) {
+            return true;
+        }
+        return password.length >= rules.minLength
+            && (!rules.requireLowercase || /[a-z]/.test(password))
+            && (!rules.requireUppercase || /[A-Z]/.test(password))
+            && (!rules.requireDigit || /\d/.test(password))
+            && (!rules.requireSpecial || /[^A-Za-z0-9]/.test(password))
+            && (!(rules.uniqueChars > 1) || new Set(password).size >= rules.uniqueChars);
+    }
+
+    // The error message for each field; a field that is fine has no entry. The server also checks the user ID rules and the account type.
+    const clientErrors = computed(() => {
+        const e = {};
+        if (isNew && form.isADAccount && blank(form.userName)) {
+            e.userName = 'User ID is required.';
+        }
+        if (blank(form.firstName)) {
+            e.firstName = 'First name is required.';
+        }
+        if (blank(form.lastName)) {
+            e.lastName = 'Last name is required.';
+        }
+        const email = form.email.trim();
+        if (!email) {
+            e.email = 'Email is required.';
+        } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+            e.email = 'Enter a valid email address.';
+        }
+        const phone = form.phoneNumber.trim();
+        if (phone) {
+            const body = phone.startsWith('+') ? phone.slice(1) : phone;
+            const digits = body.replace(/\D/g, '').length;
+            if (!/^[\d ().-]+$/.test(body) || digits < 10 || digits > 15) {
+                e.phoneNumber = 'Enter a valid phone number, for example (555) 123-4567.';
+            }
+        }
+        if (form.isADAccount) {
+            if (form.password) {
+                e.password = 'AD accounts should not have passwords set here.';
+            }
+        } else if (isNew) {
+            if (!form.password) {
+                e.password = 'Password is required.';
+            } else if (!passwordMeetsPolicy(form.password)) {
+                e.password = 'Password does not meet the requirements listed.';
+            }
+        }
+        if (isNew && form.password && form.password !== form.confirmPassword) {
+            e.confirmPassword = 'Passwords must match.';
+        }
+        if (!form.roleIds.length) {
+            e.roleIds = 'At least one role must be selected.';
+        }
+        return e;
+    });
+
+    const isValid = computed(() => Object.keys(clientErrors.value).length === 0);
+    // A field shows its message only after it was touched, or after a submit was attempted.
+    const showError = createShowError(touched, submitted, clientErrors);
+
+    // What the screen shows for a field: the server's message when it sent one, else the form's own once it is due.
+    const msg = (field) => serverErrors.value[field]?.join(' ') || (showError(field) ? clientErrors.value[field] : '');
+    const err = (field) => (msg(field) ? 1 : 0);
+
+    function resetValidation() {
+        submitted.value = false;
+        serverErrors.value = {};
+        Object.keys(touched).forEach((field) => delete touched[field]);
+    }
+
+    // ================================================================
     // Loading
     // ================================================================
     function fill(detail) {
@@ -65,6 +148,7 @@ export function useUserDetail() {
             notes: detail.notes, isEnabled: detail.isEnabled, isADAccount: detail.isADAccount,
             twoFactorEnabled: detail.twoFactorEnabled, roleIds: [...detail.roleIds], providerIds: [...detail.providerIds]
         });
+        resetValidation();
     }
 
     async function getPageData() {
@@ -98,15 +182,23 @@ export function useUserDetail() {
     function fail(e) {
         const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
         if (fieldErrors) {
-            errors.value = fieldErrors;
+            serverErrors.value = fieldErrors;
             formError.value = fieldErrors.form?.join(' ') ?? '';
+            logError('Please correct the validation errors first.');
         } else {
             logApiError(e);
         }
     }
 
+    // Checks permission, then saves.
     async function save() {
-        errors.value = {};
+        if (isSaving.value) {
+            return;
+        }
+        if (!canEdit) {
+            logError('You do not have permission to manage users.');
+            return;
+        }
         formError.value = '';
         isSaving.value = true;
         try {
@@ -123,6 +215,17 @@ export function useUserDetail() {
         } finally {
             isSaving.value = false;
         }
+    }
+
+    // The form's submit: validates first, and only saves when everything is valid.
+    function onSubmit() {
+        submitted.value = true;
+        serverErrors.value = {};
+        if (!isValid.value) {
+            logError('Please correct the validation errors first.');
+            return;
+        }
+        save();
     }
 
     async function remove() {
@@ -187,12 +290,12 @@ export function useUserDetail() {
         form, info, roles, providers, policy, dialog, documentCount, isNew, userIdShown, idCaption,
 
         // Busy and validation state
-        isLoading, isSaving, errors, formError, err, hasAdminRole,
+        isLoading, isSaving, formError, submitted, touched, touch, isValid, showError, msg, err, hasAdminRole,
 
         // User and permissions
         canEdit,
 
         // Actions
-        save, remove, cancel, passwordSet, agreementsClosed, uploadClosed, resetMfa
+        save, onSubmit, remove, cancel, passwordSet, agreementsClosed, uploadClosed, resetMfa
     };
 }
