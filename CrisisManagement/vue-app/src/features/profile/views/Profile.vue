@@ -1,22 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import http from '../../../common/api/http.js';
-import { useLogger } from '../../../common/composables/useLogger.js';
-import { getBaseUrl } from '../../../utils/urlUtils.js';
+import { useProfile } from '../composables/useProfile.js';
 
-// My Profile: read-only, as in the Blazor CMS (names are administered on the Users screen). Authenticator setup is the
-// server-rendered Account/SetupMfa page.
-const { logApiError } = useLogger();
-const profile = ref(null);
-const setupUrl = `${getBaseUrl()}/Account/SetupMfa`;
-
-onMounted(async () => {
-    try {
-        profile.value = (await http.get('profile')).data;
-    } catch (e) {
-        logApiError(e);
-    }
-});
+const { profile, setupUrl } = useProfile();
 </script>
 
 <template>
