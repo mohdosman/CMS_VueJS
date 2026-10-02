@@ -82,9 +82,18 @@ const {
                             <td>{{ u.firstName }}</td>
                             <td>{{ u.lastName }}</td>
                             <td>{{ u.email }}</td>
-                            <td>{{ u.isADAccount ? 'Yes' : 'No' }}</td>
-                            <td>{{ u.isLockedOut ? 'Yes' : 'No' }}</td>
-                            <td>{{ u.isEnabled ? 'Yes' : 'No' }}</td>
+                            <td :title="u.isADAccount ? 'AD account' : 'Local account'">
+                                <i :class="u.isADAccount ? 'fa fa-check-circle text-success' : 'fa fa-times-circle text-muted'" aria-hidden="true"></i>
+                                <span class="visually-hidden">{{ u.isADAccount ? 'AD account' : 'Local account' }}</span>
+                            </td>
+                            <td :title="u.isLockedOut ? 'Locked out' : 'Not locked'">
+                                <i :class="u.isLockedOut ? 'fa fa-check-circle text-danger' : 'fa fa-times-circle text-muted'" aria-hidden="true"></i>
+                                <span class="visually-hidden">{{ u.isLockedOut ? 'Locked out' : 'Not locked' }}</span>
+                            </td>
+                            <td :title="u.isEnabled ? 'Active' : 'Disabled'">
+                                <i :class="u.isEnabled ? 'fa fa-check-circle text-success' : 'fa fa-times-circle text-danger'" aria-hidden="true"></i>
+                                <span class="visually-hidden">{{ u.isEnabled ? 'Active' : 'Disabled' }}</span>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
