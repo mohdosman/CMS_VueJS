@@ -12,5 +12,16 @@ export const formatFileSize = (b) => {
     return b >= 1048576 ? `${(b / 1048576).toFixed(2)} MB` : b >= 1024 ? `${Math.round(b / 1024)} KB` : `${b} Bytes`;
 };
 
+// One-line XML -> one element per line, indented two spaces per level (text-only elements stay on one line).
+export const prettyXml = (xml) => {
+    let depth = 0;
+    return (xml || '').trim().replace(/>\s*</g, '>\n<').split('\n').map((line) => {
+        if (/^<\//.test(line)) depth = Math.max(depth - 1, 0);
+        const out = '  '.repeat(depth) + line;
+        if (/^<[^!?/][^>]*[^/]>$/.test(line) && !line.includes('</')) depth++;
+        return out;
+    }).join('\n');
+};
+
 // Long text cut for a grid cell (the full text goes in the title).
 export const truncate = (text, max = 50) => (text.length > max ? `${text.slice(0, max)}...` : text);

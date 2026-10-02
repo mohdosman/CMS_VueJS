@@ -1,11 +1,20 @@
 <script setup>
 import { useAssessmentFiles } from '../composables/useAssessmentFiles.js';
-import { formatDateTime } from '../../../utils/formatters.js';
+import { computed } from 'vue';
+import { formatDateTime, prettyXml } from '../../../utils/formatters.js';
+import XmlNode from '../components/XmlNode.vue';
 
 const {
     msg, criteria, paging, files, totalRecords, providers, hasSearched, isSearching, errors, dialog, current, rawXml, fileErrors, isLoadingDialog,
     search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, open, closeDialog
 } = useAssessmentFiles();
+
+// null when the file isn't well-formed XML; the dialog then falls back to indented plain text.
+const xmlRoot = computed(() => {
+    if (!rawXml.value) return null;
+    const doc = new DOMParser().parseFromString(rawXml.value, 'application/xml');
+    return doc.querySelector('parsererror') ? null : doc.documentElement;
+});
 
 </script>
 
@@ -98,7 +107,8 @@ const {
 
         <AppDialog wide v-if="dialog === 'raw'" :title="`Raw file: ${current?.fileName}`" @close="closeDialog">
             <p v-if="isLoadingDialog" role="status">Loading...</p>
-            <pre v-else class="border p-2" style="max-height: 24rem; overflow: auto; background: var(--bs-tertiary-bg, #f8f9fa); color: var(--bs-body-color)" tabindex="0">{{ rawXml }}</pre>
+            <div v-else-if="xmlRoot" class="border p-2" style="max-height: 24rem; overflow: auto" tabindex="0"><XmlNode :node="xmlRoot" /></div>
+            <pre v-else class="border p-2" style="max-height: 24rem; overflow: auto; background: var(--bs-tertiary-bg, #f8f9fa); color: var(--bs-body-color)" tabindex="0">{{ prettyXml(rawXml) }}</pre>
             <AppButton action="close" @click="closeDialog" />
         </AppDialog>
 
