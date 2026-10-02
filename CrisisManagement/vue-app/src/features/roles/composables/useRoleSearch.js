@@ -1,65 +1,110 @@
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { rolesApi } from '../api/rolesApi.js';
-import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
+import { useSearchState } from '../../../common/composables/useSearchState.js';
+import { useActivate } from '../../../common/composables/useActivate.js';
+import { createSetOrder, getSortIcon, createPagingHandlers } from '../../../utils/searchUtils.js';
 import { announce } from '../../../services/liveAnnouncer.js';
 
-const DEFAULT_CRITERIA = () => ({ name: '', orderBy: 'name', reverse: false });
-
-// Module scope on purpose: filters and results survive search -> detail -> back
-// within the SPA. A page reload starts fresh.
-const criteria = reactive(DEFAULT_CRITERIA());
-const paging = reactive({ currentPage: 1, maxPagesToShow: 10, pageSize: 20 });
-const roles = ref([]);
-const totalRecords = ref(0);
-const hasSearched = ref(false);
-const isSearching = ref(false);
-
+// Role search: the list of roles, filtered by name.
 export function useRoleSearch() {
     const router = useRouter();
-    const { can } = useCapabilities();
     const { logApiError } = useLogger();
 
-    async function getRoles() {
-        isSearching.value = true;
-        try {
-            const result = await rolesApi.search(paging.currentPage, paging.pageSize, criteria);
-            roles.value = result.items;
-            totalRecords.value = result.totalCount;
-            hasSearched.value = true;
-            announce(`${result.totalCount} roles found`);
-        } catch (e) {
-            logApiError(e);
-        } finally {
-            isSearching.value = false;
-        }
-    }
+    // ================================================================
+    // State
+    // ================================================================
+    const roles = ref([]);
+    const totalRecords = ref(0);
+    const paging = reactive({ currentPage: 1, maxPagesToShow: 10, pageSize: 20 });
 
+    const DEFAULT_CRITERIA = { name: '', orderBy: 'name', reverse: false };
+    const criteria = reactive({ ...DEFAULT_CRITERIA });
+
+    const { load, save, clear: clearState } = useSearchState('roleSearchJSON', criteria, DEFAULT_CRITERIA, paging);
+
+    const isSearching = ref(false);
+
+    // Each async load bumps its counter, so a slow earlier response can't overwrite a newer one.
+    let requestSequence = 0;
+
+    // ================================================================
+    // User permissions
+    // ================================================================
+    const { can } = useCapabilities();
+    const canAdd = can('roles.edit');
+
+    // ================================================================
+    // Sorting, paging and search
+    // ================================================================
     const setOrder = createSetOrder(criteria, paging, getRoles);
     const sortIcon = (col) => getSortIcon(col, criteria);
     const { onPageChanged, onPageSizeChanged } = createPagingHandlers(paging, getRoles);
 
-    function search() {
+    async function getRoles() {
+        const requestId = ++requestSequence;
+        isSearching.value = true;
+        try {
+            const result = await rolesApi.search(paging.currentPage, paging.pageSize, criteria);
+            if (requestId !== requestSequence) {
+                return;
+            }
+            roles.value = result.items;
+            totalRecords.value = result.totalCount;
+            announce(`${result.totalCount} roles found`);
+        } catch (e) {
+            if (requestId === requestSequence) {
+                logApiError(e);
+            }
+        } finally {
+            if (requestId === requestSequence) {
+                isSearching.value = false;
+            }
+        }
+    }
+
+    async function search() {
         paging.currentPage = 1;
-        return getRoles();
+        save();
+        await getRoles();
     }
 
-    function clear() {
-        Object.assign(criteria, DEFAULT_CRITERIA());
-        return search();
+    // Runs each time the screen is shown: restore the saved criteria and list again.
+    useActivate(async () => {
+        load();
+        await getRoles();
+    });
+
+    // ================================================================
+    // Navigation and clear
+    // ================================================================
+    function gotoRole(role) {
+        router.push(`/admin/roles/${role.id}`);
     }
 
-    const gotoRole = (r) => router.push(`/admin/roles/${r.id}`);
-    const canAdd = can('roles.edit');
-    const add = () => router.push('/admin/roles/0');
+    function add() {
+        router.push('/admin/roles/0');
+    }
 
-    // Coming back from a detail screen: refresh in place so edits and deletes show, keeping the page.
-    onMounted(() => (hasSearched.value ? getRoles() : search()));
+    async function clear() {
+        clearState();
+        await getRoles();
+    }
 
     return {
-        criteria, paging, roles, totalRecords, isSearching,
-        search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged, gotoRole, canAdd, add
+        // Results
+        roles, totalRecords, paging, criteria,
+
+        // Busy state
+        isSearching,
+
+        // User and permissions
+        canAdd,
+
+        // Actions
+        search, clear, setOrder, sortIcon, onPageChanged, onPageSizeChanged,
+        gotoRole, add
     };
 }
