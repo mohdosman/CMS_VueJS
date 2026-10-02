@@ -64,6 +64,16 @@ async function onPick(e) {
             </div>
         </div>
 
+        <div class="row mt-2">
+            <div class="col-md-12">
+                <div class="alert alert-warning" role="note">
+                    <h2 class="h6 text-danger fw-bold text-center">ATTENTION</h2>
+                    <p>As of 05/03/2018, uploaded files are processed only at night between the hours of 6pm and 6am. So you will not see uploaded file information using 'Display Files' until late evening or the day following upload. PLEASE DO NOT UPLOAD THE SAME FILE MULTIPLE TIMES.</p>
+                    <p class="mb-0">If you have issues with file upload, please contact Gina Young at <a href="mailto:gina.young@tn.gov">gina.young@tn.gov</a> 615/532-6675.</p>
+                </div>
+            </div>
+        </div>
+
         <div v-if="history.length" class="row mt-2" role="region" aria-labelledby="history-heading">
             <h2 id="history-heading" class="visually-hidden">Files uploaded in this visit</h2>
             <div class="col-md-12" aria-live="polite">

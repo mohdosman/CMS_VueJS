@@ -99,6 +99,7 @@ public sealed class AssessmentFileService(IUnitOfWork uow, ProviderScope scope, 
         if (provider is null || !scope.Allows(provider.Id)) throw Reject($"No provider found with NPI '{npi}'.");
 
         ValidateAgainstSchema(doc);
+        RejectInvalidSsns(doc);
 
         if (await uow.FileUploads.PendingExistsAsync(name, npi))
             throw Reject($"A file named '{name}' is already pending for this provider.");
@@ -111,6 +112,19 @@ public sealed class AssessmentFileService(IUnitOfWork uow, ProviderScope scope, 
         uow.FileUploads.Add(entity);
         await uow.SaveChangesAsync();
         return new AssessmentUploadResult(entity.FileUploadId, name, provider.Name);
+    }
+
+    // The schema only requires nine digits; like WebForms, dummy numbers (000, 666, repeated digits, known invalid ones) are refused.
+    private static void RejectInvalidSsns(XDocument doc)
+    {
+        string? Child(XElement patient, string name) => patient.Elements().FirstOrDefault(c => c.Name.LocalName == name)?.Value.Trim();
+        var bad = doc.Descendants().Where(e => e.Name.LocalName == "Patient")
+            .Select(p => (Ssn: Child(p, "SSN"), Number: Child(p, "ProviderPatientNo")))
+            .Where(p => !string.IsNullOrEmpty(p.Ssn) && !SsnPolicy.IsValid(p.Ssn))
+            .DistinctBy(p => p.Ssn)
+            .Select(p => $"[PatientProvider# {p.Number} has invalid SSN# {p.Ssn}]");
+        var list = string.Join("; ", bad);
+        if (list.Length > 0) throw Reject($"Upload failed. {list}");
     }
 
     private static ValidationFailedException Reject(string message) => ValidationFailedException.For("file", message);
