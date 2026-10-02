@@ -1,4 +1,4 @@
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { notificationsApi } from '../api/notificationsApi.js';
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
@@ -23,7 +23,7 @@ export function useNotificationDetail() {
     const isLoading = ref(true);
     const isSaving = ref(false);
 
-    const title = computed(() => (isNew ? 'Add Notification' : 'Notification Details'));
+    const title = 'Manage Notification';
 
     function fill(detail) {
         notificationId.value = detail.id;
@@ -33,15 +33,16 @@ export function useNotificationDetail() {
 
     async function save() {
         errors.value = {};
+        if (!form.notification.trim()) {
+            errors.value = { notification: ['Notification is required'] };
+            return;
+        }
         isSaving.value = true;
         try {
-            const detail = isNew ? await notificationsApi.create(form) : await notificationsApi.update(notificationId.value, form);
-            logSuccess('Notification saved.');
-            if (isNew) {
-                router.replace(`/notifications/${detail.id}`);
-                return;
-            }
-            fill(detail);
+            if (isNew) await notificationsApi.create(form);
+            else await notificationsApi.update(notificationId.value, form);
+            logSuccess(isNew ? 'Notification created.' : 'Notification updated.');
+            router.push('/notifications');
         } catch (e) {
             // Field problems (400) show next to their inputs; anything else (409 conflict, ...) is a toast.
             const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;

@@ -1,9 +1,9 @@
 <script setup>
 import { useNotificationSearch } from '../composables/useNotificationSearch.js';
-import { formatDateTime } from '../../../utils/formatters.js';
+import { formatDateTimeFull } from '../../../utils/formatters.js';
 
 const {
-    paging, notifications, totalRecords, isSearching, confirming,
+    paging, notifications, totalRecords, confirming,
     search, remove, setOrder, sortIcon, onPageChanged, onPageSizeChanged, gotoNotification, canEdit, add
 } = useNotificationSearch();
 
@@ -14,11 +14,7 @@ const {
         <h1 id="main-title" class="visually-hidden">Search Notifications</h1>
 
         <SearchPanel title="Search Notifications" icon="fa fa-bell" form-name="notificationForm" @submit="search">
-            <template #fields>
-                <p class="text-muted">The newest notification is shown as "Attention" on the sign-in page.</p>
-            </template>
             <template #buttons>
-                <AppButton action="search" :disabled="isSearching">Refresh</AppButton>
                 <AppButton v-if="canEdit" action="add" @click="add" />
             </template>
         </SearchPanel>
@@ -37,12 +33,12 @@ const {
                     </thead>
                     <tbody>
                         <tr v-if="!notifications.length" class="msg-error">
-                            <td :colspan="canEdit ? 4 : 3"><div class="text-center"><strong>No Notifications Found</strong></div></td>
+                            <td :colspan="canEdit ? 4 : 3"><div class="text-center"><strong>No Records Found.</strong></div></td>
                         </tr>
                         <tr v-for="n in notifications" :key="n.id" style="cursor:pointer" @click="gotoNotification(n)">
                             <td><router-link :to="`/notifications/${n.id}`" @click.stop>{{ n.id }}</router-link></td>
                             <td>{{ n.notification }}</td>
-                            <td>{{ formatDateTime(n.createdOn) }}</td>
+                            <td>{{ formatDateTimeFull(n.createdOn) }}</td>
                             <td v-if="canEdit" @click.stop>
                                 <AppButton action="cancel" @click="confirming = n">Delete<span class="visually-hidden"> notification {{ n.id }}</span></AppButton>
                             </td>
@@ -63,8 +59,8 @@ const {
         </div>
 
         <AppDialog v-if="confirming" title="Delete notification" @close="confirming = null">
-            <p>Delete notification {{ confirming.id }}? It stops showing on the sign-in page. This cannot be undone.</p>
-            <AppButton action="delete" @click="remove">Delete notification</AppButton>
+            <p>Delete notification '{{ confirming.id }}'?</p>
+            <AppButton action="delete" @click="remove">Delete</AppButton>
             <AppButton action="cancel" @click="confirming = null" />
         </AppDialog>
     </div>

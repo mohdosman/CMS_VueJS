@@ -33,7 +33,7 @@ public sealed class NotificationService(IUnitOfWork uow)
 
         // Compared here rather than via the tracked OriginalValue, which reloads overwrite.
         if (!string.IsNullOrWhiteSpace(r.RowVersion) && !n.Version.AsSpan().SequenceEqual(Convert.FromBase64String(r.RowVersion)))
-            throw new ConflictException("This notification was changed by someone else. Reload the page and try again.");
+            throw new ConflictException("This record was updated by someone else while you were editing it.  Your changes were not saved.  Click the Cancel button and enter this screen again to see the changes.");
 
         n.Notification = text;
         await uow.SaveChangesAsync();
@@ -46,9 +46,9 @@ public sealed class NotificationService(IUnitOfWork uow)
     private static string Validate(NotificationEditRequest r)
     {
         var text = r.Notification?.Trim() ?? "";
-        if (text.Length == 0) throw ValidationFailedException.For("notification", "Notification text is required.");
+        if (text.Length == 0) throw ValidationFailedException.For("notification", "Notification is required");
         if (text.Length > NotificationFieldLimits.MaxNotificationLength)
-            throw ValidationFailedException.For("notification", $"Notification text cannot exceed {NotificationFieldLimits.MaxNotificationLength} characters.");
+            throw ValidationFailedException.For("notification", $"Notification cannot exceed {NotificationFieldLimits.MaxNotificationLength} characters");
         return text;
     }
 

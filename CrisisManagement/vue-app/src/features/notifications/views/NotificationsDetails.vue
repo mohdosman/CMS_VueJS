@@ -1,7 +1,7 @@
 <script setup>
 import { useNotificationDetail } from '../composables/useNotificationDetail.js';
 
-const { isNew, canEdit, title, form, info, errors, formError, isLoading, isSaving, save, cancel } = useNotificationDetail();
+const { canEdit, title, form, errors, formError, isLoading, isSaving, save, cancel } = useNotificationDetail();
 
 const MAX = 1000;
 </script>
@@ -21,18 +21,12 @@ const MAX = 1000;
                     <div class="col-md-8 mb-3">
                         <label class="form-label" for="notification">Notification <span class="f_req" aria-hidden="true">*</span></label>
                         <textarea id="notification" v-model="form.notification" rows="4" :maxlength="MAX" class="form-control form-control-sm"
-                                  :aria-invalid="!!errors.notification?.length" aria-describedby="notification-help notification-err"></textarea>
-                        <div id="notification-help" class="form-text">
-                            Shown as "Attention" on the sign-in page. {{ form.notification.length }}/{{ MAX }} characters.
-                        </div>
+                                  :aria-invalid="!!errors.notification?.length" aria-describedby="notification-err"></textarea>
                         <div id="notification-err" class="form-text has-error" role="alert">{{ errors.notification?.join(' ') }}</div>
                     </div>
                 </div>
             </fieldset>
 
-            <div v-if="info" class="text-muted small mb-3">
-                Created: {{ new Date(info.createdOn).toLocaleString() }} &middot; Last updated: {{ new Date(info.updatedOn).toLocaleString() }}
-            </div>
         </template>
 
         <template v-if="!canEdit" #button-row>

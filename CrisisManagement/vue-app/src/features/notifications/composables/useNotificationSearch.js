@@ -51,7 +51,7 @@ export function useNotificationSearch() {
         const n = confirming.value;
         try {
             await notificationsApi.remove(n.id);
-            logSuccess('Notification deleted.');
+            logSuccess(`Notification '${n.id}' deleted.`);
             confirming.value = null;
             await getNotifications();
         } catch (e) {
