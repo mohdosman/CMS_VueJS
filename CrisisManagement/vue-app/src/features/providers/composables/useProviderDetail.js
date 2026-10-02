@@ -1,37 +1,44 @@
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { providersApi } from '../api/providersApi.js';
 import { useCapabilities } from '../../../common/composables/useCapabilities.js';
 import { useLogger } from '../../../common/composables/useLogger.js';
+import { useActivate } from '../../../common/composables/useActivate.js';
+import { restoreSearchOnReturn } from '../../../common/composables/useSearchState.js';
 import { fieldMessages } from '../../../utils/formErrors.js';
 import { apiErrorMessage } from '../../../utils/apiError.js';
 
-const blankContact = () => ({ title: '', firstName: '', lastName: '', emailAddress: '', phone: '', wirelessPhone: '' });
-const blankAddress = () => ({
-    addressLine1: '', addressLine2: '', city: '', stateId: null, countyId: null, zipcode: '', zipExtension: '', contact: blankContact()
-});
-const blankForm = () => ({
-    rowVersion: null, name: '', abbreviation: '', edisonNumber: '', npi: '',
-    physicalAddress: blankAddress(), remitAddress: blankAddress()
-});
-
-// The server sends nulls; inputs want strings.
-const strings = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v ?? '']));
-const address = (a) => ({
-    ...blankAddress(), ...strings(a),
-    stateId: a.stateId ?? null, countyId: a.countyId ?? null,
-    contact: strings({ ...blankContact(), ...a.contact })
-});
-
-// One form for both create (/admin/providers/0) and edit (/admin/providers/:key, the provider id).
+// Port of ManageProvider.aspx: one form for a new provider (/admin/providers/0) and an existing one (/admin/providers/:key).
 export function useProviderDetail() {
     const route = useRoute();
     const router = useRouter();
-    const { can } = useCapabilities();
     const { logSuccess, logApiError } = useLogger();
 
-    const isNew = route.params.key === '0';
-    const canEdit = can('providers.edit');
+    // ================================================================
+    // Blank shapes
+    // ================================================================
+    const blankContact = () => ({ title: '', firstName: '', lastName: '', emailAddress: '', phone: '', wirelessPhone: '' });
+    const blankAddress = () => ({
+        addressLine1: '', addressLine2: '', city: '', stateId: null, countyId: null, zipcode: '', zipExtension: '', contact: blankContact()
+    });
+    const blankForm = () => ({
+        rowVersion: null, name: '', abbreviation: '', edisonNumber: '', npi: '',
+        physicalAddress: blankAddress(), remitAddress: blankAddress()
+    });
+
+    // The server sends nulls; inputs want strings.
+    const strings = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v ?? '']));
+    const address = (a) => ({
+        ...blankAddress(), ...strings(a),
+        stateId: a.stateId ?? null, countyId: a.countyId ?? null,
+        contact: strings({ ...blankContact(), ...a.contact })
+    });
+
+    // ================================================================
+    // State
+    // ================================================================
+    const isNew = computed(() => route.params.key === '0');
+    const title = computed(() => (isNew.value ? 'Add Provider' : 'Provider Details'));
 
     const form = reactive(blankForm());
     const providerId = ref(0);
@@ -45,8 +52,18 @@ export function useProviderDetail() {
     const isLoading = ref(true);
     const isSaving = ref(false);
 
-    const title = computed(() => (isNew ? 'Add Provider' : 'Provider Details'));
+    const msg = fieldMessages(errors);
+    const err = (field) => errors.value[field]?.length ?? 0;
 
+    // ================================================================
+    // User permissions
+    // ================================================================
+    const { can } = useCapabilities();
+    const canEdit = can('providers.edit');
+
+    // ================================================================
+    // Loading
+    // ================================================================
     function fill(detail) {
         providerId.value = detail.id;
         info.value = detail;
@@ -57,26 +74,62 @@ export function useProviderDetail() {
         });
     }
 
+    async function getPageData() {
+        try {
+            const lookups = await providersApi.lookups();
+            states.value = lookups.states;
+            counties.value = lookups.counties;
+            if (!isNew.value) {
+                fill(await providersApi.get(route.params.key));
+            }
+        } catch (e) {
+            // Nothing to edit: keep the reason on the page.
+            formError.value = e.response?.status === 404 ? 'Provider not found.' : apiErrorMessage(e);
+        }
+    }
+
+    // ================================================================
+    // Navigation
+    // ================================================================
+    function backToList() {
+        restoreSearchOnReturn();
+        router.push('/admin/providers');
+    }
+
+    function cancel() {
+        backToList();
+    }
+
+    // ================================================================
+    // Save and delete
+    // ================================================================
     // Field problems (400) show next to their inputs; anything else (403, 409 conflict, ...) is a toast.
     function fail(e) {
         const fieldErrors = e.response?.status === 400 ? e.response.data?.errors : null;
-        if (fieldErrors) {
-            errors.value = fieldErrors;
-            // Show the first tab that has a problem.
-            const first = Object.keys(fieldErrors).find((k) => k.startsWith('physicalAddress') || k.startsWith('remitAddress'));
-            const demographics = Object.keys(fieldErrors).some((k) => !k.startsWith('physicalAddress') && !k.startsWith('remitAddress'));
-            tab.value = demographics ? 'demographics' : first.split('.')[0];
-        } else logApiError(e);
+        if (!fieldErrors) {
+            logApiError(e);
+            return;
+        }
+        errors.value = fieldErrors;
+
+        // Show the first tab that has a problem.
+        const keys = Object.keys(fieldErrors);
+        const inAddress = (key) => key.startsWith('physicalAddress') || key.startsWith('remitAddress');
+        const firstAddressKey = keys.find(inAddress);
+        tab.value = keys.some((key) => !inAddress(key)) ? 'demographics' : firstAddressKey.split('.')[0];
     }
 
     async function save() {
         errors.value = {};
         isSaving.value = true;
         try {
-            if (isNew) await providersApi.create(form);
-            else await providersApi.update(providerId.value, form);
+            if (isNew.value) {
+                await providersApi.create(form);
+            } else {
+                await providersApi.update(providerId.value, form);
+            }
             logSuccess('Provider saved.');
-            router.push('/admin/providers');
+            backToList();
         } catch (e) {
             fail(e);
         } finally {
@@ -88,7 +141,7 @@ export function useProviderDetail() {
         try {
             await providersApi.remove(providerId.value);
             logSuccess('Provider deleted.');
-            router.push('/admin/providers');
+            backToList();
         } catch (e) {
             // 409 explains itself ("still used by users, contracts, ...").
             dialog.value = '';
@@ -96,24 +149,27 @@ export function useProviderDetail() {
         }
     }
 
-    const cancel = () => router.push('/admin/providers');
-
-    onMounted(async () => {
-        try {
-            const lookups = await providersApi.lookups();
-            states.value = lookups.states;
-            counties.value = lookups.counties;
-            if (!isNew) fill(await providersApi.get(route.params.key));
-        } catch (e) {
-            // Nothing to edit: keep the reason on the page.
-            formError.value = e.response?.status === 404 ? 'Provider not found.' : apiErrorMessage(e);
-        } finally {
-            isLoading.value = false;
-        }
+    // ================================================================
+    // Page load
+    // ================================================================
+    useActivate(async () => {
+        isLoading.value = true;
+        formError.value = '';
+        await getPageData();
+        isLoading.value = false;
     });
 
-    const msg = fieldMessages(errors);
-    const err = (f) => errors.value[f]?.length ?? 0;
+    return {
+        // Form
+        form, info, states, counties, tab, dialog, title, isNew,
 
-    return { msg, err, isNew, canEdit, title, form, info, states, counties, errors, formError, dialog, tab, isLoading, isSaving, save, remove, cancel };
+        // Busy and validation state
+        isLoading, isSaving, errors, formError, msg, err,
+
+        // User and permissions
+        canEdit,
+
+        // Actions
+        save, remove, cancel
+    };
 }
